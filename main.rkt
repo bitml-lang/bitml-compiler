@@ -3,18 +3,21 @@
 (require syntax/parse/define syntax/id-table racket/stxparam
          (for-syntax racket/list racket/format))
 
+;provides the default reader for an s-exp lang
 (module reader syntax/module-reader
   bitml)
 
 (provide (all-from-out racket)
-         participant advertise withdraw deposit guards)
+         participant advertise withdraw deposit guards after)
 
+;function to enumerate tx indexes
 (define tx-index 0)
 
 (define (new-tx-index)
   (set! tx-index (add1 tx-index))
   tx-index)
 
+;helpers to store and retrieve participants info
 (define participants-table
   (make-hash))
 
@@ -27,14 +30,7 @@
 (define (get-participants)
   (hash-keys participants-table))
 
-;dichiarazione di un partecipante
-;associa il nome alla chiave pubblica
-(define-simple-macro (participant ident:id (~literal @) pubkey:string)
-  (add-participant 'ident pubkey))
-
-(define-syntax (guards stx) (raise-syntax-error 'guards "cannot use guards alone" stx))
-(define-syntax (deposit stx) (raise-syntax-error 'deposit "cannot use deposit alone" stx))
-
+;helpers to generate string transactions
 (define (slist->string l)
   (foldr (lambda (s r) (string-append s r)) "" l))
 
@@ -50,7 +46,12 @@
 (define (participants->tx-sigs participants)
   (foldl (lambda (p acc) (string-append  "s" (format "~a" p) " " acc))  "" participants))
 
-;compila withdraw in tx
+;declaration of a participant
+;associates a name to a public key
+(define-simple-macro (participant ident:string pubkey:string)
+  (add-participant 'ident pubkey))
+
+;compiles withdraw to transaction
 (define-syntax (withdraw stx)
   (syntax-parse stx    
     [(_ part parent-tx input-idx value parts timelock)
@@ -59,19 +60,30 @@
          (define tx-sigs (participants->tx-sigs (get-participants)))
 
          (displayln (if (> timelock 0)
-                        (format "transaction T~a(~a,~a) { \n input = ~a@~a:~a \n output = ~a BTC : fun(x) . versig(addr~a; x) \n absLock = date ~a \n}\n"
+                        (format "transaction T~a(~a,~a) { \n input = ~a@~a:~a \n output = ~a BTC : fun(x) . versig(addr~a; x) \n absLock = block ~a \n}\n"
                                 (new-tx-index) tx-params parent-tx parent-tx input-idx tx-sigs value part timelock)
                         (format "transaction T~a(~a,~a) { \n input = ~a@~a:~a \n output = ~a BTC : fun(x) . versig(addr~a; x) \n}\n"
                                 (new-tx-index) tx-params parent-tx parent-tx input-idx tx-sigs value part))))]
     [(_)
      (raise-syntax-error stx '! "cannot use withdraw alone")]))
-     
 
-;comando di compilazione del contratto
+;gestisce after
+(define-syntax (after stx)
+  (syntax-parse stx   
+    [(_ t (contract params ...) parent-tx input-idx value parts timelock)
+     #'(contract params ... parent-tx input-idx value parts (max t timelock))]
+    
+    [(_)
+     (raise-syntax-error stx '! "cannot use withdraw alone")]))
+     
+;keywords for the next macro
+(define-syntax (guards stx) (raise-syntax-error 'guards "cannot use guards alone" stx))
+(define-syntax (deposit stx) (raise-syntax-error 'deposit "cannot use deposit alone" stx))
+;command compilation
 (define-syntax (advertise stx)
   (syntax-parse stx
-    #:literals (guards deposit)
-    [(_ (guards (deposit part:id v:number txout) ... ) (contract params ...))
+    #:literals (guards deposit)    
+    [(_ (guards (deposit part:string v:number txout) ... ) (contract params ...))
 
      (define deposit-part (syntax->list #'(part ...)))
      
@@ -96,4 +108,4 @@
          (displayln (format "\ntransaction Tinit(~a) { \n ~a \n output = ~a BTC \n}\n" tx-params-string inputs tx-v))
 
          ;procedi compilando il contratto
-         (contract 'params ... "Tinit" 0 tx-v (get-participants) 0))]))
+         (contract params ... "Tinit" 0 tx-v (get-participants) 0))]))
