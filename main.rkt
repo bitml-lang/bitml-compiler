@@ -38,15 +38,31 @@
 (define (slist->string l)
   (foldr (lambda (s r) (string-append s r)) "" l))
 
+(define (participants->tx-params participants)
+  (define s
+    (foldl (lambda (p acc) (string-append  "s" (format "~a" p) ":signature," acc))  "" participants))
+  (substring s 0 (sub1 (string-length s))))
+
+(define (participants->tx-params-list participants)
+  (for/list([p participants])
+    (string-append  "s" (format "~a" p))))
+
+(define (participants->tx-sigs participants)
+  (foldl (lambda (p acc) (string-append  "s" (format "~a" p) " " acc))  "" participants))
+
 ;compila withdraw in tx
 (define-syntax (withdraw stx)
   (syntax-parse stx    
     [(_ part parent-tx input-idx value parts timelock)
-     #'(displayln (if (> timelock 0)
-                      (format "transaction T~a(s) { \n input = ~a@~a:s \n output = ~a BTC : fun(x) . versig(addr~a; x) \n absLock = date ~a \n}\n"
-                              (new-tx-index) parent-tx input-idx value part timelock)
-                      (format "transaction T~a(s) { \n input = ~a@~a:s \n output = ~a BTC : fun(x) . versig(addr~a; x) \n}\n"
-                              (new-tx-index) parent-tx input-idx value part)))]
+     #'(begin
+         (define tx-params (participants->tx-params (get-participants)))
+         (define tx-sigs (participants->tx-sigs (get-participants)))
+
+         (displayln (if (> timelock 0)
+                        (format "transaction T~a(~a,~a) { \n input = ~a@~a:~a \n output = ~a BTC : fun(x) . versig(addr~a; x) \n absLock = date ~a \n}\n"
+                                (new-tx-index) tx-params parent-tx parent-tx input-idx tx-sigs value part timelock)
+                        (format "transaction T~a(~a,~a) { \n input = ~a@~a:~a \n output = ~a BTC : fun(x) . versig(addr~a; x) \n}\n"
+                                (new-tx-index) tx-params parent-tx parent-tx input-idx tx-sigs value part))))]
     [(_)
      (raise-syntax-error stx '! "cannot use withdraw alone")]))
      
@@ -72,12 +88,12 @@
          (define tx-v (+ v ...))
          
          ;dichiara le pk
-         (for-each (lambda (s) (displayln (format "cost addr~a = address:~a" s (participant-pk s)))) (get-participants))         
-         (define inputs (string-append "input: [ "
-                                       (format "~a:~a" (first tx-params-list) (first deposit-txout))
+         (for-each (lambda (s) (displayln (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))         
+         (define inputs (string-append "input = [ "
+                                       (format "~a:~a" (first deposit-txout) (first tx-params-list))
                                        (slist->string (for/list ([p (rest tx-params-list)] [out (rest deposit-txout)])
-                                                        (format "; ~a:~a" p out))) " ]"))                   
-         (displayln (format "\ntransaction Tinit(~a) { \n ~a \n out: ~a \n}\n" tx-params-string inputs tx-v))
+                                                        (format "; ~a:~a" out p))) " ]"))                   
+         (displayln (format "\ntransaction Tinit(~a) { \n ~a \n output = ~a BTC \n}\n" tx-params-string inputs tx-v))
 
          ;procedi compilando il contratto
          (contract 'params ... "Tinit" 0 tx-v (get-participants) 0))]))
