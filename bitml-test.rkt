@@ -6,4 +6,4 @@
 (advertise (guards (deposit "A" 1 "txA@0")
                    (deposit "A" 1 "txA1@0")
                    (deposit "B" 2 "txB@0"))
-           (after 10 (after 20 (withdraw "B"))))
+           (auth "A" (after 30 (after 20 (withdraw "B")))))

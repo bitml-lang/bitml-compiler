@@ -1,14 +1,14 @@
-#lang racket
+#lang racket/base
 
-(require syntax/parse/define syntax/id-table racket/stxparam
-         (for-syntax racket/list racket/format))
+(require (for-syntax racket/base syntax/parse)
+          racket/list)
 
 ;provides the default reader for an s-exp lang
 (module reader syntax/module-reader
   bitml)
 
-(provide (all-from-out racket)
-         participant advertise withdraw deposit guards after)
+(provide (all-from-out racket/base)
+         participant advertise withdraw deposit guards after auth)
 
 ;function to enumerate tx indexes
 (define tx-index 0)
@@ -48,16 +48,22 @@
 
 ;declaration of a participant
 ;associates a name to a public key
+#;
 (define-simple-macro (participant ident:string pubkey:string)
   (add-participant 'ident pubkey))
+
+(define-syntax (participant stx)
+  (syntax-parse stx
+    [(_ ident:string pubkey:string)
+     #'(add-participant 'ident pubkey)]))
 
 ;compiles withdraw to transaction
 (define-syntax (withdraw stx)
   (syntax-parse stx    
     [(_ part parent-tx input-idx value parts timelock)
      #'(begin
-         (define tx-params (participants->tx-params (get-participants)))
-         (define tx-sigs (participants->tx-sigs (get-participants)))
+         (define tx-params (participants->tx-params parts))
+         (define tx-sigs (participants->tx-sigs parts))
 
          (displayln (if (> timelock 0)
                         (format "transaction T~a(~a,~a) { \n input = ~a@~a:~a \n output = ~a BTC : fun(x) . versig(addr~a; x) \n absLock = block ~a \n}\n"
@@ -67,19 +73,27 @@
     [(_)
      (raise-syntax-error stx '! "cannot use withdraw alone")]))
 
-;gestisce after
+;handles after
 (define-syntax (after stx)
   (syntax-parse stx   
     [(_ t (contract params ...) parent-tx input-idx value parts timelock)
      #'(contract params ... parent-tx input-idx value parts (max t timelock))]
     
     [(_)
-     (raise-syntax-error stx '! "cannot use withdraw alone")]))
+     (raise-syntax-error stx '! "cannot use after alone")]))
+
+;handles auth
+(define-syntax (auth stx)
+  (syntax-parse stx   
+    [(_ part:string (contract params ...) parent-tx input-idx value parts timelock)
+     #'(contract params ... parent-tx input-idx value (remove part parts) timelock)] 
+    [(_)
+     (raise-syntax-error stx '! "cannot use auth alone")]))
      
 ;keywords for the next macro
 (define-syntax (guards stx) (raise-syntax-error 'guards "cannot use guards alone" stx))
 (define-syntax (deposit stx) (raise-syntax-error 'deposit "cannot use deposit alone" stx))
-;command compilation
+;compilation command
 (define-syntax (advertise stx)
   (syntax-parse stx
     #:literals (guards deposit)    
