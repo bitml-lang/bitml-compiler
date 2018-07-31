@@ -8,7 +8,11 @@
   bitml)
 
 (provide (all-from-out racket/base)
-         participant advertise withdraw deposit guards after auth key)
+         participant compile withdraw deposit guards after auth key secret)
+
+
+;--------------------------------------------------------------------------------------
+;ENVIRONMENT
 
 ;function to enumerate tx indexes
 (define tx-index 0)
@@ -43,6 +47,42 @@
 (define (pk-for-term id term)
   (hash-ref pk-terms-table (cons id term)))
 
+;helpers to store permanent deposits
+(define parts empty)
+(define (add-part id)
+  (set! parts (cons id parts)))
+
+(define deposit-txout empty)
+(define (add-deposit txout)
+  (set! deposit-txout (cons txout deposit-txout)))
+
+(define tx-v 0)
+(define (add-tx-v v)
+  (set! tx-v (+ v tx-v)))
+
+;helpers to store volatile deposits
+(define volatile-deps-table
+  (make-hash))
+
+(define (add-volatile-dep id tx)
+  (hash-set! volatile-deps-table id tx))
+
+(define (volatile-dep id)
+  (hash-ref volatile-deps-table id))
+
+;helpers to store the secrets
+(define secrets-table
+  (make-hash))
+
+(define (add-secret part id hash)
+  (hash-set! secrets-table (cons part id) hash))
+
+(define (get-secret-hash part id)
+  (hash-ref secrets-table (cons part id)))
+
+;--------------------------------------------------------------------------------------
+;STRING HELPERS
+
 ;helpers to generate string transactions
 (define (slist->string l)
   (foldr (lambda (s r) (string-append s r)) "" l))
@@ -65,6 +105,8 @@
                                  acc))
          "" participants))
 
+;--------------------------------------------------------------------------------------
+;SYNTAX DEFINITIONS
 
 ;declaration of a participant
 ;associates a name to a public key
@@ -92,13 +134,13 @@
          (displayln (participants->sigs-declar parts tx-name parent-contract))
          
          (displayln (string-append
-                     (format "transaction ~a { \n input = ~a@~a:~a \n output = ~a BTC : fun(x) . versig(addr~a; x) \n "
+                     (format "transaction ~a { \n input = ~a@~a:~a \n output = ~a BTC : fun(x) . versig(pubkey~a; x) \n "
                              tx-name parent-tx input-idx tx-sigs value part)
                      (if (> timelock 0)
                          (format "absLock = block ~a \n}\n" timelock)
                          "\n}\n"))))]
     [(_)
-     (raise-syntax-error stx '! "cannot use withdraw alone")]))
+     (raise-syntax-error 'withdraw "wrong usage of withdraw" stx)]))
 
 ;handles after
 (define-syntax (after stx)
@@ -107,56 +149,75 @@
      #'(contract params ... parent-contract parent-tx input-idx value parts (max t timelock))]
     
     [(_)
-     (raise-syntax-error stx '! "cannot use after alone")]))
+     (raise-syntax-error 'after "wrong usage of after" stx)]))
 
 ;handles auth
 (define-syntax (auth stx)
   (syntax-parse stx   
-    [(_ part:string (contract params ...) orig-contract parent-tx input-idx value parts timelock)
+    [(_ part:string ... (contract params ...) orig-contract parent-tx input-idx value parts timelock)
      ;#'(contract params ... parent-tx input-idx value (remove part parts) timelock)]
      #'(contract params ... orig-contract parent-tx input-idx value parts timelock)] 
 
     [(_)
-     (raise-syntax-error stx '! "cannot use auth alone")]))
-     
-;keywords for the next macro
-(define-syntax (guards stx) (raise-syntax-error 'guards "cannot use guards alone" stx))
-(define-syntax (deposit stx) (raise-syntax-error 'deposit "cannot use deposit alone" stx))
+     (raise-syntax-error 'auth "wrong usage of auth" stx)]))
+
+  
+(define-syntax (guards stx) (raise-syntax-error 'guards "wrong usage of guards" stx))
+
+(define-syntax (deposit stx)
+  (syntax-parse stx
+    [(_ part:string v:number txout)
+     #'(begin
+         (add-part part)
+         (add-deposit txout)
+         (add-tx-v v))]
+    [(_)
+     (raise-syntax-error 'deposit "wrong usage of deposit" stx)]))
+
+;TODO capisci come controllare l'errore a tempo statico
+(define-syntax (secret stx)
+  (syntax-parse stx
+    [(_ part:string ident:id hash:string)     
+     #'(add-secret part 'ident hash)]
+    [(_)
+     (raise-syntax-error 'deposit "wrong usage of deposit" stx)]))
 
 ;compilation command
 ;todo: output script
-(define-syntax (advertise stx)
+(define-syntax (compile stx)
   (syntax-parse stx
-    #:literals (guards deposit)    
-    [(_ (guards (deposit part:string v:number txout) ... ) (contract params ...))
+    #:literals (guards)    
+    [(_ (guards guard ...)
+        (contract params ...))
 
-     (define deposit-part (syntax->list #'(part ...)))
+     ;(define parts #'(list 'part ...))
+     ;(define deposit-txout #'(list txout ...))
+     ;(define tx-v #'(+ v ...))
      
      #`(begin
-         (define deposit-parts (list 'part ...))
-         (define deposit-txout (list txout ...))
-         (define tx-sigs-list (for/list ([p deposit-parts]
-                                           [i (in-naturals)])
-                                  (format "sig~a~a" p i)))     
-         #;(define tx-params-string
-           (string-append (first tx-params-list)
-                          (slist->string (for/list ([p (rest tx-params-list)])                                      
-                                           (format ",~a" p)))))       
-         (define tx-v (+ v ...))
-         
-         ;compile public key
-         (for-each (lambda (s) (displayln (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))
-         (displayln "")
-
-         ;compile signatures constants for Tinit
-         (for-each (lambda (e) (displayln (string-append "const " e " : signature = _"))) tx-sigs-list)
-
-         
-         (define inputs (string-append "input = [ "
-                                       (format "~a:~a" (first deposit-txout) (first tx-sigs-list))
-                                       (slist->string (for/list ([p (rest tx-sigs-list)] [out (rest deposit-txout)])
-                                                        (format "; ~a:~a" out p))) " ]"))                   
-         (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC \n}\n" inputs tx-v))
+         guard ...
+         (compile-init parts deposit-txout tx-v)
 
          ;start the compilation of the contract
          (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]))
+
+
+
+(define (compile-init parts deposit-txout tx-v)
+  (define tx-sigs-list (for/list ([p parts]
+                                  [i (in-naturals)])
+                         (format "sig~a~a" p i)))
+                  
+  ;compile public key
+  (for-each (lambda (s) (displayln (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))
+  (displayln "")
+
+  ;compile signatures constants for Tinit
+  (for-each (lambda (e t) (displayln (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
+
+         
+  (define inputs (string-append "input = [ "
+                                (format "~a:~a" (first deposit-txout) (first tx-sigs-list))
+                                (slist->string (for/list ([p (rest tx-sigs-list)] [out (rest deposit-txout)])
+                                                 (format "; ~a:~a" out p))) " ]"))                   
+  (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC \n}\n" inputs tx-v)))
