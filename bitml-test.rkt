@@ -7,5 +7,7 @@
 (key "B" (auth "A" "B" (after 30 (after 20 (withdraw "B")))) "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
 
 (compile (guards (deposit "A" 1 "txA@0")(deposit "A" 1 "txA1@0")(deposit "B" 2 "txB@0")
-                 (secret "A" a "hashdigianni")(secret "B" b "hashdigianni"))
-           (auth "A" "B" (after 30 (after 20 (withdraw "B")))))
+                 (secret "A" a "hashdigianni")(secret "B" b "hashdigianni")
+                 (vol-deposit "A" x 1 "txVA@2"))
+         
+           (putrevealif (x) (a) (withdraw A)))

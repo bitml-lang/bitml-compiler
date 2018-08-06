@@ -8,7 +8,7 @@
   bitml)
 
 (provide (all-from-out racket/base)
-         participant compile withdraw deposit guards after auth key secret)
+         participant compile withdraw deposit guards after auth key secret vol-deposit putrevealif)
 
 
 ;--------------------------------------------------------------------------------------
@@ -64,11 +64,11 @@
 (define volatile-deps-table
   (make-hash))
 
-(define (add-volatile-dep id tx)
-  (hash-set! volatile-deps-table id tx))
+(define (add-volatile-dep part id val tx)
+  (hash-set! volatile-deps-table (cons part id) (cons val tx)))
 
-(define (volatile-dep id)
-  (hash-ref volatile-deps-table id))
+(define (volatile-dep part id)
+  (hash-ref volatile-deps-table (cons part id)))
 
 ;helpers to store the secrets
 (define secrets-table
@@ -174,13 +174,20 @@
     [(_)
      (raise-syntax-error 'deposit "wrong usage of deposit" stx)]))
 
+(define-syntax (vol-deposit stx)
+  (syntax-parse stx
+    [(_ part:string ident:id val:number txout)
+     #'(add-volatile-dep part 'ident val txout)]
+    [(_)
+     (raise-syntax-error 'deposit "wrong usage of deposit" stx)]))
+
 ;TODO capisci come controllare l'errore a tempo statico
 (define-syntax (secret stx)
   (syntax-parse stx
     [(_ part:string ident:id hash:string)     
      #'(add-secret part 'ident hash)]
     [(_)
-     (raise-syntax-error 'deposit "wrong usage of deposit" stx)]))
+     (raise-syntax-error 'deposit "wrong usage of secret" stx)]))
 
 ;compilation command
 ;todo: output script
@@ -221,3 +228,9 @@
                                 (slist->string (for/list ([p (rest tx-sigs-list)] [out (rest deposit-txout)])
                                                  (format "; ~a:~a" out p))) " ]"))                   
   (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC \n}\n" inputs tx-v)))
+
+
+(define-syntax (putrevealif stx)
+  (syntax-parse stx
+    [(_ (tx-id:id ...) (sec:id ...) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock )
+     #'5]))
