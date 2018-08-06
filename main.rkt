@@ -14,6 +14,9 @@
 ;--------------------------------------------------------------------------------------
 ;ENVIRONMENT
 
+;security parameter (minimun secret length)
+(define sec-param 128)
+
 ;function to enumerate tx indexes
 (define tx-index 0)
 
@@ -74,11 +77,11 @@
 (define secrets-table
   (make-hash))
 
-(define (add-secret part id hash)
-  (hash-set! secrets-table (cons part id) hash))
+(define (add-secret id hash)
+  (hash-set! secrets-table id hash))
 
-(define (get-secret-hash part id)
-  (hash-ref secrets-table (cons part id)))
+(define (get-secret-hash id)
+  (hash-ref secrets-table id))
 
 ;--------------------------------------------------------------------------------------
 ;STRING HELPERS
@@ -185,9 +188,10 @@
 (define-syntax (secret stx)
   (syntax-parse stx
     [(_ part:string ident:id hash:string)     
-     #'(add-secret part 'ident hash)]
+     #'(add-secret 'ident hash)]
     [(_)
      (raise-syntax-error 'deposit "wrong usage of secret" stx)]))
+
 
 ;compilation command
 ;todo: output script
@@ -200,15 +204,28 @@
      ;(define parts #'(list 'part ...))
      ;(define deposit-txout #'(list txout ...))
      ;(define tx-v #'(+ v ...))
+
+     (define initscript (get-initscript #'(contract params ...)))
      
      #`(begin
          guard ...
+         (displayln #,initscript)
          (compile-init parts deposit-txout tx-v)
 
          ;start the compilation of the contract
          (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]))
 
+(define-for-syntax (get-initscript stx)
+  (syntax-parse stx
+    #:literals (putrevealif)
+    [(putrevealif (tx-id:id ...) (sec:id ...) (~optional (contract params ...)))
 
+     (define secrets #'(list 'sec ...))
+     #`(foldl (lambda (x res)
+                (string-append " and sha256(" (symbol->string x) ") == " (get-secret-hash x) " and size(" (symbol->string x) ") >= " (number->string sec-param) res))
+              "" #,secrets)]
+    [(_) ""])) 
+        
 
 (define (compile-init parts deposit-txout tx-v)
   (define tx-sigs-list (for/list ([p parts]
@@ -227,7 +244,7 @@
                                 (format "~a:~a" (first deposit-txout) (first tx-sigs-list))
                                 (slist->string (for/list ([p (rest tx-sigs-list)] [out (rest deposit-txout)])
                                                  (format "; ~a:~a" out p))) " ]"))                   
-  (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC \n}\n" inputs tx-v)))
+  (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(x) . ~a \n}\n" inputs tx-v "qui")))
 
 
 (define-syntax (putrevealif stx)
