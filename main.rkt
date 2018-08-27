@@ -7,9 +7,9 @@
 (module reader syntax/module-reader
   bitml)
 
-(provide (all-from-out racket/base)
-         participant compile withdraw deposit guards after auth key secret vol-deposit putrevealif)
-
+(provide  participant compile withdraw deposit guards after auth key secret vol-deposit putrevealif
+          (rename-out [btrue true] [band and] [bnot not] [b= =] [b< <] [b+ +] [b- -] [bsize size])
+          #%module-begin #%datum)
 
 ;--------------------------------------------------------------------------------------
 ;ENVIRONMENT
@@ -210,24 +210,29 @@
      #`(begin
          guard ...
          (displayln #,initscript)
-         (compile-init parts deposit-txout tx-v)
+         (compile-init parts deposit-txout tx-v #,initscript)
 
          ;start the compilation of the contract
          (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]))
 
 (define-for-syntax (get-initscript stx)
   (syntax-parse stx
-    #:literals (putrevealif)
-    [(putrevealif (tx-id:id ...) (sec:id ...) (~optional (contract params ...)))
+    #:literals (putrevealif auth after)
+    [(putrevealif (tx-id:id ...) (sec:id ...) #;(~optional pred:expr) (~optional (contract params ...)))
 
      (define secrets #'(list 'sec ...))
-     #`(foldl (lambda (x res)
-                (string-append " and sha256(" (symbol->string x) ") == " (get-secret-hash x) " and size(" (symbol->string x) ") >= " (number->string sec-param) res))
-              "" #,secrets)]
-    [(_) ""])) 
+     ;(define pred* #'(~? pred ""))
+     ;(define pred-comp (compile-pred pred*))
+     #`(cons #,secrets
+             (foldr (lambda (x res)
+                      (string-append " and sha256(" (symbol->string x) ") == " (get-secret-hash x) " and size(" (symbol->string x) ") >= " (number->string sec-param) res))
+                    "" #,secrets))]
+    [(auth part ... cont) (get-initscript #'cont)]
+    [(after t cont) (get-initscript #'cont)]
+    [(_ ...) #'(cons null "")])) 
         
 
-(define (compile-init parts deposit-txout tx-v)
+(define (compile-init parts deposit-txout tx-v init-script)
   (define tx-sigs-list (for/list ([p parts]
                                   [i (in-naturals)])
                          (format "sig~a~a" p i)))
@@ -239,15 +244,51 @@
   ;compile signatures constants for Tinit
   (for-each (lambda (e t) (displayln (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
 
-         
+  (define script (cdr init-script))
+  (define params (foldl (lambda (p rest) (string-append rest "," (symbol->string p))) "x" (car init-script)))
+
+    
   (define inputs (string-append "input = [ "
                                 (format "~a:~a" (first deposit-txout) (first tx-sigs-list))
                                 (slist->string (for/list ([p (rest tx-sigs-list)] [out (rest deposit-txout)])
                                                  (format "; ~a:~a" out p))) " ]"))                   
-  (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(x) . ~a \n}\n" inputs tx-v "qui")))
+  (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" inputs tx-v params script)))
 
 
 (define-syntax (putrevealif stx)
   (syntax-parse stx
-    [(_ (tx-id:id ...) (sec:id ...) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock )
+    [(_ (tx-id:id ...) (sec:id ...) #;(~optional pred:expr) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock )
      #'5]))
+
+;operators for predicate in putrevealif
+(define-syntax (btrue stx) (raise-syntax-error 'true "wrong usage of true" stx))
+(define-syntax (band stx) (raise-syntax-error 'and "wrong usage of and" stx))
+(define-syntax (bnot stx) (raise-syntax-error 'not "wrong usage of not" stx))
+(define-syntax (b= stx) (raise-syntax-error '= "wrong usage of =" stx))
+(define-syntax (b< stx) (raise-syntax-error '< "wrong usage of <" stx))
+(define-syntax (b+ stx) (raise-syntax-error '+ "wrong usage of +" stx))
+(define-syntax (b- stx) (raise-syntax-error '- "wrong usage of -" stx))
+(define-syntax (bsize stx) (raise-syntax-error 'size "wrong usage of size" stx))
+
+(define-for-syntax (compile-pred stx)
+  (syntax-parse stx
+    #:literals(btrue band bnot)
+    [(_ btrue) "true"]
+    [(_ band a b) (string-append (compile-pred #'a) " && " (compile-pred #'b))]
+    [(_ bnot a) (string-append "!(" (compile-pred #'a) ")")]
+    [(_ p) (compile-pred-exp #'p)]))
+
+
+(define-for-syntax (compile-pred-exp stx)
+  (syntax-parse stx
+    #:literals(b= b< b+ b- bsize)
+    [(_ b= a b) (string-append (compile-pred-exp #'a) "==" (compile-pred-exp #'b))]
+    [(_ b< a b) (string-append (compile-pred-exp #'a) "<" (compile-pred-exp #'b))]
+    [(_ b+ a b) (string-append (compile-pred-exp #'a) "+" (compile-pred-exp #'b))]
+    [(_ b- a b) (string-append (compile-pred-exp #'a) "-" (compile-pred-exp #'b))]
+    [(_ bsize a) (string-append "size(" (compile-pred-exp #'a) ") - " #'sec-param)]
+    [(_ a:number) (number->string #'a)]
+    [(_ a:string) #'a]
+    [(_ a:id) #'(syntax->string a)]
+    [(_ s) (raise-syntax-error 'put-if "wrong if predicate" stx)]))
+
