@@ -7,7 +7,9 @@
 (module reader syntax/module-reader
   bitml)
 
-(provide  participant compile withdraw deposit guards after auth key secret vol-deposit putrevealif
+(provide  participant compile withdraw deposit guards
+          after auth key secret vol-deposit putrevealif
+          pred
           (rename-out [btrue true] [band and] [bnot not] [b= =] [b< <] [b+ +] [b- -] [bsize size])
           #%module-begin #%datum)
 
@@ -215,18 +217,18 @@
          ;start the compilation of the contract
          (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]))
 
+;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
 (define-for-syntax (get-initscript stx)
   (syntax-parse stx
-    #:literals (putrevealif auth after)
-    [(putrevealif (tx-id:id ...) (sec:id ...) #;(~optional pred:expr) (~optional (contract params ...)))
+    #:literals (putrevealif auth after pred)
+    [(putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)))
 
-     (define secrets #'(list 'sec ...))
-     ;(define pred* #'(~? pred ""))
-     ;(define pred-comp (compile-pred pred*))
-     #`(cons #,secrets
-             (foldr (lambda (x res)
-                      (string-append " and sha256(" (symbol->string x) ") == " (get-secret-hash x) " and size(" (symbol->string x) ") >= " (number->string sec-param) res))
-                    "" #,secrets))]
+     #'(let ([pred-comp (~? (string-append " and " (compile-pred p)) "")]
+             [secrets (list 'sec ...)])
+         (cons secrets
+               (foldr (lambda (x res)
+                        (string-append pred-comp " and sha256(" (symbol->string x) ") == " (get-secret-hash x) " and size(" (symbol->string x) ") >= " (number->string sec-param) res))
+                      "" secrets)))]
     [(auth part ... cont) (get-initscript #'cont)]
     [(after t cont) (get-initscript #'cont)]
     [(_ ...) #'(cons null "")])) 
@@ -257,8 +259,11 @@
 
 (define-syntax (putrevealif stx)
   (syntax-parse stx
-    [(_ (tx-id:id ...) (sec:id ...) #;(~optional pred:expr) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock )
-     #'5]))
+    #:literals(pred)
+    [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock )
+     (begin
+       ;(compile-pred #'p)
+       #'5)]))
 
 ;operators for predicate in putrevealif
 (define-syntax (btrue stx) (raise-syntax-error 'true "wrong usage of true" stx))
@@ -269,26 +274,26 @@
 (define-syntax (b+ stx) (raise-syntax-error '+ "wrong usage of +" stx))
 (define-syntax (b- stx) (raise-syntax-error '- "wrong usage of -" stx))
 (define-syntax (bsize stx) (raise-syntax-error 'size "wrong usage of size" stx))
+(define-syntax (pred stx) (raise-syntax-error 'pred "wrong usage of pred" stx))
 
-(define-for-syntax (compile-pred stx)
+(define-syntax (compile-pred stx)
   (syntax-parse stx
     #:literals(btrue band bnot)
-    [(_ btrue) "true"]
-    [(_ band a b) (string-append (compile-pred #'a) " && " (compile-pred #'b))]
-    [(_ bnot a) (string-append "!(" (compile-pred #'a) ")")]
-    [(_ p) (compile-pred-exp #'p)]))
+    [(_ btrue) #'"true"]
+    [(_ (band a b)) #'(string-append (compile-pred a) " && " (compile-pred b))]
+    [(_ (bnot a)) #'(string-append "!(" (compile-pred a) ")")]
+    [(_ p) #'(compile-pred-exp p)]))
 
 
-(define-for-syntax (compile-pred-exp stx)
+(define-syntax (compile-pred-exp stx)
   (syntax-parse stx
     #:literals(b= b< b+ b- bsize)
-    [(_ b= a b) (string-append (compile-pred-exp #'a) "==" (compile-pred-exp #'b))]
-    [(_ b< a b) (string-append (compile-pred-exp #'a) "<" (compile-pred-exp #'b))]
-    [(_ b+ a b) (string-append (compile-pred-exp #'a) "+" (compile-pred-exp #'b))]
-    [(_ b- a b) (string-append (compile-pred-exp #'a) "-" (compile-pred-exp #'b))]
-    [(_ bsize a) (string-append "size(" (compile-pred-exp #'a) ") - " #'sec-param)]
-    [(_ a:number) (number->string #'a)]
+    [(_ (b= a b)) #'(string-append (compile-pred-exp a) "==" (compile-pred-exp b))]
+    [(_ (b< a b)) #'(string-append (compile-pred-exp a) "<" (compile-pred-exp b))]
+    [(_ (b+ a b)) #'(string-append "(" (compile-pred-exp a) "+" (compile-pred-exp b) ")")]
+    [(_ (b- a b)) #'(string-append "(" (compile-pred-exp a) "-" (compile-pred-exp b) ")")]
+    [(_ (bsize a)) #'(string-append "(size(" (compile-pred-exp a) ") - " (number->string sec-param) ")")]
+    [(_ a:number) #'(number->string a)]
     [(_ a:string) #'a]
-    [(_ a:id) #'(syntax->string a)]
-    [(_ s) (raise-syntax-error 'put-if "wrong if predicate" stx)]))
-
+    [(_ a:id) #'(symbol->string 'a)]
+    [(_) (raise-syntax-error 'put-if "wrong if predicate" stx)]))

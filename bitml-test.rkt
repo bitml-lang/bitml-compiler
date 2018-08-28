@@ -12,7 +12,7 @@
          
            (putrevealif (x) (a b) (withdraw A)))
 
-#;(compile (guards (deposit "A" 1 "txA@0")
+(compile (guards (deposit "A" 1 "txA@0")
                  (deposit "A" 1 "txA1@0")
                  (deposit "B" 2 "txB@0")
                  (secret "A" a "0xA"))
@@ -22,7 +22,7 @@
                  (deposit "A" 1 "txA1@0")
                  (deposit "B" 2 "txB@0")
                  (secret "A" a "0xA"))
-         (auth "A" "B" (after 10 (putrevealif () (a) = (withdraw A)))))
+         (auth "A" "B" (after 10 (putrevealif () (b) (pred (= (size a) 100)) (withdraw A)))))
 
 
 #;(compile (guards (deposit "A" 1 "txA@0")
