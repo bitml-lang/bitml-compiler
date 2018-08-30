@@ -85,6 +85,18 @@
 (define (get-secret-hash id)
   (hash-ref secrets-table id))
 
+;clear the state
+(define (reset-state)
+  (set! tx-v 0)
+  (set! secrets-table (make-hash))
+  (set! volatile-deps-table (make-hash))
+  (set! deposit-txout empty)
+  (set! parts empty)
+  (set! pk-terms-table (make-hash))
+  (set! participants-table (make-hash))
+  (set! tx-index 0)
+)
+
 ;--------------------------------------------------------------------------------------
 ;STRING HELPERS
 
@@ -210,6 +222,7 @@
      (define initscript (get-initscript #'(contract params ...)))
      
      #`(begin
+         (reset-state)
          guard ...
          (displayln #,initscript)
          (compile-init parts deposit-txout tx-v #,initscript)
