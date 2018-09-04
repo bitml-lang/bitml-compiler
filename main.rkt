@@ -70,10 +70,10 @@
   (make-hash))
 
 (define (add-volatile-dep part id val tx)
-  (hash-set! volatile-deps-table (cons part id) (cons val tx)))
+  (hash-set! volatile-deps-table id (list part val tx)))
 
-(define (volatile-dep part id)
-  (hash-ref volatile-deps-table (cons part id)))
+(define (get-volatile-dep id)
+  (hash-ref volatile-deps-table id))
 
 ;helpers to store the secrets
 (define secrets-table
@@ -95,7 +95,7 @@
   (set! pk-terms-table (make-hash))
   (set! participants-table (make-hash))
   (set! tx-index 0)
-)
+  )
 
 ;--------------------------------------------------------------------------------------
 ;STRING HELPERS
@@ -218,20 +218,18 @@
      ;(define parts #'(list 'part ...))
      ;(define deposit-txout #'(list txout ...))
      ;(define tx-v #'(+ v ...))
-
-     (define initscript (get-initscript #'(contract params ...)))
      
      #`(begin
          (reset-state)
          guard ...
-         (displayln #,initscript)
-         (compile-init parts deposit-txout tx-v #,initscript)
+         ;(displayln #,initscript)
+         (compile-init parts deposit-txout tx-v (get-initscript (contract params ...)))
 
          ;start the compilation of the contract
          (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
-(define-for-syntax (get-initscript stx)
+(define-syntax (get-initscript stx)
   (syntax-parse stx
     #:literals (putrevealif auth after pred)
     [(putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)))
@@ -242,8 +240,8 @@
                (foldr (lambda (x res)
                         (string-append pred-comp " and sha256(" (symbol->string x) ") == " (get-secret-hash x) " and size(" (symbol->string x) ") >= " (number->string sec-param) res))
                       "" secrets)))]
-    [(auth part ... cont) (get-initscript #'cont)]
-    [(after t cont) (get-initscript #'cont)]
+    [(auth part ... cont) (#'(get-initscript cont))]
+    [(after t cont) (#'(get-initscript cont))]
     [(_ ...) #'(cons null "")])) 
         
 
@@ -252,7 +250,7 @@
                                   [i (in-naturals)])
                          (format "sig~a~a" p i)))
                   
-  ;compile public key
+  ;compile public keys
   (for-each (lambda (s) (displayln (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))
   (displayln "")
 
@@ -274,9 +272,41 @@
   (syntax-parse stx
     #:literals(pred)
     [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock )
-     (begin
-       ;(compile-pred #'p)
-       #'5)]))
+     
+     #'(let ([init-script (~? (get-initscript (contract params ...)) "")])
+         (compile-putreveal (list 'tx-id ... )  parent-contract parent-tx input-idx value parts timelock init-script))]))
+
+(define (compile-putreveal vol-dep-ids parent-contract parent-tx input-idx value parts timelock init-script)
+
+  ;retrieve volatile deposits
+  (define vol-dep-list (map (lambda (x) (get-volatile-dep x)) vol-dep-ids))
+
+  (define new-value (foldl (lambda (x acc) (+ (second x) acc)) value vol-dep-list))
+
+  (displayln new-value)
+  #;(
+     (define tx-sigs-list (for/list ([p parts]
+                                     [i (in-naturals)])
+                            (format "sig~a~a" p i)))
+                  
+     ;compile public keys
+     (for-each (lambda (s) (displayln (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))
+     (displayln "")
+
+     ;compile signatures constants for Tinit
+     (for-each (lambda (e t) (displayln (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
+
+     (define script (cdr init-script))
+     (define params (foldl (lambda (p rest) (string-append rest "," (symbol->string p))) "x" (car init-script)))
+
+    
+     (define inputs (string-append "input = [ "
+                                   (format "~a:~a" (first deposit-txout) (first tx-sigs-list))
+                                   (slist->string (for/list ([p (rest tx-sigs-list)] [out (rest deposit-txout)])
+                                                    (format "; ~a:~a" out p))) " ]"))                   
+     (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" inputs value params script)))
+
+  )
 
 ;operators for predicate in putrevealif
 (define-syntax (btrue stx) (raise-syntax-error 'true "wrong usage of true" stx))
