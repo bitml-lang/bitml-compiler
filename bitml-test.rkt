@@ -6,11 +6,15 @@
 (key "A" (auth "A" "B" (after 30 (after 20 (withdraw "B")))) "02ec5dfd983a0a4e188be4581847e2ffd3639dc1c94a2ee2ee6d4d560fa6c35b31")
 (key "B" (auth "A" "B" (after 30 (after 20 (withdraw "B")))) "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
 
+(key "B" (withdraw "A") "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
+(key "A" (withdraw "A") "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
+
+
 (compile (guards (deposit "A" 1 "txA@0")(deposit "A" 1 "txA1@0")(deposit "B" 2 "txB@0")
                    (secret "A" a "0xA")(secret "B" b "0xB")
                    (vol-deposit "A" x 1 "txVA@2"))
          
-           (putrevealif (x) (a b) (withdraw A)))
+           (putrevealif (x) (a b) (withdraw "A")))
 
 #;(compile (guards (deposit "A" 1 "txA@0")
                  (deposit "A" 1 "txA1@0")
