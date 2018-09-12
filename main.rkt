@@ -47,10 +47,17 @@
   (make-hash))
 
 (define (add-pk-for-term id term pk)
-  (hash-set! pk-terms-table (cons id term) pk))
+  (let ([name (format "pubkey~a~a" id (new-key-index))])
+    (hash-set! pk-terms-table (cons id term) (list pk name))))
 
 (define (pk-for-term id term)
   (hash-ref pk-terms-table (cons id term)))
+
+(define key-index 0)
+
+(define (new-key-index)
+  (set! key-index (add1 key-index))
+  key-index)
 
 ;helpers to store permanent deposits
 (define parts empty)
@@ -116,7 +123,7 @@
   (foldr (lambda (p acc) (format "const sig~a~a : signature = _ ~a\n~a" p tx-name
                                  (if (false? contract)
                                      ""
-                                     (string-append "//signature with private key corresponding to " (pk-for-term p contract)))
+                                     (string-append "//signature with private key corresponding to " (first (pk-for-term p contract))))
                                  acc))
          "" participants))
 
@@ -260,6 +267,14 @@
 
     ;compile public keys
     (for-each (lambda (s) (displayln (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))
+    (displayln "")
+
+    ;compile pubkeys for terms
+    (for-each
+     (lambda (s)
+       (let ([ key-name (pk-for-term (first s) (rest s))])
+         (displayln (format "const ~a = pubkey:~a" (second key-name) (first key-name)))))
+     (hash-keys pk-terms-table))
     (displayln "")
 
     ;compile signatures constants for Tinit
