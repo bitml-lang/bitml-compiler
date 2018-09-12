@@ -116,7 +116,7 @@
   (foldr (lambda (p acc) (format "const sig~a~a : signature = _ ~a\n~a" p tx-name
                                  (if (false? contract)
                                      ""
-                                     (string-append "//signature with private key of " (pk-for-term p contract)))
+                                     (string-append "//signature with private key corresponding to " (pk-for-term p contract)))
                                  acc))
          "" participants))
 
@@ -220,7 +220,6 @@
      #`(begin
          (reset-state)
          guard ...
-         ;(displayln #,initscript)
          (compile-init parts deposit-txout tx-v (get-initscript (contract params ...)))
 
          ;start the compilation of the contract
@@ -230,7 +229,7 @@
 (define-syntax (get-initscript stx)
   (syntax-parse stx
     #:literals (putrevealif auth after pred)
-    [(putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)))
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
 
      #'(let ([pred-comp (~? (string-append " and " (compile-pred p)) "")]
              [secrets (list 'sec ...)])
@@ -238,32 +237,35 @@
                (foldr (lambda (x res)
                         (string-append pred-comp " and sha256(" (symbol->string x) ") == " (get-secret-hash x) " and size(" (symbol->string x) ") >= " (number->string sec-param) res))
                       "" secrets)))]
-    [(auth part ... cont) (#'(get-initscript cont))]
-    [(after t cont) (#'(get-initscript cont))]
-    [(_ ...) #'(cons null "")])) 
+    [(_ (auth part ... cont)) (#'(get-initscript cont))]
+    [(_ (after t cont)) (#'(get-initscript cont))]
+    [(_ ...) #'(cons null "")]))
         
 
 (define (compile-init parts deposit-txout tx-v init-script)
-  (define tx-sigs-list (for/list ([p parts]
+
+  (let* ([tx-sigs-list (for/list ([p parts]
                                   [i (in-naturals)])
-                         (format "sig~a~a" p i)))
+                         (format "sig~a~a" p i))]
                   
-  ;compile public keys
-  (for-each (lambda (s) (displayln (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))
-  (displayln "")
-
-  ;compile signatures constants for Tinit
-  (for-each (lambda (e t) (displayln (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
-
-  (define script (cdr init-script))
-  (define params (foldl (lambda (p rest) (string-append rest "," (symbol->string p))) "x" (car init-script)))
+         [script (cdr init-script)]
+         [params (foldl (lambda (p rest) (string-append rest "," (symbol->string p))) "x" (car init-script))]
 
     
-  (define inputs (string-append "input = [ "
+         [inputs (string-append "input = [ "
                                 (format "~a:~a" (first deposit-txout) (first tx-sigs-list))
                                 (slist->string (for/list ([p (rest tx-sigs-list)] [out (rest deposit-txout)])
-                                                 (format "; ~a:~a" out p))) " ]"))                   
-  (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" inputs tx-v params script)))
+                                                 (format "; ~a:~a" out p))) " ]")])
+
+
+    ;compile public keys
+    (for-each (lambda (s) (displayln (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))
+    (displayln "")
+
+    ;compile signatures constants for Tinit
+    (for-each (lambda (e t) (displayln (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
+  
+    (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . versig_qui ~a \n}\n" inputs tx-v params script))))
 
 
 (define-syntax (putrevealif stx)
@@ -271,20 +273,34 @@
     #:literals(pred)
     [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock )
      
-     #'(let* ([init-script (~? (get-initscript (contract params ...)) "")]
-              [tx-name (format "T~a" (new-tx-index))]
+     #'(let* ([tx-name (format "T~a" (new-tx-index))]
               [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
               [new-value (foldl (lambda (x acc) (+ (second x) acc)) value vol-dep-list)]
-                    
-              ;compile signatures constants for Tinit
-              ;(for-each (lambda (e t) (displayln (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
+
+              [format-input (lambda (x sep acc) (format "~a:sig~a~a ~a" (third (get-volatile-dep x)) (symbol->string x) sep acc))]
+              
+              [vol-inputs (foldl (lambda (x acc) (format-input x ";" acc))
+
+                                 (format-input (first (list 'tx-id ...)) "" "")
+                                 (rest (list 'tx-id ...)))]
+
+              
+              [init-script (~? (get-initscript (contract params ...)) "")]
               [script (cdr init-script)]    
               [script-params (foldl (lambda (par rest) (string-append rest "," (symbol->string par))) "x" (car init-script))]
-              [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":"
-                                     " ]")])
+              [tx-sigs (participants->tx-sigs parts tx-name)]
+              [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" tx-sigs "; " vol-inputs " ]")])
+
+         ;compile signatures constants for the volatile deposits
+         (for-each
+          (lambda (x) (displayln (string-append "const sig" (symbol->string x) " : signature = _ //add signature for output " (third (get-volatile-dep x)))))
+          (list 'tx-id ...))
+
+         (displayln (participants->sigs-declar parts tx-name parent-contract))
 
          
-         (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
+         (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . versig_qui ~a \n}\n" tx-name inputs new-value script-params script))
+         
          (~? (contract params ... '(contract params ...) tx-name input-idx new-value parts timelock)) "")]))
 
 
