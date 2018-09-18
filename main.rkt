@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require (for-syntax racket/base syntax/parse)
+(require (for-syntax racket/base syntax/parse syntax/to-string)
          racket/list racket/bool)
 
 ;provides the default reader for an s-exp lang
@@ -9,7 +9,7 @@
 
 (provide  participant compile withdraw deposit guards
           after auth key secret vol-deposit putrevealif
-          pred
+          pred sum
           (rename-out [btrue true] [band and] [bnot not] [b= =] [b< <] [b+ +] [b- -] [bsize size])
           #%module-begin #%datum)
 
@@ -99,8 +99,7 @@
   (set! volatile-deps-table (make-hash))
   (set! deposit-txout empty)
   (set! parts empty)
-  (set! tx-index 0)
-  )
+  (set! tx-index 0))
 
 ;--------------------------------------------------------------------------------------
 ;STRING HELPERS
@@ -171,7 +170,7 @@
      #'(contract params ... parent-contract parent-tx input-idx value parts (max t timelock))]
     
     [(_)
-     (raise-syntax-error 'after "wrong usage of after" stx)]))
+     (raise-syntax-error 'bitml "wrong usage of after" stx)]))
 
 ;handles auth
 (define-syntax (auth stx)
@@ -181,7 +180,7 @@
      #'(contract params ... orig-contract parent-tx input-idx value parts timelock)] 
 
     [(_)
-     (raise-syntax-error 'auth "wrong usage of auth" stx)]))
+     (raise-syntax-error 'bitml "wrong usage of auth" stx)]))
 
   
 (define-syntax (guards stx) (raise-syntax-error 'guards "wrong usage of guards" stx))
@@ -194,14 +193,14 @@
          (add-deposit txout)
          (add-tx-v v))]
     [(_)
-     (raise-syntax-error 'deposit "wrong usage of deposit" stx)]))
+     (raise-syntax-error 'bitml "wrong usage of deposit" stx)]))
 
 (define-syntax (vol-deposit stx)
   (syntax-parse stx
     [(_ part:string ident:id val:number txout)
      #'(add-volatile-dep part 'ident val txout)]
     [(_)
-     (raise-syntax-error 'deposit "wrong usage of deposit" stx)]))
+     (raise-syntax-error 'bitml "wrong usage of deposit" stx)]))
 
 ;TODO capisci come controllare l'errore a tempo statico
 (define-syntax (secret stx)
@@ -212,17 +211,15 @@
      (raise-syntax-error 'deposit "wrong usage of secret" stx)]))
 
 
+(define-syntax (sum stx) (raise-syntax-error 'bitml "wrong usage of sum" stx))
+
 ;compilation command
 ;todo: output script
 (define-syntax (compile stx)
   (syntax-parse stx
-    #:literals (guards)    
+    #:literals (guards sum)
     [(_ (guards guard ...)
-        (contract params ...))
-
-     ;(define parts #'(list 'part ...))
-     ;(define deposit-txout #'(list txout ...))
-     ;(define tx-v #'(+ v ...))
+        (sum (contract params ...)))
      
      #`(begin
          (reset-state)
@@ -230,7 +227,18 @@
          (compile-init parts deposit-txout tx-v (get-initscript (contract params ...)))
 
          ;start the compilation of the contract
-         (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]))
+         (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]
+    [(_ (guards guard ...)
+        (contract params ...))
+     
+     #`(begin
+         (reset-state)
+         guard ...
+         (compile-init parts deposit-txout tx-v (get-initscript (contract params ...)))
+
+         ;start the compilation of the contract
+         (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]
+    ))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
 (define-syntax (get-initscript stx)
@@ -238,19 +246,30 @@
     #:literals (putrevealif auth after pred)
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
 
-     #'(let ([pred-comp (~? (string-append " and " (compile-pred p)) "")]
-             [secrets (list 'sec ...)])
-         (cons secrets
-               (foldr (lambda (x res)
-                        (string-append pred-comp " and sha256(" (symbol->string x) ") == " (get-secret-hash x) " and size(" (symbol->string x) ") >= " (number->string sec-param) res))
-                      "" secrets)))]
+     #'(let ([pred-comp (~? (string-append (compile-pred p) " and ") "")]
+             [secrets (list 'sec ...)]
+             [compiled-continuation (~? (get-initscript p) (get-initscript ()))])
+         (cons (append secrets (car compiled-continuation))
+               (string-append
+                (foldr (lambda (x res)
+                         (string-append pred-comp "sha256(" (symbol->string x) ") == " (get-secret-hash x)
+                                        " and size(" (symbol->string x) ") >= " (number->string sec-param) res " and "))
+                       "" secrets)
+                (cdr compiled-continuation))))]
     [(_ (auth part ... cont)) (#'(get-initscript cont))]
     [(_ (after t cont)) (#'(get-initscript cont))]
-    [(_ ...) #'(cons null "")]))
-        
+    [(_ *) #'(cons (list 'x) "versig(x; qualcosa)")]))
+
+
+
+(define-syntax (symb*->string stx)
+  (syntax-parse stx
+    #:literals (quote)
+    [(_ a:id)  #'(symbol->string a)]
+    [(_ (quote a)) #''(symbol->string a)]))
+          
 
 (define (compile-init parts deposit-txout tx-v init-script)
-
   (let* ([tx-sigs-list (for/list ([p parts]
                                   [i (in-naturals)])
                          (format "sig~a~a" p i))]
@@ -272,7 +291,7 @@
     ;compile pubkeys for terms
     (for-each
      (lambda (s)
-       (let ([ key-name (pk-for-term (first s) (rest s))])
+       (let ([key-name (pk-for-term (first s) (rest s))])
          (displayln (format "const ~a = pubkey:~a" (second key-name) (first key-name)))))
      (hash-keys pk-terms-table))
     (displayln "")
@@ -280,7 +299,7 @@
     ;compile signatures constants for Tinit
     (for-each (lambda (e t) (displayln (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
   
-    (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . versig_qui ~a \n}\n" inputs tx-v params script))))
+    (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" inputs tx-v params script))))
 
 
 (define-syntax (putrevealif stx)
@@ -314,7 +333,7 @@
          (displayln (participants->sigs-declar parts tx-name parent-contract))
 
          
-         (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . versig_qui ~a \n}\n" tx-name inputs new-value script-params script))
+         (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
          
          (~? (contract params ... '(contract params ...) tx-name input-idx new-value parts timelock)) "")]))
 
