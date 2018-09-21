@@ -14,7 +14,7 @@
 
 
 (compile (guards (deposit "A" 1 "txA@0")(deposit "A" 1 "txA1@0")(deposit "B" 2 "txB@0")
-                 (secret "A" a "0xA")(secret "B" b "0xB")
+                 (secret a "0xA")(secret b "0xB")
                  (vol-deposit "A" x 1 "txVA@2") (vol-deposit "B" y 1 "txVB@1"))
          
          (sum (putrevealif (x y) (a) (pred (= (size a) 100)) (withdraw "A"))))
@@ -29,7 +29,7 @@
 #;(compile (guards (deposit "A" 1 "txA@0")
                    (deposit "A" 1 "txA1@0")
                    (deposit "B" 2 "txB@0")
-                   (secret "A" a "0xA"))
+                   (secret a "0xA"))
            (auth "A" "B" (after 10 (putrevealif () (a) (pred (= (size a) 100)) (withdraw "A")))))
 
 

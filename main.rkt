@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require (for-syntax racket/base syntax/parse syntax/to-string)
-         racket/list racket/bool)
+         racket/list racket/bool racket/stream)
 
 ;provides the default reader for an s-exp lang
 (module reader syntax/module-reader
@@ -101,6 +101,23 @@
   (set! parts empty)
   (set! tx-index 0))
 
+;helpers to generate fresh names in scripts
+(define alphabet (string->list "abcdefghijklmnopqrstuvwxyz"))
+
+(define var-index 0)
+
+(define (next-var)
+  (set! var-index (add1 var-index))
+  (string (list-ref alphabet (sub1 var-index))))
+
+(define (reset-vars)
+  (set! var-index 0))
+
+(define (used-vars)
+  (for/list([i var-index])
+    (string (list-ref alphabet i))))
+
+
 ;--------------------------------------------------------------------------------------
 ;STRING HELPERS
 
@@ -125,6 +142,13 @@
                                      (string-append "//signature with private key corresponding to " (first (pk-for-term p contract))))
                                  acc))
          "" participants))
+
+(define (param-list->string l [sep ","])
+  (let* ([s (foldr (lambda (s r) (string-append s sep r)) "" l)]
+        [length (string-length s)])
+    (if (> length 0)
+    (substring s 0 (sub1 length))
+    s)))
 
 ;--------------------------------------------------------------------------------------
 ;SYNTAX DEFINITIONS
@@ -205,7 +229,7 @@
 ;TODO capisci come controllare l'errore a tempo statico
 (define-syntax (secret stx)
   (syntax-parse stx
-    [(_ part:string ident:id hash:string)     
+    [(_ ident:id hash:string)     
      #'(add-secret 'ident hash)]
     [(_)
      (raise-syntax-error 'deposit "wrong usage of secret" stx)]))
@@ -248,17 +272,18 @@
 
      #'(let ([pred-comp (~? (string-append (compile-pred p) " and ") "")]
              [secrets (list 'sec ...)]
-             [compiled-continuation (~? (get-initscript p) (get-initscript ()))])
-         (cons (append secrets (car compiled-continuation))
-               (string-append
-                (foldr (lambda (x res)
-                         (string-append pred-comp "sha256(" (symbol->string x) ") == " (get-secret-hash x)
-                                        " and size(" (symbol->string x) ") >= " (number->string sec-param) res " and "))
-                       "" secrets)
-                (cdr compiled-continuation))))]
-    [(_ (auth part ... cont)) (#'(get-initscript cont))]
-    [(_ (after t cont)) (#'(get-initscript cont))]
-    [(_ *) #'(cons (list 'x) "versig(x; qualcosa)")]))
+             [compiled-continuation (~? (get-initscript parts p) (get-initscript parts ()))])
+         (string-append
+          (foldr (lambda (x res)
+                   (string-append pred-comp "sha256(" (symbol->string x) ") == " (get-secret-hash x)
+                                  " and size(" (symbol->string x) ") >= " (number->string sec-param) res " and "))
+                 "" secrets)
+          compiled-continuation))]
+    [(_ (auth part ... cont)) (#'(get-initscript parts cont))]
+    [(_ (after t cont)) (#'(get-initscript parts cont))]
+    [(_ *) #'(let* ([sparts (map (lambda (s) (string-append "s" s)) (get-participants))]
+                          [params (param-list->string sparts)])
+                     (string-append "versig(" params "; qualcosa)"))]))
 
 
 
@@ -269,13 +294,13 @@
     [(_ (quote a)) #''(symbol->string a)]))
           
 
-(define (compile-init parts deposit-txout tx-v init-script)
+(define (compile-init parts deposit-txout tx-v script)
   (let* ([tx-sigs-list (for/list ([p parts]
                                   [i (in-naturals)])
                          (format "sig~a~a" p i))]
                   
-         [script (cdr init-script)]
-         [params (foldl (lambda (p rest) (string-append rest "," (symbol->string p))) "x" (car init-script))]
+         [script-params (param-list->string (used-vars))]
+
 
     
          [inputs (string-append "input = [ "
@@ -299,7 +324,7 @@
     ;compile signatures constants for Tinit
     (for-each (lambda (e t) (displayln (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
   
-    (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" inputs tx-v params script))))
+    (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" inputs tx-v script-params script))))
 
 
 (define-syntax (putrevealif stx)
@@ -307,35 +332,36 @@
     #:literals(pred)
     [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock )
      
-     #'(let* ([tx-name (format "T~a" (new-tx-index))]
-              [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
-              [new-value (foldl (lambda (x acc) (+ (second x) acc)) value vol-dep-list)]
+     #'(begin
+         (reset-vars)
+         (let* ([tx-name (format "T~a" (new-tx-index))]
+                [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
+                [new-value (foldl (lambda (x acc) (+ (second x) acc)) value vol-dep-list)]
 
-              [format-input (lambda (x sep acc) (format "~a:sig~a~a ~a" (third (get-volatile-dep x)) (symbol->string x) sep acc))]
+                [format-input (lambda (x sep acc) (format "~a:sig~a~a ~a" (third (get-volatile-dep x)) (symbol->string x) sep acc))]
               
-              [vol-inputs (foldl (lambda (x acc) (format-input x ";" acc))
+                [vol-inputs (foldl (lambda (x acc) (format-input x ";" acc))
 
-                                 (format-input (first (list 'tx-id ...)) "" "")
-                                 (rest (list 'tx-id ...)))]
+                                   (format-input (first (list 'tx-id ...)) "" "")
+                                   (rest (list 'tx-id ...)))]
 
               
-              [init-script (~? (get-initscript (contract params ...)) "")]
-              [script (cdr init-script)]    
-              [script-params (foldl (lambda (par rest) (string-append rest "," (symbol->string par))) "x" (car init-script))]
-              [tx-sigs (participants->tx-sigs parts tx-name)]
-              [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" tx-sigs "; " vol-inputs " ]")])
+                [script (~? (get-initscript (contract params ...)) "")]
+                [script-params (param-list->string (used-vars))]
+                [tx-sigs (participants->tx-sigs parts tx-name)]
+                [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" tx-sigs "; " vol-inputs " ]")])
 
-         ;compile signatures constants for the volatile deposits
-         (for-each
-          (lambda (x) (displayln (string-append "const sig" (symbol->string x) " : signature = _ //add signature for output " (third (get-volatile-dep x)))))
-          (list 'tx-id ...))
+           ;compile signatures constants for the volatile deposits
+           (for-each
+            (lambda (x) (displayln (string-append "const sig" (symbol->string x) " : signature = _ //add signature for output " (third (get-volatile-dep x)))))
+            (list 'tx-id ...))
 
-         (displayln (participants->sigs-declar parts tx-name parent-contract))
+           (displayln (participants->sigs-declar parts tx-name parent-contract))
 
          
-         (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
+           (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
          
-         (~? (contract params ... '(contract params ...) tx-name input-idx new-value parts timelock)) "")]))
+           (~? (contract params ... '(contract params ...) tx-name input-idx new-value parts timelock)) ""))]))
 
 
 ;operators for predicate in putrevealif
