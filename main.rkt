@@ -272,27 +272,19 @@
 
      #'(let ([pred-comp (~? (string-append (compile-pred p) " and ") "")]
              [secrets (list 'sec ...)]
-             [compiled-continuation (~? (get-initscript parts p) (get-initscript parts ()))])
+             [compiled-continuation (~? (get-initscript p) (get-initscript ()))])
          (string-append
           (foldr (lambda (x res)
                    (string-append pred-comp "sha256(" (symbol->string x) ") == " (get-secret-hash x)
                                   " and size(" (symbol->string x) ") >= " (number->string sec-param) res " and "))
                  "" secrets)
           compiled-continuation))]
-    [(_ (auth part ... cont)) (#'(get-initscript parts cont))]
-    [(_ (after t cont)) (#'(get-initscript parts cont))]
+    [(_ (auth part ... cont)) (#'(get-initscript cont))]
+    [(_ (after t cont)) (#'(get-initscript cont))]
     [(_ *) #'(let* ([sparts (map (lambda (s) (string-append "s" s)) (get-participants))]
                           [params (param-list->string sparts)])
                      (string-append "versig(" params "; qualcosa)"))]))
-
-
-
-(define-syntax (symb*->string stx)
-  (syntax-parse stx
-    #:literals (quote)
-    [(_ a:id)  #'(symbol->string a)]
-    [(_ (quote a)) #''(symbol->string a)]))
-          
+         
 
 (define (compile-init parts deposit-txout tx-v script)
   (let* ([tx-sigs-list (for/list ([p parts]
