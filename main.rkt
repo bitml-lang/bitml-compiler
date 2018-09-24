@@ -353,7 +353,7 @@
          
            (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
          
-           (~? (contract params ... '(contract params ...) tx-name input-idx new-value parts timelock)) ""))]))
+           (~? (contract params ... '(contract params ...) tx-name input-idx new-value parts timelock))))]))
 
 
 ;operators for predicate in putrevealif
