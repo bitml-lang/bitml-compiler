@@ -101,23 +101,6 @@
   (set! parts empty)
   (set! tx-index 0))
 
-;helpers to generate fresh names in scripts
-(define alphabet (string->list "abcdefghijklmnopqrstuvwxyz"))
-
-(define var-index 0)
-
-(define (next-var)
-  (set! var-index (add1 var-index))
-  (string (list-ref alphabet (sub1 var-index))))
-
-(define (reset-vars)
-  (set! var-index 0))
-
-(define (used-vars)
-  (for/list([i var-index])
-    (string (list-ref alphabet i))))
-
-
 ;--------------------------------------------------------------------------------------
 ;STRING HELPERS
 
@@ -145,10 +128,13 @@
 
 (define (param-list->string l [sep ","])
   (let* ([s (foldr (lambda (s r) (string-append s sep r)) "" l)]
-        [length (string-length s)])
+         [length (string-length s)])
     (if (> length 0)
-    (substring s 0 (sub1 length))
-    s)))
+        (substring s 0 (sub1 length))
+        s)))
+
+(define (parts->sigs-params)
+  (param-list->string (map (lambda (s) (string-append "s" s)) (get-participants))))
 
 ;--------------------------------------------------------------------------------------
 ;SYNTAX DEFINITIONS
@@ -270,28 +256,43 @@
     #:literals (putrevealif auth after pred)
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
 
-     #'(let ([pred-comp (~? (string-append (compile-pred p) " and ") "")]
+     #'(get-initscript* '(putrevealif (tx-id ...) (sec ...) (~? (pred p) ()) (~? (contract params ...) ()))
+                        '(putrevealif (tx-id ...) (sec ...) (~? (pred p) ()) (~? (contract params ...) ())))]
+    [(_ (auth part ... cont)) #'(get-initscript* '(auth part ... cont) 'cont)]
+    [(_ (after t cont)) #'(get-initscript* '(after t cont) 'cont)]
+    [(_ x) #'(get-initscript* 'x 'x)]))
+
+;auxiliar function that maintains the contract passed in the first call
+(define-syntax (get-initscript* stx)
+  (syntax-parse stx
+    #:literals (putrevealif auth after pred)
+    [(_ parent '(putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
+
+     #'(let ([pred-comp (~? (string-append (compile-pred p) " && ") "")]
              [secrets (list 'sec ...)]
-             [compiled-continuation (~? (get-initscript p) (get-initscript ()))])
+             [compiled-continuation (~? (get-initscript* parent p) (get-initscript* parent ()))])
          (string-append
           (foldr (lambda (x res)
                    (string-append pred-comp "sha256(" (symbol->string x) ") == " (get-secret-hash x)
-                                  " and size(" (symbol->string x) ") >= " (number->string sec-param) res " and "))
+                                  " && size(" (symbol->string x) ") >= " (number->string sec-param) res " && "))
                  "" secrets)
           compiled-continuation))]
-    [(_ (auth part ... cont)) (#'(get-initscript cont))]
-    [(_ (after t cont)) (#'(get-initscript cont))]
-    [(_ *) #'(let* ([sparts (map (lambda (s) (string-append "s" s)) (get-participants))]
-                          [params (param-list->string sparts)])
-                     (string-append "versig(" params "; qualcosa)"))]))
+    [(_ parent '(auth part ... cont)) #'(get-initscript* parent cont)]
+    [(_ parent '(after t cont)) #'(get-initscript* parent cont)]
+    [(_ parent x)
+     #'(let* ([keys (for/list([part (get-participants)])
+                      (second (pk-for-term part parent)))]
+              [keys-string (param-list->string keys)])
+         (string-append "versig(" keys-string "; " (parts->sigs-params)  ")"))]))
          
 
+;compiles the Tinit transaction
 (define (compile-init parts deposit-txout tx-v script)
   (let* ([tx-sigs-list (for/list ([p parts]
                                   [i (in-naturals)])
                          (format "sig~a~a" p i))]
                   
-         [script-params (param-list->string (used-vars))]
+         [script-params (parts->sigs-params)]
 
 
     
@@ -325,7 +326,6 @@
     [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock )
      
      #'(begin
-         (reset-vars)
          (let* ([tx-name (format "T~a" (new-tx-index))]
                 [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
                 [new-value (foldl (lambda (x acc) (+ (second x) acc)) value vol-dep-list)]
@@ -339,7 +339,7 @@
 
               
                 [script (~? (get-initscript (contract params ...)) "")]
-                [script-params (param-list->string (used-vars))]
+                [script-params (parts->sigs-params)]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" tx-sigs "; " vol-inputs " ]")])
 
