@@ -136,6 +136,9 @@
 (define (parts->sigs-params)
   (param-list->string (map (lambda (s) (string-append "s" s)) (get-participants))))
 
+(define (parts->sigs-param-list)
+  (map (lambda (s) (string-append "s" s)) (get-participants)))
+
 ;--------------------------------------------------------------------------------------
 ;SYNTAX DEFINITIONS
 
@@ -234,7 +237,7 @@
      #`(begin
          (reset-state)
          guard ...
-         (compile-init parts deposit-txout tx-v (get-initscript (contract params ...)))
+         (compile-init parts deposit-txout tx-v (get-script (contract params ...)))
 
          ;start the compilation of the contract
          (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]
@@ -244,55 +247,68 @@
      #`(begin
          (reset-state)
          guard ...
-         (compile-init parts deposit-txout tx-v (get-initscript (contract params ...)))
+         (compile-init parts deposit-txout tx-v (get-script (contract params ...)) (get-script-params (contract params ...)))
 
          ;start the compilation of the contract
          (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]
     ))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
-(define-syntax (get-initscript stx)
+(define-syntax (get-script stx)
   (syntax-parse stx
     #:literals (putrevealif auth after pred)
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
 
-     #'(get-initscript* '(putrevealif (tx-id ...) (sec ...) (~? (pred p) ()) (~? (contract params ...) ()))
-                        '(putrevealif (tx-id ...) (sec ...) (~? (pred p) ()) (~? (contract params ...) ())))]
-    [(_ (auth part ... cont)) #'(get-initscript* '(auth part ... cont) 'cont)]
-    [(_ (after t cont)) #'(get-initscript* '(after t cont) 'cont)]
-    [(_ x) #'(get-initscript* 'x 'x)]))
+     #'(get-script* '(putrevealif (tx-id ...) (sec ...) (~? (pred p) ()) (~? (contract params ...) ()))
+                    '(putrevealif (tx-id ...) (sec ...) (~? (pred p) ()) (~? (contract params ...) ())))]
+    [(_ (auth part ... cont)) #'(get-script* '(auth part ... cont) 'cont)]
+    [(_ (after t cont)) #'(get-script* '(after t cont) 'cont)]
+    [(_ x) #'(get-script* 'x 'x)]))
 
 ;auxiliar function that maintains the contract passed in the first call
-(define-syntax (get-initscript* stx)
+(define-syntax (get-script* stx)
   (syntax-parse stx
     #:literals (putrevealif auth after pred)
     [(_ parent '(putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
 
      #'(let ([pred-comp (~? (string-append (compile-pred p) " && ") "")]
              [secrets (list 'sec ...)]
-             [compiled-continuation (~? (get-initscript* parent p) (get-initscript* parent ()))])
+             [compiled-continuation (~? (get-script* parent p) (get-script* parent ()))])
          (string-append
           (foldr (lambda (x res)
-                   (string-append pred-comp "sha256(" (symbol->string x) ") == " (get-secret-hash x)
+                   (string-append pred-comp "sha256(" (symbol->string x) ") == hash:" (get-secret-hash x)
                                   " && size(" (symbol->string x) ") >= " (number->string sec-param) res " && "))
                  "" secrets)
           compiled-continuation))]
-    [(_ parent '(auth part ... cont)) #'(get-initscript* parent cont)]
-    [(_ parent '(after t cont)) #'(get-initscript* parent cont)]
+    [(_ parent '(auth part ... cont)) #'(get-script* parent cont)]
+    [(_ parent '(after t cont)) #'(get-script* parent cont)]
     [(_ parent x)
      #'(let* ([keys (for/list([part (get-participants)])
                       (second (pk-for-term part parent)))]
               [keys-string (param-list->string keys)])
          (string-append "versig(" keys-string "; " (parts->sigs-params)  ")"))]))
+
+
+;auxiliar function that maintains the contract passed in the first call
+(define-syntax (get-script-params stx)
+  (syntax-parse stx
+    #:literals (putrevealif auth after pred)
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
+
+     #'(let ([cont-params (~? (get-script-params p) '())])
+         (append (list (string-append (symbol->string 'sec) ":string") ...) cont-params))]
+    [(_ (auth part ... cont)) #'(get-script-params cont)]
+    [(_ (after t cont)) #'(get-script-params cont)]
+    [(_ x) #''()]))
          
 
 ;compiles the Tinit transaction
-(define (compile-init parts deposit-txout tx-v script)
+(define (compile-init parts deposit-txout tx-v script script-params-list)
   (let* ([tx-sigs-list (for/list ([p parts]
                                   [i (in-naturals)])
                          (format "sig~a~a" p i))]
                   
-         [script-params (parts->sigs-params)]
+         [script-params (param-list->string (append script-params-list (parts->sigs-param-list)))]
 
 
     
@@ -338,7 +354,10 @@
                                    (rest (list 'tx-id ...)))]
 
               
-                [script (~? (get-initscript (contract params ...)) "")]
+                [script (~? (get-script (contract params ...)) "")]
+                [script-params (param-list->string (append
+                                                    (~? (get-script-params (contract params ...)) '())
+                                                    (parts->sigs-param-list)))]
                 [script-params (parts->sigs-params)]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" tx-sigs "; " vol-inputs " ]")])
