@@ -1,7 +1,7 @@
 #lang racket/base
 
-(require (for-syntax racket/base syntax/parse syntax/to-string)
-         racket/list racket/bool racket/stream)
+(require (for-syntax racket/base syntax/parse)
+         racket/list racket/bool)
 
 ;provides the default reader for an s-exp lang
 (module reader syntax/module-reader
@@ -126,15 +126,15 @@
                                  acc))
          "" participants))
 
-(define (param-list->string l [sep ","])
+(define (list+sep->string l [sep ","])
   (let* ([s (foldr (lambda (s r) (string-append s sep r)) "" l)]
          [length (string-length s)])
-    (if (> length 0)
-        (substring s 0 (sub1 length))
+    (if (> length (string-length sep))
+        (substring s 0 (- length (string-length sep)))
         s)))
 
 (define (parts->sigs-params)
-  (param-list->string (map (lambda (s) (string-append "s" s)) (get-participants))))
+  (list+sep->string (map (lambda (s) (string-append "s" s)) (get-participants))))
 
 (define (parts->sigs-param-list)
   (map (lambda (s) (string-append "s" s)) (get-participants)))
@@ -232,15 +232,20 @@
   (syntax-parse stx
     #:literals (guards sum)
     [(_ (guards guard ...)
-        (sum (contract params ...)))
+        (sum (contract params ...) ...))
      
      #`(begin
          (reset-state)
          guard ...
-         (compile-init parts deposit-txout tx-v (get-script (contract params ...)))
 
-         ;start the compilation of the contract
-         (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]
+         (let* ([scripts-list (list (get-script (contract params ...)) ...)]
+                [script (list+sep->string scripts-list " || ")]
+                [script-params (append (get-script-params (contract params ...)) ...)])
+
+           (compile-init parts deposit-txout tx-v script script-params)
+
+           ;start the compilation of the contract
+           (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0) ...))]
     [(_ (guards guard ...)
         (contract params ...))
      
@@ -259,8 +264,8 @@
     #:literals (putrevealif auth after pred)
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
 
-     #'(get-script* '(putrevealif (tx-id ...) (sec ...) (~? (pred p) ()) (~? (contract params ...) ()))
-                    '(putrevealif (tx-id ...) (sec ...) (~? (pred p) ()) (~? (contract params ...) ())))]
+     #'(get-script* '(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (~? (contract params ...) ()))
+                    '(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (~? (contract params ...) ())))]
     [(_ (auth part ... cont)) #'(get-script* '(auth part ... cont) 'cont)]
     [(_ (after t cont)) #'(get-script* '(after t cont) 'cont)]
     [(_ x) #'(get-script* 'x 'x)]))
@@ -285,7 +290,7 @@
     [(_ parent x)
      #'(let* ([keys (for/list([part (get-participants)])
                       (second (pk-for-term part parent)))]
-              [keys-string (param-list->string keys)])
+              [keys-string (list+sep->string keys)])
          (string-append "versig(" keys-string "; " (parts->sigs-params)  ")"))]))
 
 
@@ -308,7 +313,7 @@
                                   [i (in-naturals)])
                          (format "sig~a~a" p i))]
                   
-         [script-params (param-list->string (append script-params-list (parts->sigs-param-list)))]
+         [script-params (list+sep->string (append script-params-list (parts->sigs-param-list)))]
 
 
     
@@ -346,21 +351,21 @@
                 [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
                 [new-value (foldl (lambda (x acc) (+ (second x) acc)) value vol-dep-list)]
 
-                [format-input (lambda (x sep acc) (format "~a:sig~a~a ~a" (third (get-volatile-dep x)) (symbol->string x) sep acc))]
+                [format-input (lambda (x sep acc) (format "~a:sig~a" (third (get-volatile-dep x)) (symbol->string x)))]
+
+                [vol-inputs (list 'tx-id ...)]
               
-                [vol-inputs (foldl (lambda (x acc) (format-input x ";" acc))
-
-                                   (format-input (first (list 'tx-id ...)) "" "")
-                                   (rest (list 'tx-id ...)))]
-
+                [vol-inputs-str (if (> 0 (length vol-inputs))
+                                    (string-append "; " (list+sep->string (map (lambda (x) (format-input x)) vol-inputs)))
+                                    "")]
               
                 [script (~? (get-script (contract params ...)) "")]
-                [script-params (param-list->string (append
-                                                    (~? (get-script-params (contract params ...)) '())
-                                                    (parts->sigs-param-list)))]
+                [script-params (list+sep->string (append
+                                                  (~? (get-script-params (contract params ...)) '())
+                                                  (parts->sigs-param-list)))]
                 [script-params (parts->sigs-params)]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
-                [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" tx-sigs "; " vol-inputs " ]")])
+                [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" tx-sigs vol-inputs-str "]")])
 
            ;compile signatures constants for the volatile deposits
            (for-each
