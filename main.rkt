@@ -122,7 +122,7 @@
   (foldr (lambda (p acc) (format "const sig~a~a : signature = _ ~a\n~a" p tx-name
                                  (if (false? contract)
                                      ""
-                                     (string-append "//signature with private key corresponding to " (first (pk-for-term p contract))))
+                                     (string-append "//signature of " tx-name " with private key corresponding to " (second (pk-for-term p contract))))
                                  acc))
          "" participants))
 
@@ -161,18 +161,18 @@
   (syntax-parse stx    
     [(_ part parent-contract parent-tx input-idx value parts timelock)
      #'(begin         
-         (define tx-name (new-tx-name))
-         (define tx-sigs (participants->tx-sigs parts tx-name))
+         (let* ([tx-name (new-tx-name)]
+                [tx-sigs (participants->tx-sigs parts tx-name)])
 
 
-         (displayln (participants->sigs-declar parts tx-name parent-contract))
+           (displayln (participants->sigs-declar parts tx-name parent-contract))
          
-         (displayln (string-append
-                     (format "transaction ~a { \n input = ~a@~a:~a \n output = ~a BTC : fun(x) . versig(pubkey~a; x) \n "
-                             tx-name parent-tx input-idx tx-sigs value part)
-                     (if (> timelock 0)
-                         (format "absLock = block ~a \n}\n" timelock)
-                         "\n}\n"))))]
+           (displayln (string-append
+                       (format "transaction ~a { \n input = ~a@~a:~a \n output = ~a BTC : fun(x) . versig(pubkey~a; x) \n "
+                               tx-name parent-tx input-idx tx-sigs value part)
+                       (if (> timelock 0)
+                           (format "absLock = block ~a \n}\n" timelock)
+                           "\n}\n")))))]
     [(_)
      (raise-syntax-error 'withdraw "wrong usage of withdraw" stx)]))
 
@@ -244,8 +244,9 @@
 
            (compile-init parts deposit-txout tx-v script script-params)
 
-           ;start the compilation of the contract
-           (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0) ...))]
+           ;start the compilation of the continuation contracts
+           (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0)...))]
+    
     [(_ (guards guard ...)
         (contract params ...))
      
@@ -255,8 +256,7 @@
          (compile-init parts deposit-txout tx-v (get-script (contract params ...)) (get-script-params (contract params ...)))
 
          ;start the compilation of the contract
-         (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]
-    ))
+         (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
 (define-syntax (get-script stx)
@@ -343,9 +343,43 @@
 
 (define-syntax (putrevealif stx)
   (syntax-parse stx
-    #:literals(pred)
-    [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock )
+    #:literals(pred sum)
+     [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (sum (contract params ...)...)) parent-contract parent-tx input-idx value parts timelock )
      
+     #'(begin        
+         (let* ([tx-name (format "T~a" (new-tx-index))]
+                [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
+                [new-value (foldl (lambda (x acc) (+ (second x) acc)) value vol-dep-list)]
+
+                [format-input (lambda (x sep acc) (format "~a:sig~a" (third (get-volatile-dep x)) (symbol->string x)))]
+
+                [vol-inputs (list 'tx-id ...)]
+              
+                [vol-inputs-str (if (> 0 (length vol-inputs))
+                                    (string-append "; " (list+sep->string (map (lambda (x) (format-input x)) vol-inputs)))
+                                    "")]
+                [scripts-list (~? (list (get-script (contract params ...)) ...) null)]
+                [script (list+sep->string scripts-list " || ")]
+                [script-params (list+sep->string (append
+                                                  (~? (append (get-script-params (contract params ...)) ...) '())
+                                                  (parts->sigs-param-list)))]
+                [script-params (parts->sigs-params)]
+                [tx-sigs (participants->tx-sigs parts tx-name)]
+                [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" tx-sigs vol-inputs-str "]")])
+
+           ;compile signatures constants for the volatile deposits
+           (for-each
+            (lambda (x) (displayln (string-append "const sig" (symbol->string x) " : signature = _ //add signature for output " (third (get-volatile-dep x)))))
+            (list 'tx-id ...))
+
+           (displayln (participants->sigs-declar parts tx-name parent-contract))
+
+         
+           (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
+         
+           (~? (contract params ... '(sum (contract params ...)...) tx-name input-idx new-value parts timelock))...))]
+    
+    [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock )     
      #'(begin
          (let* ([tx-name (format "T~a" (new-tx-index))]
                 [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
