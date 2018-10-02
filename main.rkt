@@ -461,3 +461,34 @@
     [(_ a:string) #'a]
     [(_ a:id) #'(symbol->string 'a)]
     [(_) (raise-syntax-error 'put-if "wrong if predicate" stx)]))
+
+
+#;(define-syntax (split stx)
+  (syntax-parse stx
+    #:literals(sum)
+    [(_ (val (sum (contract params ...)...))... parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     
+     #'(begin        
+         (let* ([tx-name (format "T~a" (new-tx-index))]
+
+                [scripts-list (list (list (get-script (contract params ...)) ...)...)]
+                [script (list+sep->string scripts-list " || ")]
+                [script-params (list+sep->string (append
+                                                  (~? (append (get-script-params (contract params ...)) ...) '())
+                                                  (parts->sigs-param-list)))]
+                [script-params (parts->sigs-params)]
+                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
+                [tx-sigs (participants->tx-sigs parts tx-name)]
+                [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" sec-wit " " tx-sigs "]")])
+
+           (displayln (participants->sigs-declar parts tx-name parent-contract))
+
+           ;compile the secrets declarations
+           (for-each
+            (lambda (x) (displayln (string-append "const sec_" (symbol->string x) " : string = _ //add secret for output " (symbol->string x))))
+            sec-to-reveal)
+
+         
+           (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
+         
+           (~? (contract params ... '(sum (contract params ...)...) tx-name input-idx new-value parts timelock (get-script-params (contract params ...)) script-params))...))]))
