@@ -9,9 +9,9 @@
 
 (provide  participant compile withdraw deposit guards
           after auth key secret vol-deposit putrevealif
-          pred sum
+          pred sum split
           (rename-out [btrue true] [band and] [bnot not] [b= =] [b< <] [b+ +] [b- -] [bsize size])
-          #%module-begin #%datum)
+          #%module-begin #%datum #%top-interaction)
 
 ;--------------------------------------------------------------------------------------
 ;ENVIRONMENT
@@ -105,18 +105,8 @@
 ;STRING HELPERS
 
 ;helpers to generate string transactions
-(define (slist->string l)
-  (foldr (lambda (s r) (string-append s r)) "" l))
-
-(define (participants->tx-params-list participants)
-  (for/list([p participants])
-    (string-append  "s" (format "~a" p))))
-
 (define (participants->tx-sigs participants tx-name)
   (foldl (lambda (p acc) (format "sig~a~a ~a" p tx-name acc))  "" participants))
-
-(define (participants->tx-sigsl participants tx-name)
-  (map (lambda (p) (format "sig~a~a ~a" p tx-name)) participants))
 
 (define (participants->sigs-declar participants tx-name [contract #f])
   (foldr (lambda (p acc) (format "const sig~a~a : signature = _ ~a\n~a" p tx-name
@@ -126,7 +116,7 @@
                                  acc))
          "" participants))
 
-(define (list+sep->string l [sep ","])
+(define (list+sep->string l [sep ", "])
   (let* ([s (foldr (lambda (s r) (string-append s sep r)) "" l)]
          [length (string-length s)])
     (if (> length (string-length sep))
@@ -256,10 +246,12 @@
      #`(begin
          (reset-state)
          guard ...
-         (compile-init parts deposit-txout tx-v (get-script (contract params ...)) (get-script-params (contract params ...)))
+         (let ([script (get-script (contract params ...))]
+               [script-params (get-script-params (contract params ...))])
+           (compile-init parts deposit-txout tx-v script script-params)
 
-         ;start the compilation of the contract
-         (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0))]))
+           ;start the compilation of the contract
+           (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0 script-params script-params)))]))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
 (define-syntax (get-script stx)
@@ -321,9 +313,10 @@
 
     
          [inputs (string-append "input = [ "
-                                (format "~a:~a" (first deposit-txout) (first tx-sigs-list))
-                                (slist->string (for/list ([p (rest tx-sigs-list)] [out (rest deposit-txout)])
-                                                 (format "; ~a:~a" out p))) " ]")])
+                                (list+sep->string (for/list ([p tx-sigs-list]
+                                                             [out deposit-txout])
+                                                    (format "~a:~a" out p))
+                                                  "; ") " ]")])
 
 
     ;compile public keys
@@ -366,7 +359,7 @@
                 [script-params (list+sep->string (append
                                                   (~? (append (get-script-params (contract params ...)) ...) '())
                                                   (parts->sigs-param-list)))]
-                [script-params (parts->sigs-params)]
+                ;[script-params (parts->sigs-params)]
                 [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" sec-wit " " tx-sigs vol-inputs-str "]")])
@@ -386,7 +379,7 @@
          
            (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
          
-           (~? (contract params ... '(sum (contract params ...)...) tx-name input-idx new-value parts timelock (get-script-params (contract params ...)) script-params))...))]
+           (~? (contract params ... '(sum (contract params ...)...) tx-name 0 new-value parts timelock (get-script-params (contract params ...)) script-params))...))]
     
     [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)     
      #'(begin
@@ -406,7 +399,7 @@
                 [script-params (list+sep->string (append
                                                   (~? (get-script-params (contract params ...)) '())
                                                   (parts->sigs-param-list)))]
-                [script-params (parts->sigs-params)]
+                ;[script-params (parts->sigs-params)]
                 [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ": " sec-wit " " tx-sigs vol-inputs-str "]")])
@@ -426,7 +419,7 @@
          
            (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
          
-           (~? (contract params ... '(contract params ...) tx-name input-idx new-value parts timelock (get-script-params (contract params ...)) (get-script-params parent-contract) ))))]))
+           (~? (contract params ... '(contract params ...) tx-name 0 new-value parts timelock (get-script-params (contract params ...)) (get-script-params parent-contract) ))))]))
 
 
 ;operators for predicate in putrevealif
@@ -463,23 +456,31 @@
     [(_) (raise-syntax-error 'put-if "wrong if predicate" stx)]))
 
 
-#;(define-syntax (split stx)
+(define-syntax (split stx)
   (syntax-parse stx
     #:literals(sum)
-    [(_ (val (sum (contract params ...)...))... parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+    [(_ (val:number (sum (contract params ...)...))... parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      
      #'(begin        
          (let* ([tx-name (format "T~a" (new-tx-index))]
-
-                [scripts-list (list (list (get-script (contract params ...)) ...)...)]
-                [script (list+sep->string scripts-list " || ")]
-                [script-params (list+sep->string (append
-                                                  (~? (append (get-script-params (contract params ...)) ...) '())
-                                                  (parts->sigs-param-list)))]
-                [script-params (parts->sigs-params)]
+                [values-list (list val ...)]
+                [subscripts-list (list (list (get-script (contract params ...)) ...)...)]
+                [script-list (for/list([subscripts subscripts-list])
+                               (list+sep->string subscripts " || "))]
+                [script-params-list (list (list+sep->string (append
+                                                             (append (get-script-params (contract params ...)) ...)
+                                                             (parts->sigs-param-list)))...)]         
+          
+                
+                 
                 [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
-                [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" sec-wit " " tx-sigs "]")])
+                [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" sec-wit " " tx-sigs "]")]
+                [outputs (for/list([value values-list]
+                                   [script script-list]
+                                   [script-params script-params-list])
+                           (format "~a BTC : fun(~a) . ~a" value script-params script))]
+                [output (string-append "output = [ " (list+sep->string outputs "; ") " ]")])
 
            (displayln (participants->sigs-declar parts tx-name parent-contract))
 
@@ -488,7 +489,12 @@
             (lambda (x) (displayln (string-append "const sec_" (symbol->string x) " : string = _ //add secret for output " (symbol->string x))))
             sec-to-reveal)
 
-         
-           (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
-         
-           (~? (contract params ... '(sum (contract params ...)...) tx-name input-idx new-value parts timelock (get-script-params (contract params ...)) script-params))...))]))
+
+
+           (displayln (format "\ntransaction ~a { \n ~a \n ~a \n}\n" tx-name inputs output))
+
+           
+           #|(contract params ... '(split (val (sum (contract params ...)...))...)
+                     tx-name input-idx new-value parts timelock
+                     (get-script-params (sum (contract params ...)...)) script-params)... ...|#
+           ))]))
