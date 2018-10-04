@@ -18,4 +18,3 @@
 
 (compile (guards (deposit "A" 1 "txA@0")(secret a "000a")(deposit "B" 0 "txB@0")(secret b "000b")(secret c "000b"))        
          (sum (putrevealif () (a) (withdraw "A")) (putrevealif () (b c) (withdraw "B"))))
-
