@@ -16,6 +16,11 @@
 ;--------------------------------------------------------------------------------------
 ;ENVIRONMENT
 
+(define output "")
+
+(define (add-output str)
+  (set! output (string-append output "\n" str)))
+
 ;security parameter (minimun secret length)
 (define sec-param 128)
 
@@ -161,14 +166,14 @@
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ": " sec-wit " " tx-sigs "]")])
 
 
-           (displayln (participants->sigs-declar parts tx-name parent-contract))
+           (add-output (participants->sigs-declar parts tx-name parent-contract))
          
-           (displayln (string-append
-                       (format "transaction ~a { \n ~a \n output = ~a BTC : fun(x) . versig(pubkey~a; x) \n "
-                               tx-name inputs value part)
-                       (if (> timelock 0)
-                           (format "absLock = block ~a \n}\n" timelock)
-                           "\n}\n")))))]
+           (add-output (string-append
+                        (format "transaction ~a { \n ~a \n output = ~a BTC : fun(x) . versig(pubkey~a; x) \n "
+                                tx-name inputs value part)
+                        (if (> timelock 0)
+                            (format "absLock = block ~a \n}\n" timelock)
+                            "\n}\n")))))]
     [(_)
      (raise-syntax-error #f "wrong usage of withdraw" stx)]))
 
@@ -241,7 +246,8 @@
            (compile-init parts deposit-txout tx-v script script-params)
 
            ;start the compilation of the continuation contracts
-           (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0 (get-script-params (contract params ...)) script-params)...))]
+           (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0 (get-script-params (contract params ...)) script-params)...
+           (displayln output)))]
     
     [(_ (guards guard ...)
         (contract params ...))
@@ -254,7 +260,8 @@
            (compile-init parts deposit-txout tx-v script script-params)
 
            ;start the compilation of the contract
-           (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0 script-params script-params)))]))
+           (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0 script-params script-params)
+           (displayln output)))]))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
 (define-syntax (get-script stx)
@@ -323,21 +330,21 @@
 
 
     ;compile public keys
-    (for-each (lambda (s) (displayln (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))
-    (displayln "")
+    (for-each (lambda (s) (add-output (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))
+    (add-output "")
 
     ;compile pubkeys for terms
     (for-each
      (lambda (s)
        (let ([key-name (pk-for-term (first s) (rest s))])
-         (displayln (format "const ~a = pubkey:~a" (second key-name) (first key-name)))))
+         (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)))))
      (hash-keys pk-terms-table))
-    (displayln "")
+    (add-output "")
 
     ;compile signatures constants for Tinit
-    (for-each (lambda (e t) (displayln (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
+    (for-each (lambda (e t) (add-output (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
   
-    (displayln (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" inputs tx-v script-params script))))
+    (add-output (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" inputs tx-v script-params script))))
 
 
 (define-syntax (putrevealif stx)
@@ -369,18 +376,18 @@
 
            ;compile signatures constants for the volatile deposits
            (for-each
-            (lambda (x) (displayln (string-append "const sig" (symbol->string x) " : signature = _ //add signature for output " (third (get-volatile-dep x)))))
+            (lambda (x) (add-output (string-append "const sig" (symbol->string x) " : signature = _ //add signature for output " (third (get-volatile-dep x)))))
             (list 'tx-id ...))
 
-           (displayln (participants->sigs-declar parts tx-name parent-contract))
+           (add-output (participants->sigs-declar parts tx-name parent-contract))
 
            ;compile the secrets declarations
            (for-each
-            (lambda (x) (displayln (string-append "const sec_" (symbol->string x) " : string = _ //add secret for output " (symbol->string x))))
+            (lambda (x) (add-output (string-append "const sec_" (symbol->string x) " : string = _ //add secret for output " (symbol->string x))))
             sec-to-reveal)
 
          
-           (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
+           (add-output (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
          
            (~? (contract params ... '(sum (contract params ...)...) tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract)))...))]
     
@@ -409,18 +416,18 @@
 
            ;compile signatures constants for the volatile deposits
            (for-each
-            (lambda (x) (displayln (string-append "const sig" (symbol->string x) " : signature = _ //add signature for output " (third (get-volatile-dep x)))))
+            (lambda (x) (add-output (string-append "const sig" (symbol->string x) " : signature = _ //add signature for output " (third (get-volatile-dep x)))))
             (list 'tx-id ...))
 
-           (displayln (participants->sigs-declar parts tx-name parent-contract))
+           (add-output (participants->sigs-declar parts tx-name parent-contract))
            
            ;compile the secrets declarations
            (for-each
-            (lambda (x) (displayln (string-append "const sec_" x " = _ //add secret for output " x)))
+            (lambda (x) (add-output (string-append "const sec_" x " = _ //add secret for output " x)))
             sec-to-reveal)
          
-           (displayln (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a\n~a}\n"
-                              tx-name inputs new-value script-params script (format-timelock timelock)))
+           (add-output (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a\n~a}\n"
+                               tx-name inputs new-value script-params script (format-timelock timelock)))
          
            (~? (contract params ... '(contract params ...) tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract) ))))]))
 
@@ -483,18 +490,18 @@
                 [output (string-append "output = [ " (list+sep->string outputs ";\n\t") " ]")]
                 [count 0])                
 
-           (displayln (participants->sigs-declar parts tx-name parent-contract))
+           (add-output (participants->sigs-declar parts tx-name parent-contract))
 
            (if(> (apply + values-list) value)
-              (raise-syntax-error 'bitml "split spends more funds than it receives"  '#,stx)
+              (raise-syntax-error 'bitml "split spends more funds than it receives"  '(split (val (sum (contract params ...)...))...))
 
               (begin
                 ;compile the secrets declarations
                 (for-each
-                 (lambda (x) (displayln (string-append "const sec_" (symbol->string x) " : string = _ //add secret for output " (symbol->string x))))
+                 (lambda (x) (add-output (string-append "const sec_" (symbol->string x) " : string = _ //add secret for output " (symbol->string x))))
                  sec-to-reveal)
 
-                (displayln (format "\ntransaction ~a { \n ~a \n ~a \n~a}\n" tx-name inputs output (format-timelock timelock)))
+                (add-output (format "\ntransaction ~a { \n ~a \n ~a \n~a}\n" tx-name inputs output (format-timelock timelock)))
            
                 ;compile the continuations
                 
