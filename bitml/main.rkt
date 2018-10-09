@@ -470,7 +470,6 @@
   (syntax-parse stx
     #:literals(sum)
     [(_ (val:number (sum (contract params ...)...))... parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-
      #`(begin    
          (let* ([tx-name (format "T~a" (new-tx-index))]
                 [values-list (list val ...)]
@@ -493,7 +492,9 @@
            (add-output (participants->sigs-declar parts tx-name parent-contract))
 
            (if(> (apply + values-list) value)
-              (raise-syntax-error 'bitml "split spends more funds than it receives"  '(split (val (sum (contract params ...)...))...))
+              (raise-syntax-error 'bitml
+                                  (format "split spends ~a BTC but it receives ~a BTC" (+ val ...) value)
+                                  '(split (val (sum (contract params ...)...))...))
 
               (begin
                 ;compile the secrets declarations
