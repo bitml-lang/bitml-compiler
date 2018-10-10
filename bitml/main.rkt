@@ -405,7 +405,7 @@
                                     (string-append "; " (list+sep->string (map (lambda (x) (format-input x)) vol-inputs)))
                                     "")]
               
-                [script (~? (get-script (contract params ...)) "")]
+                [script (~? (get-script (contract params ...)) null)]
                 [script-params (list+sep->string (append
                                                   (~? (get-script-params (contract params ...)) '())
                                                   (parts->sigs-param-list)))]
@@ -513,7 +513,8 @@
 (define-syntax (execute-split stx)
   (syntax-parse stx
     #:literals (sum)
-    [(_ (sum '(contract params ...) ...) parent-tx input-idx value parts)  
-     #'(begin
+    [(_ (sum '(contract params ...) ...) parent-tx input-idx value parts)     
+     #'(let ([sum-secrets (append (get-script-params (contract params ...))...)])
+        (begin
          (contract params ... '(contract params ...) parent-tx input-idx value parts 0
-                   (get-script-params (sum (contract params ...) ...))  (get-script-params (contract params ...)))...)]))
+                   sum-secrets  (get-script-params (contract params ...)))...))]))
