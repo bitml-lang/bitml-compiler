@@ -35,7 +35,7 @@ followed by participants declarations and public keys declaration.
 
 Each contract sub-term needs a public key for each participant.
 
-`(key "participant-name" (contract) "public-key")`
+`(key "participant-name" contract "public-key")`
 
 #### Compiling contracts
 
@@ -43,8 +43,12 @@ A contract declaration adheres to the following structure:
 
 ```
 (compile 
-	(guards (guard)...)        
-    (sum (contract) ...))
+	(guards 
+	   	guard
+		...)        
+    (sum 
+    	contract
+	...))
 ```
 
 #### Guards
@@ -89,7 +93,7 @@ The participant can withdraw all the bitcoins in the contract.
 The continuation `contract` is enabled after `block-height`.
 
 ```
-(after block-height _contract)
+(after block-height contract)
 ```
 
 ##### Authorization
@@ -111,8 +115,8 @@ but either the deposit or the secret must be specified. The predicate can only b
 ```
 (putrevealif (vol-deposit-id ...) (secret-id ...) (pred predicate) 
 	(sum 
-    	(contract) 
-        ...)) 
+		(contract) 
+       		 ...)) 
 ```
 
 The continuation ```(sum (contract)... )``` is optional.
@@ -122,14 +126,14 @@ The continuation ```(sum (contract)... )``` is optional.
 ```
 
 P,Q ::= true
-		(and P Q)
+	(and P Q)
         (not P)
         E
 ```
 
 ```
 E,F ::= number
-		string
+	string
         secret-id
         (= E F)
         (< E F)
@@ -144,8 +148,8 @@ E,F ::= number
 (split
 	(value (sum 
     		(contract) 
-            ...) 
-    ...)
+           	 ...) 
+   	 ...)
 ```
 
 Splits the current value of the contract between the continuations ```(sum (contract)... )```,
@@ -177,7 +181,8 @@ as instructed by each ```value```.
 
 (compile 
   (guards
-  	(deposit "A" 1 "801db83ddf7bc0c4d028150974562002f5877a4fc9088e5574cc2a7b491a7931@0")			(secret a "df31a65089fe25501f7245a9c84740addf66dad2097bdee68c58f446245f6ffb"))
+  	(deposit "A" 1 "801db83ddf7bc0c4d028150974562002f5877a4fc9088e5574cc2a7b491a7931@0")			
+	(secret a "df31a65089fe25501f7245a9c84740addf66dad2097bdee68c58f446245f6ffb"))
 
   (sum 
   	(putrevealif () (a) (withdraw "A")) 
