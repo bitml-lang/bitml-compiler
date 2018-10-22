@@ -291,7 +291,8 @@
            ;start the compilation of the contract
            (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0 script-params script-params)
 
-           (if gen-keys
+           
+           (when gen-keys
                ;compile pubkeys for terms
                (for-each
                 (lambda (s)
@@ -299,6 +300,7 @@
                     (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)) #t)))
                 (hash-keys pk-terms-table))
                (add-output "" #t))
+
            
            (displayln output)))]))
 
@@ -362,17 +364,18 @@
                                                              [out deposit-txout])
                                                     (format "~a:~a" out p))
                                                   "; ") " ]")])
-    ;compile public keys
+    ;compile public keys    
     (for-each (lambda (s) (add-output (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))
     (add-output "")
 
-    ;compile pubkeys for terms
-    (for-each
-     (lambda (s)
-       (let ([key-name (pk-for-term (first s) (rest s))])
-         (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)))))
-     (hash-keys pk-terms-table))
-    (add-output "")
+    (unless gen-keys
+      ;compile pubkeys for terms
+      (for-each
+       (lambda (s)
+         (let ([key-name (pk-for-term (first s) (rest s))])
+           (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)))))
+       (hash-keys pk-terms-table))
+      (add-output ""))
 
     ;compile signatures constants for Tinit
     (for-each (lambda (e t) (add-output (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
