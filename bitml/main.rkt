@@ -9,8 +9,8 @@
 
 (provide  participant compile withdraw deposit guards
           after auth key secret vol-deposit putrevealif
-          pred sum split
-          (rename-out [btrue true] [band and] [bnot not] [b= =] [b< <] [b+ +] [b- -] [bsize size])
+          pred sum split generate-keys
+          (rename-out [btrue true] [band and] [bnot not] [b= =] [b< <] [b+ +] [b- -] [b<= <=] [bsize size])
           #%module-begin #%datum #%top-interaction)
 
 ;--------------------------------------------------------------------------------------
@@ -18,8 +18,16 @@
 
 (define output "")
 
-(define (add-output str)
-  (set! output (string-append output "\n" str)))
+(define (add-output str [pre #f])
+  (if pre
+      (set! output (string-append str "\n" output))
+      (set! output (string-append output "\n" str))))
+
+;generate keys for debug purposes
+(define gen-keys #f)
+
+(define (set-gen-keys!)
+  (set! gen-keys #t))
 
 ;security parameter (minimun secret length)
 (define sec-param 128)
@@ -56,7 +64,13 @@
     (hash-set! pk-terms-table (cons id term) (list pk name))))
 
 (define (pk-for-term id term)
-  (hash-ref pk-terms-table (cons id term)))
+  (hash-ref pk-terms-table (cons id term)
+            (lambda ()
+              (if gen-keys
+                  (begin 
+                    (add-pk-for-term id term "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
+                    (pk-for-term id term))
+                  (raise (error 'bitml "no public key defined for participant ~a and contract ~a" id term))))))
 
 (define key-index 0)
 
@@ -134,12 +148,16 @@
 (define (parts->sigs-param-list)
   (map (lambda (s) (string-append "s" s)) (get-participants)))
 
-(define format-secret (lambda (x) (string-append "sec_" (string-replace x ":string" ""))))
+(define format-secret (lambda (x) (string-append "sec_" (string-replace x ":int" ""))))
 
 (define (format-timelock tl)
   (if (> tl 0) (format " absLock = block ~a\n" tl) ""))
 ;--------------------------------------------------------------------------------------
 ;SYNTAX DEFINITIONS
+
+;turns on the generation of the keys
+(define-syntax (generate-keys stx)
+  #'(set-gen-keys!))
 
 ;declaration of a participant
 ;associates a name to a public key
@@ -241,12 +259,22 @@
 
          (let* ([scripts-list (list (get-script (contract params ...)) ...)]
                 [script (list+sep->string scripts-list " || ")]
-                [script-params (append (get-script-params (contract params ...)) ...)])
+                [script-params (remove-duplicates (append (get-script-params (contract params ...)) ...))])
 
            (compile-init parts deposit-txout tx-v script script-params)
 
            ;start the compilation of the continuation contracts
            (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0 (get-script-params (contract params ...)) script-params)...
+
+           (if gen-keys
+               ;compile pubkeys for terms
+               (for-each
+                (lambda (s)
+                  (let ([key-name (pk-for-term (first s) (rest s))])
+                    (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)) #t)))
+                (hash-keys pk-terms-table))
+               (add-output "" #t))
+           
            (displayln output)))]
     
     [(_ (guards guard ...)
@@ -255,12 +283,23 @@
      #`(begin
          (reset-state)
          guard ...
+         
          (let ([script (get-script (contract params ...))]
                [script-params (get-script-params (contract params ...))])
            (compile-init parts deposit-txout tx-v script script-params)
 
            ;start the compilation of the contract
            (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0 script-params script-params)
+
+           (if gen-keys
+               ;compile pubkeys for terms
+               (for-each
+                (lambda (s)
+                  (let ([key-name (pk-for-term (first s) (rest s))])
+                    (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)) #t)))
+                (hash-keys pk-terms-table))
+               (add-output "" #t))
+           
            (displayln output)))]))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
@@ -306,7 +345,7 @@
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
 
      #'(let ([cont-params (~? (get-script-params p) '())])
-         (append (list (string-append (symbol->string 'sec) ":string") ...) cont-params))]
+         (append (list (string-append (symbol->string 'sec) ":int") ...) cont-params))]
     [(_ (auth part ... cont)) #'(get-script-params cont)]
     [(_ (after t cont)) #'(get-script-params cont)]
     [(_ x) #''()]))
@@ -316,19 +355,13 @@
 (define (compile-init parts deposit-txout tx-v script script-params-list)
   (let* ([tx-sigs-list (for/list ([p parts]
                                   [i (in-naturals)])
-                         (format "sig~a~a" p i))]
-                  
-         [script-params (list+sep->string (append script-params-list (parts->sigs-param-list)))]
-
-
-    
+                         (format "sig~a~a" p i))]                  
+         [script-params (list+sep->string (append script-params-list (parts->sigs-param-list)))]    
          [inputs (string-append "input = [ "
                                 (list+sep->string (for/list ([p tx-sigs-list]
                                                              [out deposit-txout])
                                                     (format "~a:~a" out p))
                                                   "; ") " ]")])
-
-
     ;compile public keys
     (for-each (lambda (s) (add-output (format "const pubkey~a = pubkey:~a" s (participant-pk s)))) (get-participants))
     (add-output "")
@@ -438,6 +471,7 @@
 (define-syntax (bnot stx) (raise-syntax-error #f "wrong usage of not" stx))
 (define-syntax (b= stx) (raise-syntax-error #f "wrong usage of =" stx))
 (define-syntax (b< stx) (raise-syntax-error #f "wrong usage of <" stx))
+(define-syntax (b<= stx) (raise-syntax-error #f "wrong usage of <" stx))
 (define-syntax (b+ stx) (raise-syntax-error #f "wrong usage of +" stx))
 (define-syntax (b- stx) (raise-syntax-error #f "wrong usage of -" stx))
 (define-syntax (bsize stx) (raise-syntax-error #f "wrong usage of size" stx))
@@ -454,9 +488,10 @@
 
 (define-syntax (compile-pred-exp stx)
   (syntax-parse stx
-    #:literals(b= b< b+ b- bsize)
+    #:literals(b= b< b<= b+ b- bsize)
     [(_ (b= a b)) #'(string-append (compile-pred-exp a) "==" (compile-pred-exp b))]
     [(_ (b< a b)) #'(string-append (compile-pred-exp a) "<" (compile-pred-exp b))]
+    [(_ (b<= a b)) #'(string-append (compile-pred-exp a) "<=" (compile-pred-exp b))]
     [(_ (b+ a b)) #'(string-append "(" (compile-pred-exp a) "+" (compile-pred-exp b) ")")]
     [(_ (b- a b)) #'(string-append "(" (compile-pred-exp a) "-" (compile-pred-exp b) ")")]
     [(_ (bsize a)) #'(string-append "(size(" (compile-pred-exp a) ") - " (number->string sec-param) ")")]
@@ -477,7 +512,7 @@
                 [script-list (for/list([subscripts subscripts-list])
                                (list+sep->string subscripts " || "))]
                 [script-params-list (list (list+sep->string (append
-                                                             (append (get-script-params (contract params ...)) ...)
+                                                             (remove-duplicates (append (get-script-params (contract params ...)) ...))
                                                              (parts->sigs-param-list)))...)]  
                 [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
@@ -514,7 +549,16 @@
   (syntax-parse stx
     #:literals (sum)
     [(_ (sum '(contract params ...) ...) parent-tx input-idx value parts)     
-     #'(let ([sum-secrets (append (get-script-params (contract params ...))...)])
-        (begin
-         (contract params ... '(contract params ...) parent-tx input-idx value parts 0
-                   sum-secrets  (get-script-params (contract params ...)))...))]))
+     #'(let ([sum-secrets (remove-duplicates (append (get-script-params (contract params ...))...))])
+         (begin
+           ;(begin
+           ;(displayln '(contract params ...))
+           ;(displayln (format "parametri ~a ~a ~a ~a ~a" parent-tx input-idx value parts sum-secrets))
+           ;(displayln (get-script-params (contract params ...)))
+           ;(displayln ""))...
+
+
+           (contract params ... '(contract params ...) parent-tx input-idx value parts 0
+                     sum-secrets  (get-script-params (contract params ...)))...
+
+                                                                            ))]))
