@@ -293,13 +293,13 @@
 
            
            (when gen-keys
-               ;compile pubkeys for terms
-               (for-each
-                (lambda (s)
-                  (let ([key-name (pk-for-term (first s) (rest s))])
-                    (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)) #t)))
-                (hash-keys pk-terms-table))
-               (add-output "" #t))
+             ;compile pubkeys for terms
+             (for-each
+              (lambda (s)
+                (let ([key-name (pk-for-term (first s) (rest s))])
+                  (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)) #t)))
+              (hash-keys pk-terms-table))
+             (add-output "" #t))
 
            
            (displayln output)))]))
@@ -309,9 +309,9 @@
   (syntax-parse stx
     #:literals (putrevealif auth after pred)
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
+     (let [(contract #''(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (~? (contract params ...) ())) )]
+       #`(get-script* #,contract #,contract))]
 
-     #'(get-script* '(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (~? (contract params ...) ()))
-                    '(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (~? (contract params ...) ())))]
     [(_ (auth part ... cont)) #'(get-script* '(auth part ... cont) 'cont)]
     [(_ (after t cont)) #'(get-script* '(after t cont) 'cont)]
     [(_ x) #'(get-script* 'x 'x)]))
@@ -545,23 +545,18 @@
                 ;compile the continuations
                 
                 (begin             
-                  (execute-split (sum '(contract params ...)...) tx-name count val parts)
+                  (execute-split '(contract params ...)... tx-name count val parts)
                   (set! count (add1 count)))...))))]))
 
 (define-syntax (execute-split stx)
   (syntax-parse stx
-    #:literals (sum)
-    [(_ (sum '(contract params ...) ...) parent-tx input-idx value parts)     
+    [(_ '(contract params ...) ... parent-tx input-idx value parts)     
      #'(let ([sum-secrets (remove-duplicates (append (get-script-params (contract params ...))...))])
-         (begin
-           ;(begin
-           ;(displayln '(contract params ...))
-           ;(displayln (format "parametri ~a ~a ~a ~a ~a" parent-tx input-idx value parts sum-secrets))
-           ;(displayln (get-script-params (contract params ...)))
-           ;(displayln ""))...
-
-
-           (contract params ... '(contract params ...) parent-tx input-idx value parts 0
-                     sum-secrets  (get-script-params (contract params ...)))...
-
-                                                                            ))]))
+         ;(begin
+         ;(displayln '(contract params ...))
+         ;(displayln (format "parametri ~a ~a ~a ~a ~a" parent-tx input-idx value parts sum-secrets))
+         ;(displayln (get-script-params (contract params ...)))
+         ;(displayln ""))...
+         
+         (contract params ... '(contract params ...) parent-tx input-idx value parts 0
+                   sum-secrets  null #;(get-script-params (contract params ...)))...)]))
