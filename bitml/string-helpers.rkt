@@ -1,4 +1,6 @@
-#lang racket
+#lang racket/base
+
+(require racket/bool racket/list racket/string)
 
 ;STRING HELPERS
 

@@ -1,0 +1,41 @@
+#lang racket/base
+
+(require (for-syntax racket/base syntax/parse) "env.rkt")
+ 
+
+;operators for predicate in putrevealif
+(define-syntax (btrue stx) (raise-syntax-error #f "wrong usage of true" stx))
+(define-syntax (band stx) (raise-syntax-error #f "wrong usage of and" stx))
+(define-syntax (bnot stx) (raise-syntax-error #f "wrong usage of not" stx))
+(define-syntax (b= stx) (raise-syntax-error #f "wrong usage of =" stx))
+(define-syntax (b< stx) (raise-syntax-error #f "wrong usage of <" stx))
+(define-syntax (b<= stx) (raise-syntax-error #f "wrong usage of <" stx))
+(define-syntax (b+ stx) (raise-syntax-error #f "wrong usage of +" stx))
+(define-syntax (b- stx) (raise-syntax-error #f "wrong usage of -" stx))
+(define-syntax (bsize stx) (raise-syntax-error #f "wrong usage of size" stx))
+(define-syntax (pred stx) (raise-syntax-error #f "wrong usage of pred" stx))
+
+(define-syntax (compile-pred stx)
+  (syntax-parse stx
+    #:literals(btrue band bnot)
+    [(_ btrue) #'"true"]
+    [(_ (band a b)) #'(string-append (compile-pred a) " && " (compile-pred b))]
+    [(_ (bnot a)) #'(string-append "!(" (compile-pred a) ")")]
+    [(_ p) #'(compile-pred-exp p)]))
+
+
+(define-syntax (compile-pred-exp stx)
+  (syntax-parse stx
+    #:literals(b= b< b<= b+ b- bsize)
+    [(_ (b= a b)) #'(string-append (compile-pred-exp a) "==" (compile-pred-exp b))]
+    [(_ (b< a b)) #'(string-append (compile-pred-exp a) "<" (compile-pred-exp b))]
+    [(_ (b<= a b)) #'(string-append (compile-pred-exp a) "<=" (compile-pred-exp b))]
+    [(_ (b+ a b)) #'(string-append "(" (compile-pred-exp a) "+" (compile-pred-exp b) ")")]
+    [(_ (b- a b)) #'(string-append "(" (compile-pred-exp a) "-" (compile-pred-exp b) ")")]
+    [(_ (bsize a)) #'(string-append "(size(" (compile-pred-exp a) ") - " (number->string sec-param) ")")]
+    [(_ a:number) #'(number->string a)]
+    [(_ a:string) #'a]
+    [(_ a:id) #'(symbol->string 'a)]
+    [(_) (raise-syntax-error #f "wrong if predicate" stx)]))
+
+(provide (all-defined-out))
