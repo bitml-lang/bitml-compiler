@@ -1,7 +1,8 @@
 #lang racket/base
 
 (require (for-syntax racket/base syntax/parse)
-         racket/list racket/bool racket/string)
+         racket/list racket/bool racket/string
+         "maude.rkt" "string-helpers.rkt" "env.rkt")
 
 ;provides the default reader for an s-exp lang
 (module reader syntax/module-reader
@@ -13,146 +14,6 @@
           (rename-out [btrue true] [band and] [bnot not] [b= =] [b< <] [b+ +] [b- -] [b<= <=] [bsize size])
           #%module-begin #%datum #%top-interaction)
 
-;--------------------------------------------------------------------------------------
-;ENVIRONMENT
-
-(define output "")
-
-(define (add-output str [pre #f])
-  (if pre
-      (set! output (string-append str "\n" output))
-      (set! output (string-append output "\n" str))))
-
-;generate keys for debug purposes
-(define gen-keys #f)
-
-(define (set-gen-keys!)
-  (set! gen-keys #t))
-
-;security parameter (minimun secret length)
-(define sec-param 128)
-
-;function to enumerate tx indexes
-(define tx-index 0)
-
-(define (new-tx-index)
-  (set! tx-index (add1 tx-index))
-  tx-index)
-
-(define (new-tx-name)
-  (format "T~a" (new-tx-index)))
-
-;helpers to store and retrieve participants' public keys
-(define participants-table
-  (make-hash))
-
-(define (add-participant id pk)
-  (hash-set! participants-table id pk))
-
-(define (participant-pk id)
-  (hash-ref participants-table id))
-
-(define (get-participants)
-  (hash-keys participants-table))
-
-;helpers to store and retrieve participants' public keys for terms
-(define pk-terms-table
-  (make-hash))
-
-(define (add-pk-for-term id term pk)
-  (let ([name (format "pubkey~a~a" id (new-key-index))])
-    (hash-set! pk-terms-table (cons id term) (list pk name))))
-
-(define (pk-for-term id term)
-  (hash-ref pk-terms-table (cons id term)
-            (lambda ()
-              (if gen-keys
-                  (begin 
-                    (add-pk-for-term id term "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
-                    (pk-for-term id term))
-                  (raise (error 'bitml "no public key defined for participant ~a and contract ~a" id term))))))
-
-(define key-index 0)
-
-(define (new-key-index)
-  (set! key-index (add1 key-index))
-  key-index)
-
-;helpers to store permanent deposits
-(define parts empty)
-(define (add-part id)
-  (set! parts (cons id parts)))
-
-(define deposit-txout empty)
-(define (add-deposit txout)
-  (set! deposit-txout (cons txout deposit-txout)))
-
-(define tx-v 0)
-(define (add-tx-v v)
-  (set! tx-v (+ v tx-v)))
-
-;helpers to store volatile deposits
-(define volatile-deps-table
-  (make-hash))
-
-(define (add-volatile-dep part id val tx)
-  (hash-set! volatile-deps-table id (list part val tx)))
-
-(define (get-volatile-dep id)
-  (hash-ref volatile-deps-table id))
-
-;helpers to store the secrets
-(define secrets-table
-  (make-hash))
-
-(define (add-secret id hash)
-  (hash-set! secrets-table id hash))
-
-(define (get-secret-hash id)
-  (hash-ref secrets-table id))
-
-;clear the state
-(define (reset-state)
-  (set! tx-v 0)
-  (set! secrets-table (make-hash))
-  (set! volatile-deps-table (make-hash))
-  (set! deposit-txout empty)
-  (set! parts empty)
-  (set! tx-index 0))
-
-;--------------------------------------------------------------------------------------
-;STRING HELPERS
-
-;helpers to generate string transactions
-(define (participants->tx-sigs participants tx-name)
-  (foldl (lambda (p acc) (format "sig~a~a ~a" p tx-name acc))  "" participants))
-
-(define (participants->sigs-declar participants tx-name [contract #f])
-  (foldr (lambda (p acc) (format "const sig~a~a : signature = _ ~a\n~a" p tx-name
-                                 (if (false? contract)
-                                     ""
-                                     (string-append "//signature of " tx-name " with private key corresponding to " (second (pk-for-term p contract))))
-                                 acc))
-         "" participants))
-
-(define (list+sep->string l [sep ", "])
-  (let* ([s (foldr (lambda (s r) (string-append s sep r)) "" l)]
-         [length (string-length s)])
-    (if (> length (string-length sep))
-        (substring s 0 (- length (string-length sep)))
-        s)))
-
-(define (parts->sigs-params)
-  (list+sep->string (map (lambda (s) (string-append "s" s)) (get-participants))))
-
-(define (parts->sigs-param-list)
-  (map (lambda (s) (string-append "s" s)) (get-participants)))
-
-(define format-secret (lambda (x) (string-append "sec_" (string-replace x ":int" ""))))
-
-(define (format-timelock tl)
-  (if (> tl 0) (format " absLock = block ~a\n" tl) ""))
-;--------------------------------------------------------------------------------------
 ;SYNTAX DEFINITIONS
 
 ;turns on the generation of the keys
@@ -245,6 +106,25 @@
 
 (define-syntax (sum stx) (raise-syntax-error #f "wrong usage of sum" stx))
 
+;prepares and displays the output of the compilation
+(define (show-compiled)
+  ;start the maude declaration
+  (maude-opening (get-participants) (get-secrets))
+
+  ;if the keys where auto-generated, add them to the outpt
+  (when gen-keys
+    ;compile pubkeys for terms
+    (for-each
+     (lambda (s)
+       (let ([key-name (pk-for-term (first s) (rest s))])
+         (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)) #t)))
+     (hash-keys pk-terms-table))
+    (add-output "" #t))
+           
+  (displayln output)
+  (displayln maude-output))
+
+
 ;compilation command
 ;todo: output script
 (define-syntax (compile stx)
@@ -263,19 +143,11 @@
 
            (compile-init parts deposit-txout tx-v script script-params)
 
+
            ;start the compilation of the continuation contracts
            (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0 (get-script-params (contract params ...)) script-params)...
 
-           (if gen-keys
-               ;compile pubkeys for terms
-               (for-each
-                (lambda (s)
-                  (let ([key-name (pk-for-term (first s) (rest s))])
-                    (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)) #t)))
-                (hash-keys pk-terms-table))
-               (add-output "" #t))
-           
-           (displayln output)))]
+           (show-compiled)))]
     
     [(_ (guards guard ...)
         (contract params ...))
@@ -291,18 +163,7 @@
            ;start the compilation of the contract
            (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0 script-params script-params)
 
-           
-           (when gen-keys
-             ;compile pubkeys for terms
-             (for-each
-              (lambda (s)
-                (let ([key-name (pk-for-term (first s) (rest s))])
-                  (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)) #t)))
-              (hash-keys pk-terms-table))
-             (add-output "" #t))
-
-           
-           (displayln output)))]))
+           (show-compiled)))]))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
 (define-syntax (get-script stx)
@@ -337,7 +198,7 @@
      #'(let* ([keys (for/list([part (get-participants)])
                       (second (pk-for-term part parent)))]
               [keys-string (list+sep->string keys)])
-         (string-append "versig(" keys-string "; " (parts->sigs-params)  ")"))]))
+         (string-append "versig(" keys-string "; " (parts->sigs-params (get-participants))  ")"))]))
 
 
 ;return the parameters for the script obtained by get-script
@@ -358,7 +219,7 @@
   (let* ([tx-sigs-list (for/list ([p parts]
                                   [i (in-naturals)])
                          (format "sig~a~a" p i))]                  
-         [script-params (list+sep->string (append script-params-list (parts->sigs-param-list)))]    
+         [script-params (list+sep->string (append script-params-list (parts->sigs-param-list (get-participants))))]    
          [inputs (string-append "input = [ "
                                 (list+sep->string (for/list ([p tx-sigs-list]
                                                              [out deposit-txout])
@@ -404,7 +265,7 @@
                 [script (list+sep->string scripts-list " || ")]
                 [script-params (list+sep->string (append
                                                   (~? (append (get-script-params (contract params ...)) ...) '())
-                                                  (parts->sigs-param-list)))]
+                                                  (parts->sigs-param-list (get-participants))))]
                 ;[script-params (parts->sigs-params)]
                 [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
@@ -444,7 +305,7 @@
                 [script (~? (get-script (contract params ...)) null)]
                 [script-params (list+sep->string (append
                                                   (~? (get-script-params (contract params ...)) '())
-                                                  (parts->sigs-param-list)))]
+                                                  (parts->sigs-param-list (get-participants))))]
                 ;[script-params (parts->sigs-params)]
                 [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
@@ -516,7 +377,7 @@
                                (list+sep->string subscripts " || "))]
                 [script-params-list (list (list+sep->string (append
                                                              (remove-duplicates (append (get-script-params (contract params ...)) ...))
-                                                             (parts->sigs-param-list)))...)]  
+                                                             (parts->sigs-param-list (get-participants))))...)]  
                 [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" sec-wit " " tx-sigs "]")]
