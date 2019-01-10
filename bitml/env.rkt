@@ -95,11 +95,14 @@
 (define secrets-table
   (make-hash))
 
-(define (add-secret id hash)
-  (hash-set! secrets-table id hash))
+(define (add-secret part id hash)
+  (hash-set! secrets-table id (list part hash)))
 
 (define (get-secret-hash id)
-  (hash-ref secrets-table id))
+  (second (hash-ref secrets-table id)))
+
+(define (get-secret-part id)
+  (first (hash-ref secrets-table id)))
 
 (define (get-secrets)
   (hash-keys secrets-table))

@@ -98,8 +98,8 @@
 ;TODO capisci come controllare l'errore a tempo statico
 (define-syntax (secret stx)
   (syntax-parse stx
-    [(_ ident:id hash:string)     
-     #'(add-secret 'ident hash)]
+    [(_ part:string ident:id hash:string)     
+     #'(add-secret part 'ident hash)]
     [(_)
      (raise-syntax-error 'deposit "wrong usage of secret" stx)]))
 
@@ -108,10 +108,8 @@
 
 ;prepares and displays the output of the compilation
 (define (show-compiled)
-  ;start the maude declaration
-  (maude-opening (get-participants) (get-secrets))
 
-  ;if the keys where auto-generated, add them to the outpt
+  ;if the keys where auto-generated, add them to the output
   (when gen-keys
     ;compile pubkeys for terms
     (for-each
@@ -122,7 +120,9 @@
     (add-output "" #t))
            
   (displayln output)
-  (displayln maude-output))
+  (define out (open-output-file "test.maude"))
+  (display maude-output out)
+  (close-output-port out))
 
 
 ;compilation command
@@ -146,7 +146,12 @@
 
            ;start the compilation of the continuation contracts
            (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0 (get-script-params (contract params ...)) script-params)...
-
+           
+           ;start the maude code declaration
+           (maude-opening)
+           (add-maude-output (string-append "eq C = " (compile-maude (sum (contract params ...) ...)) " . \n"))
+           (maude-closing)
+           
            (show-compiled)))]
     
     [(_ (guards guard ...)
@@ -163,6 +168,11 @@
            ;start the compilation of the contract
            (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0 script-params script-params)
 
+           ;start the maude code declaration
+           (maude-opening)
+           (add-maude-output (string-append "eq C = " (compile-maude (contract params ...)) " . \n"))
+           (maude-closing)
+           
            (show-compiled)))]))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
@@ -384,4 +394,49 @@
          ;(displayln ""))...
          
          (contract params ... '(contract params ...) parent-tx input-idx value parts 0
-                   sum-secrets  null #;(get-script-params (contract params ...)))...)]))
+                   sum-secrets (get-script-params (contract params ...)))...)]))
+
+(define-syntax (compile-maude stx)
+  (syntax-parse stx
+    #:literals (withdraw after auth split putrevealif pred sum)
+    [(_ (withdraw part:string))
+     #'(string-append "withdraw " part)]
+    [(_ (after t (contract params ...)))
+     #'(format "after ~a : ~a" t (compile-maude (contract params ...)))]
+    [(_ (auth part:string ... (contract params ...)))
+     #'(string-append part ... " : " (compile-maude (contract params ...)))]
+
+    ;  split ( v -> C, v' -> C' ... )
+    [(_ (split (val:number (sum (contract params ...)...))... ))
+     #'(let* ([vals (list val ...)]
+              [g-contracts (list (compile-maude (sum (contract params ...)...)) ...)]
+              [decl-parts (map
+                           (lambda (v gc) (string-append (number->string v) " BTC ~> " gc))
+                           vals
+                           g-contracts)]
+              [decl (list+sep->string decl-parts "\n")])
+           
+         (string-append "split( " decl " )" ))]
+
+    [(_ (sum (contract params ...)...))
+     #'(let ([g-contracts (list (compile-maude (contract params ...))...)])         
+         (string-append "( " (list+sep->string g-contracts " + ") " )"))]
+
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (sum (contract params ...) ...)))
+     #'(let* ([txs (list (symbol->string 'tx-id) ...)]
+              [secs (list (symbol->string 'sec) ...)]
+              [txs-len (length txs)]
+              [secs-len (length secs)]
+              [compiled-pred (~? (string-append " if " (compile-pred-maude p)) "")]
+              [compiled-cont (compile-maude (sum (contract params ...) ...))])
+         
+         (if (and (= 0 secs-len) (> txs-len 0))
+             (string-append "( put (" (list+sep->string txs) ") . " compiled-cont " )")
+             (if (and (> secs-len 0) (= txs-len 0))
+                 (string-append "( reveal (" (list+sep->string secs) ")" compiled-pred " . " compiled-cont " )")
+                 (if (and (> secs-len 0) (> txs-len 0))
+                     (string-append "( put (" (list+sep->string txs) ") & reveal (" (list+sep->string secs) ")" compiled-pred " . " compiled-cont " )")
+                     ""))))]
+
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)))
+     #'(compile-maude (putrevealif (tx-id ...) (sec ...) (~? (pred p)) (sum (contract params ...))))]))
