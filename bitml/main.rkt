@@ -10,6 +10,7 @@
 
 (provide  participant compile withdraw deposit guards
           after auth key secret vol-deposit putrevealif
+          put reveal revealif
           pred sum split generate-keys
           (rename-out [btrue true] [band and] [bnot not] [b= =] [b< <] [b+ +] [b- -] [b<= <=] [bsize size])
           #%module-begin #%datum #%top-interaction)
@@ -120,7 +121,7 @@
     (add-output "" #t))
            
   (displayln output)
-  (define out (open-output-file "test.maude"))
+  (define out (open-output-file "test.maude" #:exists 'replace))
   (display maude-output out)
   (close-output-port out))
 
@@ -396,6 +397,31 @@
          (contract params ... '(contract params ...) parent-tx input-idx value parts 0
                    sum-secrets (get-script-params (contract params ...)))...)]))
 
+(define-syntax (put stx)
+  (syntax-parse stx
+    #:literals(sum)
+    [(_ (tx-id:id ...) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(putrevealif (tx-id ...) () (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+    [(_ (tx-id:id ...) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(putrevealif (tx-id ...) () (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
+
+(define-syntax (reveal stx)
+  (syntax-parse stx
+    #:literals(sum)
+    [(_ (sec:id ...) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(putrevealif () (sec ...) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+    [(_ (sec:id ...) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(putrevealif () (sec ...) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
+
+(define-syntax (revealif stx)
+  (syntax-parse stx
+    #:literals(sum pred)
+    [(_ (sec:id ...) (pred p) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(putrevealif () (sec ...) (pred p) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+    [(_ (sec:id ...) (pred p) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(putrevealif () (sec ...) (pred p) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
+     
+
 (define-syntax (compile-maude stx)
   (syntax-parse stx
     #:literals (withdraw after auth split putrevealif pred sum)
@@ -437,6 +463,21 @@
                  (if (and (> secs-len 0) (> txs-len 0))
                      (string-append "( put (" (list+sep->string txs) ") & reveal (" (list+sep->string secs) ")" compiled-pred " . " compiled-cont " )")
                      ""))))]
+
+    [(_ (reveal (sec:id ...) (sum (contract params ...) ...)))
+     #'(compile-maude (putrevealif () (sec ...) (sum (contract params ...) ...)))]
+    [(_ (reveal (sec:id ...) (contract params ...)))
+     #'(compile-maude (putrevealif () (sec ...) (contract params ...)))]
+
+    [(_ (revealif (sec:id ...) (pred p) (sum (contract params ...) ...)))
+     #'(compile-maude (putrevealif () (sec ...) (pred p) (sum (contract params ...) ...)))]
+    [(_ (reveal (sec:id ...) (pred p) (contract params ...)))
+     #'(compile-maude (putrevealif () (sec ...) (pred p) (contract params ...)))]
+
+    [(_ (put (tx:id ...) (sum (contract params ...) ...)))
+     #'(compile-maude (putrevealif (tx ...) () (sum (contract params ...) ...)))]
+    [(_ (reveal (tx:id ...) (contract params ...)))
+     #'(compile-maude (putrevealif (tx ...) () (contract params ...)))]
 
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)))
      #'(compile-maude (putrevealif (tx-id ...) (sec ...) (~? (pred p)) (sum (contract params ...))))]))

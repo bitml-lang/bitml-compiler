@@ -7,9 +7,9 @@
 
 
 
-(compile (guards (deposit "A" 4 "txA@0")(secret a "000a")(secret b "000b")(deposit "B" 0 "txB@0")(vol-deposit "B" a 1 "txVA@2"))        
+(compile (guards (deposit "A" 4 "txA@0")(secret "A" a "000a")(secret "B" b "000b")(deposit "B" 0 "txB@0"))        
          (after 10 (split
-                    (3 (sum  (putrevealif () ()  (withdraw "A"))
+                    (3 (sum  (putrevealif () (a)  (withdraw "A"))
                             (withdraw "B")))
                     (1 (sum (withdraw "B"))))))
 

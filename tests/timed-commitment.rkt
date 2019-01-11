@@ -7,5 +7,6 @@
 
 
 (compile (guards (deposit "A" 1 "txA@0")(secret "A" a "000a")(deposit "B" 0 "txB@0"))        
-         (sum (putrevealif () (a) (withdraw "A")) (after 10 (withdraw "B"))))
+         (sum (reveal (a) (withdraw "A"))
+              (after 10 (withdraw "B"))))
 

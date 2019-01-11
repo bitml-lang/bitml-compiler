@@ -1,3 +1,5 @@
 **/compiled/
 *.rkt~
 *.bak
+.maude_history
+test.maude
