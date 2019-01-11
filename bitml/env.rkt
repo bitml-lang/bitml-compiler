@@ -91,6 +91,9 @@
 (define (get-volatile-dep id)
   (hash-ref volatile-deps-table id))
 
+(define (get-volatile-deps)
+  (hash-keys volatile-deps-table))
+
 ;helpers to store the secrets
 (define secrets-table
   (make-hash))

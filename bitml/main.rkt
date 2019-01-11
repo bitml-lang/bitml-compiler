@@ -461,7 +461,7 @@
              (if (and (> secs-len 0) (= txs-len 0))
                  (string-append "( reveal (" (list+sep->string secs) ")" compiled-pred " . " compiled-cont " )")
                  (if (and (> secs-len 0) (> txs-len 0))
-                     (string-append "( put (" (list+sep->string txs) ") & reveal (" (list+sep->string secs) ")" compiled-pred " . " compiled-cont " )")
+                     (string-append "( put (" (list+sep->string txs) ") reveal (" (list+sep->string secs) ")" compiled-pred " . " compiled-cont " )")
                      ""))))]
 
     [(_ (reveal (sec:id ...) (sum (contract params ...) ...)))
