@@ -430,9 +430,9 @@
     [(_ (after t (contract params ...)))
      #'(format "after ~a : ~a" t (compile-maude (contract params ...)))]
     [(_ (auth part:string ... (contract params ...)))
-     #'(string-append part ... " : " (compile-maude (contract params ...)))]
+     #'(string-append (list+sep->string (list part ...) " : ") " : " (compile-maude (contract params ...)))]
 
-    ;  split ( v -> C, v' -> C' ... )
+    ;  split ( v -> C v' -> C' ... )
     [(_ (split (val:number (sum (contract params ...)...))... ))
      #'(let* ([vals (list val ...)]
               [g-contracts (list (compile-maude (sum (contract params ...)...)) ...)]

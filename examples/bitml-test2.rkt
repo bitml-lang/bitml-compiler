@@ -13,5 +13,5 @@
             (deposit "A" 1 "txA@0")
             (deposit "B" 1 "txA1@0")
             (vol-deposit "B" a 1 "txVA@2")
-            (secret a "hash:00a"))
+            (secret "A" a "hash:00a"))
            (auth "A" "B" (after 10 (putrevealif (a) () (withdraw "A")))))

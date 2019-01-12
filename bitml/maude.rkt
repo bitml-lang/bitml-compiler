@@ -15,8 +15,12 @@
   (let* ([parts-dec (string-append "ops " (list+sep->string (get-participants) " ") " : -> Participant .\n")]
          [string-sec (map (lambda (x) (symbol->string x)) (get-secrets))]
          [string-vdep (map (lambda (x) (symbol->string x)) (get-volatile-deps))]
-         [sec-dec (string-append "ops " (list+sep->string string-sec " ") " : -> Secret .\n")]
-         [vdep-dec (string-append "ops " (list+sep->string string-vdep " ") " : -> Name .\n")]
+         [sec-dec (if (> (length string-sec) 0)
+                      (string-append "ops " (list+sep->string string-sec " ") " : -> Secret .\n")
+                      "")]
+         [vdep-dec (if (> (length string-vdep) 0)
+                       (string-append "ops " (list+sep->string string-vdep " ") " : -> Name .\n")
+                       "")]
          [contract "op C : -> Contract .\n"]
          [sem-conf "op Cconf : -> SemConfiguration .\n"]
          )
@@ -34,7 +38,7 @@
          [sem-vdeps (list+sep->string sem-vdeps "")])
     
     (add-maude-output (string-append "\neq Cconf = toSemConf < C , "
-                                     (number->string tx-v) " BTC > 'nichele\n"
+                                     (number->string tx-v) " BTC > 'xconf\n"
                                      sem-secret-dec "\n" sem-vdeps " .\n"))
     (add-maude-output "endm\n")
     (add-maude-output "smod LIQUIDITY_CHECK is\nprotecting BITML-CHECK .\nincluding BITML-CONTRACT .\nendsm\n")
