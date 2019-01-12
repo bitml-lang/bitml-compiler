@@ -180,6 +180,12 @@
 (define-syntax (get-script stx)
   (syntax-parse stx
     #:literals (putrevealif auth after pred)
+    [(_ (reveal (sec:id ...) (contract params ...)))
+     #'(get-script (putrevealif () (sec ...) (contract params ...)))]
+    [(_ (reveal (sec:id ...) (pred p) (contract params ...)))
+     #'(get-script (putrevealif () (sec ...) (pred p) (contract params ...)))]
+    [(_ (reveal (tx:id ...) (contract params ...)))
+     #'(get-script (putrevealif (tx ...) () (contract params ...)))]
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
      (let [(contract #''(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (~? (contract params ...) ())) )]
        #`(get-script* #,contract #,contract))]
@@ -216,6 +222,13 @@
 (define-syntax (get-script-params stx)
   (syntax-parse stx
     #:literals (putrevealif auth after pred)
+    [(_ (reveal (sec:id ...) (contract params ...)))
+     #'(get-script-params (putrevealif () (sec ...) (contract params ...)))]
+    [(_ (reveal (sec:id ...) (pred p) (contract params ...)))
+     #'(get-script-params (putrevealif () (sec ...) (pred p) (contract params ...)))]
+    [(_ (reveal (tx:id ...) (contract params ...)))
+     #'(get-script-params (putrevealif (tx ...) () (contract params ...)))]
+    
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
 
      #'(let ([cont-params (~? (get-script-params p) '())])
@@ -259,7 +272,7 @@
   (syntax-parse stx
     #:literals(pred sum)
     [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (sum (contract params ...)...)) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     
+     (displayln #'sec-to-reveal)
      #'(begin        
          (let* ([tx-name (format "T~a" (new-tx-index))]
                 [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
@@ -291,7 +304,7 @@
 
            ;compile the secrets declarations
            (for-each
-            (lambda (x) (add-output (string-append "const sec_" (symbol->string x) " : string = _ //add secret for output " (symbol->string x))))
+            (lambda (x) (add-output (string-append "const sec_" x " = _ //add value for secret " x)))
             sec-to-reveal)
 
          
@@ -342,8 +355,9 @@
 
 (define-syntax (split stx)
   (syntax-parse stx
-    #:literals(sum)
-    [(_ (val:number (sum (contract params ...)...))... parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+    #:literals(sum)    
+    [(_ (val:number (sum (contract params ...)...))...
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #`(begin    
          (let* ([tx-name (format "T~a" (new-tx-index))]
                 [values-list (list val ...)]
@@ -382,7 +396,13 @@
                 
                 (begin             
                   (execute-split '(contract params ...)... tx-name count val parts)
-                  (set! count (add1 count)))...))))]))
+                  (set! count (add1 count)))...))))]
+
+    ;allow for split branches with unary sums
+    [(_ (val:number (~or (sum (contract params ...)...) (scontract sparams ...)))...
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(split (val (~? (sum (scontract sparams ...))) (~? (sum (contract params ...)...)) )...
+              parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
 
 (define-syntax (execute-split stx)
   (syntax-parse stx
@@ -433,9 +453,9 @@
      #'(string-append (list+sep->string (list part ...) " : ") " : " (compile-maude (contract params ...)))]
 
     ;  split ( v -> C v' -> C' ... )
-    [(_ (split (val:number (sum (contract params ...)...))... ))
+    [(_ (split (val:number (contract params ...))... ))
      #'(let* ([vals (list val ...)]
-              [g-contracts (list (compile-maude (sum (contract params ...)...)) ...)]
+              [g-contracts (list (compile-maude (contract params ...)) ...)]
               [decl-parts (map
                            (lambda (v gc) (string-append (number->string v) " BTC ~> " gc))
                            vals
@@ -448,13 +468,13 @@
      #'(let ([g-contracts (list (compile-maude (contract params ...))...)])         
          (string-append "( " (list+sep->string g-contracts " + ") " )"))]
 
-    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (sum (contract params ...) ...)))
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)))
      #'(let* ([txs (list (symbol->string 'tx-id) ...)]
               [secs (list (symbol->string 'sec) ...)]
               [txs-len (length txs)]
               [secs-len (length secs)]
               [compiled-pred (~? (string-append " if " (compile-pred-maude p)) "")]
-              [compiled-cont (compile-maude (sum (contract params ...) ...))])
+              [compiled-cont (compile-maude (contract params ...))])
          
          (if (and (= 0 secs-len) (> txs-len 0))
              (string-append "( put (" (list+sep->string txs) ") . " compiled-cont " )")
@@ -464,20 +484,11 @@
                      (string-append "( put (" (list+sep->string txs) ") reveal (" (list+sep->string secs) ")" compiled-pred " . " compiled-cont " )")
                      ""))))]
 
-    [(_ (reveal (sec:id ...) (sum (contract params ...) ...)))
-     #'(compile-maude (putrevealif () (sec ...) (sum (contract params ...) ...)))]
     [(_ (reveal (sec:id ...) (contract params ...)))
      #'(compile-maude (putrevealif () (sec ...) (contract params ...)))]
 
-    [(_ (revealif (sec:id ...) (pred p) (sum (contract params ...) ...)))
-     #'(compile-maude (putrevealif () (sec ...) (pred p) (sum (contract params ...) ...)))]
     [(_ (reveal (sec:id ...) (pred p) (contract params ...)))
      #'(compile-maude (putrevealif () (sec ...) (pred p) (contract params ...)))]
 
-    [(_ (put (tx:id ...) (sum (contract params ...) ...)))
-     #'(compile-maude (putrevealif (tx ...) () (sum (contract params ...) ...)))]
     [(_ (reveal (tx:id ...) (contract params ...)))
-     #'(compile-maude (putrevealif (tx ...) () (contract params ...)))]
-
-    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)))
-     #'(compile-maude (putrevealif (tx-id ...) (sec ...) (~? (pred p)) (sum (contract params ...))))]))
+     #'(compile-maude (putrevealif (tx ...) () (contract params ...)))]))
