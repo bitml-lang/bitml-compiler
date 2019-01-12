@@ -127,7 +127,6 @@
 
 
 ;compilation command
-;todo: output script
 (define-syntax (compile stx)
   (syntax-parse stx
     #:literals (guards sum)
@@ -158,23 +157,8 @@
     [(_ (guards guard ...)
         (contract params ...))
      
-     #`(begin
-         (reset-state)
-         guard ...
-         
-         (let ([script (get-script (contract params ...))]
-               [script-params (get-script-params (contract params ...))])
-           (compile-init parts deposit-txout tx-v script script-params)
-
-           ;start the compilation of the contract
-           (contract params ... '(contract params ...) "Tinit" 0 tx-v (get-participants) 0 script-params script-params)
-
-           ;start the maude code declaration
-           (maude-opening)
-           (add-maude-output (string-append "eq C = " (compile-maude (contract params ...)) " . \n"))
-           (maude-closing)
-           
-           (show-compiled)))]))
+     #`(compile (guards guard ...)
+        (contract params ...))]))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
 (define-syntax (get-script stx)
@@ -313,44 +297,7 @@
            (~? (contract params ... '(sum (contract params ...)...) tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract)))...))]
     
     [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)     
-     #'(begin
-         (let* ([tx-name (format "T~a" (new-tx-index))]
-                [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
-                [new-value (foldl (lambda (x acc) (+ (second x) acc)) value vol-dep-list)]
-
-                [format-input (lambda (x sep acc) (format "~a:sig~a" (third (get-volatile-dep x)) (symbol->string x)))]
-
-                [vol-inputs (list 'tx-id ...)]
-              
-                [vol-inputs-str (if (> 0 (length vol-inputs))
-                                    (string-append "; " (list+sep->string (map (lambda (x) (format-input x)) vol-inputs)))
-                                    "")]
-              
-                [script (~? (get-script (contract params ...)) null)]
-                [script-params (list+sep->string (append
-                                                  (~? (get-script-params (contract params ...)) '())
-                                                  (parts->sigs-param-list (get-participants))))]
-                ;[script-params (parts->sigs-params)]
-                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
-                [tx-sigs (participants->tx-sigs parts tx-name)]
-                [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ": " sec-wit " " tx-sigs vol-inputs-str "]")])
-
-           ;compile signatures constants for the volatile deposits
-           (for-each
-            (lambda (x) (add-output (string-append "const sig" (symbol->string x) " : signature = _ //add signature for output " (third (get-volatile-dep x)))))
-            (list 'tx-id ...))
-
-           (add-output (participants->sigs-declar parts tx-name parent-contract))
-           
-           ;compile the secrets declarations
-           (for-each
-            (lambda (x) (add-output (string-append "const sec_" x " = _ //add secret for output " x)))
-            sec-to-reveal)
-         
-           (add-output (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a\n~a}\n"
-                               tx-name inputs new-value script-params script (format-timelock timelock)))
-         
-           (~? (contract params ... '(contract params ...) tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract) ))))]))
+     #'(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (~? (sum (contract params ...))) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)]))
 
 
 (define-syntax (split stx)
