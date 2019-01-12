@@ -9,9 +9,8 @@
 (compile (guards (deposit "A" 1 "txA@0")(secret "A" a "000a")
                  (deposit "B" 1 "txB@0")(secret "B" b "000b"))        
          (sum
-          (reveal (a)
-                  (sum (reveal (b) (split (1 (withdraw "A"))
-                                          (1 (withdraw "B"))))
+          (reveal (a) (sum
+                       (reveal (b) (split (1 (withdraw "A")) (1 (withdraw "B"))))
                        (after 10 (withdraw "B"))))
           (after 10 (withdraw "B"))))
 

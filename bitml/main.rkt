@@ -42,7 +42,7 @@
      #'(begin         
          (let* ([tx-name (new-tx-name)]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
-                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
+                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "0")) all-secrets) " ")]
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ": " sec-wit " " tx-sigs "]")])
 
 
@@ -139,7 +139,7 @@
 
          (let* ([scripts-list (list (get-script (contract params ...)) ...)]
                 [script (list+sep->string scripts-list " || ")]
-                [script-params (remove-duplicates (append (get-script-params (contract params ...)) ...))])
+                [script-params (get-script-params (sum (contract params ...) ...))])
 
            (compile-init parts deposit-txout tx-v script script-params)
 
@@ -158,7 +158,7 @@
         (contract params ...))
      
      #`(compile (guards guard ...)
-        (contract params ...))]))
+                (contract params ...))]))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
 (define-syntax (get-script stx)
@@ -205,18 +205,22 @@
 ;return the parameters for the script obtained by get-script
 (define-syntax (get-script-params stx)
   (syntax-parse stx
-    #:literals (putrevealif auth after pred)
+    #:literals (putrevealif auth after pred sum split)
     [(_ (reveal (sec:id ...) (contract params ...)))
      #'(get-script-params (putrevealif () (sec ...) (contract params ...)))]
-    [(_ (reveal (sec:id ...) (pred p) (contract params ...)))
+    [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
      #'(get-script-params (putrevealif () (sec ...) (pred p) (contract params ...)))]
-    [(_ (reveal (tx:id ...) (contract params ...)))
+    [(_ (put (tx:id ...) (contract params ...)))
      #'(get-script-params (putrevealif (tx ...) () (contract params ...)))]
     
+    [(_ (sum (contract params ...)...))
+     #'(remove-duplicates (append (get-script-params (contract params ...)) ...))]
+    
+    [(_ (split (val (contract params ...))...))
+     #'(get-script-params (sum (contract params ...) ...))]
+    
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
-
-     #'(let ([cont-params (~? (get-script-params p) '())])
-         (append (list (string-append (symbol->string 'sec) ":int") ...) cont-params))]
+     #'(list (string-append (symbol->string 'sec) ":int") ...)]
     [(_ (auth part ... cont)) #'(get-script-params cont)]
     [(_ (after t cont)) #'(get-script-params cont)]
     [(_ x) #''()]))
@@ -256,8 +260,13 @@
   (syntax-parse stx
     #:literals(pred sum)
     [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (sum (contract params ...)...)) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     (displayln #'sec-to-reveal)
-     #'(begin        
+     #'(begin
+         (displayln 'parent-contract)
+         (displayln sec-to-reveal)
+         (displayln all-secrets)
+         (displayln "")
+
+
          (let* ([tx-name (format "T~a" (new-tx-index))]
                 [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
                 [new-value (foldl (lambda (x acc) (+ (second x) acc)) value vol-dep-list)]
@@ -275,7 +284,7 @@
                                                   (~? (append (get-script-params (contract params ...)) ...) '())
                                                   (parts->sigs-param-list (get-participants))))]
                 ;[script-params (parts->sigs-params)]
-                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
+                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "0")) all-secrets) " ")]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" sec-wit " " tx-sigs vol-inputs-str "]")])
 
@@ -294,7 +303,8 @@
          
            (add-output (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
          
-           (~? (contract params ... '(sum (contract params ...)...) tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract)))...))]
+           (~? (contract params ... '(sum (contract params ...)...)
+                         tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params (sum (contract params ...)...))))...))]
     
     [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)     
      #'(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (~? (sum (contract params ...))) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)]))
@@ -312,9 +322,9 @@
                 [script-list (for/list([subscripts subscripts-list])
                                (list+sep->string subscripts " || "))]
                 [script-params-list (list (list+sep->string (append
-                                                             (remove-duplicates (append (get-script-params (contract params ...)) ...))
-                                                             (parts->sigs-param-list (get-participants))))...)]  
-                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
+                                                             (get-script-params (split (val (sum (contract params ...)...))...))
+                                                             (parts->sigs-param-list (get-participants)))))]  
+                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "0")) all-secrets) " ")]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" sec-wit " " tx-sigs "]")]
                 [outputs (for/list([value values-list]
@@ -354,7 +364,7 @@
 (define-syntax (execute-split stx)
   (syntax-parse stx
     [(_ '(contract params ...) ... parent-tx input-idx value parts)     
-     #'(let ([sum-secrets (remove-duplicates (append (get-script-params (contract params ...))...))])
+     #'(let ([sum-secrets (get-script-params (sum (contract params ...)...))])
          ;(begin
          ;(displayln '(contract params ...))
          ;(displayln (format "parametri ~a ~a ~a ~a ~a" parent-tx input-idx value parts sum-secrets))
@@ -364,6 +374,9 @@
          (contract params ... '(contract params ...) parent-tx input-idx value parts 0
                    sum-secrets (get-script-params (contract params ...)))...)]))
 
+
+;syntax sugar for putrevealif
+;--------------------------------------------------------------------------
 (define-syntax (put stx)
   (syntax-parse stx
     #:literals(sum)
@@ -387,7 +400,7 @@
      #'(putrevealif () (sec ...) (pred p) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
     [(_ (sec:id ...) (pred p) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #'(putrevealif () (sec ...) (pred p) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
-     
+;--------------------------------------------------------------------------   
 
 (define-syntax (compile-maude stx)
   (syntax-parse stx
