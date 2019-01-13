@@ -11,5 +11,5 @@
          (after 10 (split
                     (3 (sum  (putrevealif () (a)  (withdraw "A"))
                             (withdraw "B")))
-                    (1 (sum (withdraw "B"))))))
+                    (1 (withdraw "B")))))
 

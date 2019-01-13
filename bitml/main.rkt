@@ -216,9 +216,6 @@
     [(_ (sum (contract params ...)...))
      #'(remove-duplicates (append (get-script-params (contract params ...)) ...))]
     
-    [(_ (split (val (contract params ...))...))
-     #'(get-script-params (sum (contract params ...) ...))]
-    
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
      #'(list (string-append (symbol->string 'sec) ":int") ...)]
     [(_ (auth part ... cont)) #'(get-script-params cont)]
