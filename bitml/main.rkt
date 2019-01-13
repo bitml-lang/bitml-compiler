@@ -408,7 +408,7 @@
      #'(let* ([vals (list val ...)]
               [g-contracts (list (compile-maude (contract params ...)) ...)]
               [decl-parts (map
-                           (lambda (v gc) (string-append (number->string v) " BTC ~> " gc))
+                           (lambda (v gc) (string-append (number->string v) " BTC ~> ( " gc " )"))
                            vals
                            g-contracts)]
               [decl (list+sep->string decl-parts "\n")])
