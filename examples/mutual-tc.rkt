@@ -10,7 +10,8 @@
                  (deposit "B" 1 "txB@0")(secret "B" b "000b"))        
          (sum
           (reveal (a) (sum
-                       (reveal (b) (split (1 (withdraw "A")) (1 (withdraw "B"))))
-                       (after 10 (withdraw "B"))))
+                       (reveal (b) (split (1 -> (withdraw "A"))
+                                          (1 -> (withdraw "B"))))
+                       (after 10 (withdraw "A"))))
           (after 10 (withdraw "B"))))
 

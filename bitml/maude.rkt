@@ -41,5 +41,6 @@
                                      (number->string tx-v) " BTC > 'xconf\n"
                                      sem-secret-dec "\n" sem-vdeps " .\n"))
     (add-maude-output "endm\n")
-    (add-maude-output "smod LIQUIDITY_CHECK is\nprotecting BITML-CHECK .\nincluding BITML-CONTRACT .\nendsm\n")
-    (add-maude-output "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, <> contract-free, 'bitml) .\n")))
+    (add-maude-output "smod LIQUIDITY_CHECK is\nprotecting BITML-CHECK .\nincluding BITM-CONTRACT .\nendsm\n")
+    (add-maude-output "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, <> contract-free, 'bitml) .\n")
+    (add-maude-output "quit .\n")))

@@ -1,19 +1,7 @@
 #lang racket/base
 
-(require (for-syntax racket/base syntax/parse) "env.rkt")
+(require (for-syntax racket/base syntax/parse) "env.rkt" "terminals.rkt")
  
-
-;operators for predicate in putrevealif
-(define-syntax (btrue stx) (raise-syntax-error #f "wrong usage of true" stx))
-(define-syntax (band stx) (raise-syntax-error #f "wrong usage of and" stx))
-(define-syntax (bnot stx) (raise-syntax-error #f "wrong usage of not" stx))
-(define-syntax (b= stx) (raise-syntax-error #f "wrong usage of =" stx))
-(define-syntax (b< stx) (raise-syntax-error #f "wrong usage of <" stx))
-(define-syntax (b<= stx) (raise-syntax-error #f "wrong usage of <" stx))
-(define-syntax (b+ stx) (raise-syntax-error #f "wrong usage of +" stx))
-(define-syntax (b- stx) (raise-syntax-error #f "wrong usage of -" stx))
-(define-syntax (bsize stx) (raise-syntax-error #f "wrong usage of size" stx))
-(define-syntax (pred stx) (raise-syntax-error #f "wrong usage of pred" stx))
 
 (define-syntax (compile-pred stx)
   (syntax-parse stx

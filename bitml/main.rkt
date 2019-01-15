@@ -2,7 +2,7 @@
 
 (require (for-syntax racket/base syntax/parse)
          racket/list racket/bool racket/string
-         "maude.rkt" "string-helpers.rkt" "env.rkt" "exp.rkt")
+         "maude.rkt" "string-helpers.rkt" "env.rkt" "exp.rkt" "terminals.rkt")
 
 ;provides the default reader for an s-exp lang
 (module reader syntax/module-reader
@@ -11,7 +11,7 @@
 (provide  participant compile withdraw deposit guards
           after auth key secret vol-deposit putrevealif
           put reveal revealif
-          pred sum split generate-keys
+          pred sum split generate-keys ->
           (rename-out [btrue true] [band and] [bnot not] [b= =] [b< <] [b+ +] [b- -] [b<= <=] [bsize size])
           #%module-begin #%datum #%top-interaction)
 
@@ -76,9 +76,6 @@
     [(_)
      (raise-syntax-error #f "wrong usage of auth" stx)]))
 
-  
-(define-syntax (guards stx) (raise-syntax-error #f "wrong usage of guards" stx))
-
 (define-syntax (deposit stx)
   (syntax-parse stx
     [(_ part:string v:number txout)
@@ -104,8 +101,6 @@
     [(_)
      (raise-syntax-error 'deposit "wrong usage of secret" stx)]))
 
-
-(define-syntax (sum stx) (raise-syntax-error #f "wrong usage of sum" stx))
 
 ;prepares and displays the output of the compilation
 (define (show-compiled)
@@ -149,7 +144,7 @@
            
            ;start the maude code declaration
            (maude-opening)
-           (add-maude-output (string-append "eq C = " (compile-maude (sum (contract params ...) ...)) " . \n"))
+           (add-maude-output (string-append "eq C = " (compile-maude-contract (sum (contract params ...) ...)) " . \n"))
            (maude-closing)
            
            (show-compiled)))]
@@ -256,7 +251,7 @@
 (define-syntax (putrevealif stx)
   (syntax-parse stx
     #:literals(pred sum)
-    [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (sum (contract params ...)...)) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+    [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #'(begin
          (let* ([tx-name (format "T~a" (new-tx-index))]
                 [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
@@ -269,7 +264,7 @@
                 [vol-inputs-str (if (> 0 (length vol-inputs))
                                     (string-append "; " (list+sep->string (map (lambda (x) (format-input x)) vol-inputs)))
                                     "")]
-                [scripts-list (~? (list (get-script (contract params ...)) ...) null)]
+                [scripts-list (list (get-script (contract params ...)) ...)]
                 [script (list+sep->string scripts-list " || ")]
                 [script-params (list+sep->string (append
                                                   (~? (append (get-script-params (contract params ...)) ...) '())
@@ -294,17 +289,17 @@
          
            (add-output (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
          
-           (~? (contract params ... '(sum (contract params ...)...)
-                         tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract)))...))]
+           (contract params ... '(sum (contract params ...)...)
+                     tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract))...))]
     
-    [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...)) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)     
-     #'(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (~? (sum (contract params ...))) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)]))
+    [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)
+     #'(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (sum (contract params ...)) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)]))
 
 
 (define-syntax (split stx)
   (syntax-parse stx
     #:literals(sum)    
-    [(_ (val:number (sum (contract params ...)...))...
+    [(_ (val:number -> (sum (contract params ...)...))...
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #`(begin    
          (let* ([tx-name (format "T~a" (new-tx-index))]
@@ -347,9 +342,9 @@
                   (set! count (add1 count)))...))))]
 
     ;allow for split branches with unary sums
-    [(_ (val:number (~or (sum (contract params ...)...) (scontract sparams ...)))...
+    [(_ (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(split (val (~? (sum (scontract sparams ...))) (~? (sum (contract params ...)...)) )...
+     #'(split (val -> (~? (sum (scontract sparams ...))) (~? (sum (contract params ...)...)) )...
               parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
 
 (define-syntax (execute-split stx)
@@ -393,20 +388,21 @@
      #'(putrevealif () (sec ...) (pred p) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
 ;--------------------------------------------------------------------------   
 
-(define-syntax (compile-maude stx)
+(define-syntax (compile-maude-contract stx)
   (syntax-parse stx
-    #:literals (withdraw after auth split putrevealif pred sum)
+    #:literals (withdraw after auth split putrevealif pred sum strip-auth)
     [(_ (withdraw part:string))
      #'(string-append "withdraw " part)]
     [(_ (after t (contract params ...)))
-     #'(format "after ~a : ~a" t (compile-maude (contract params ...)))]
+     #'(format "after ~a : ~a" t (compile-maude-contract (contract params ...)))]
     [(_ (auth part:string ... (contract params ...)))
-     #'(string-append (list+sep->string (list part ...) " : ") " : " (compile-maude (contract params ...)))]
-
+     #'(string-append "(" (list+sep->string (list part ...) " , ") ") : " (compile-maude-contract (contract params ...)))]
+    [(_ (auth part:string ... (contract params ...)) strip-auth)
+     #'(compile-maude-contract (contract params ...))]
     ;  split ( v -> C v' -> C' ... )
-    [(_ (split (val:number (contract params ...))... ))
+    [(_ (split (val:number -> (contract params ...))... ))
      #'(let* ([vals (list val ...)]
-              [g-contracts (list (compile-maude (contract params ...)) ...)]
+              [g-contracts (list (compile-maude-contract (contract params ...)) ...)]
               [decl-parts (map
                            (lambda (v gc) (string-append (number->string v) " BTC ~> ( " gc " )"))
                            vals
@@ -416,7 +412,7 @@
          (string-append "split( " decl " )" ))]
 
     [(_ (sum (contract params ...)...))
-     #'(let ([g-contracts (list (compile-maude (contract params ...))...)])         
+     #'(let ([g-contracts (list (compile-maude-contract (contract params ...))...)])         
          (string-append "( " (list+sep->string g-contracts " + ") " )"))]
 
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)))
@@ -425,7 +421,7 @@
               [txs-len (length txs)]
               [secs-len (length secs)]
               [compiled-pred (~? (string-append " if " (compile-pred-maude p)) "")]
-              [compiled-cont (compile-maude (contract params ...))])
+              [compiled-cont (compile-maude-contract (contract params ...))])
          
          (if (and (= 0 secs-len) (> txs-len 0))
              (string-append "( put (" (list+sep->string txs) ") . " compiled-cont " )")
@@ -436,10 +432,51 @@
                      ""))))]
 
     [(_ (reveal (sec:id ...) (contract params ...)))
-     #'(compile-maude (putrevealif () (sec ...) (contract params ...)))]
+     #'(compile-maude-contract (putrevealif () (sec ...) (contract params ...)))]
 
-    [(_ (reveal (sec:id ...) (pred p) (contract params ...)))
-     #'(compile-maude (putrevealif () (sec ...) (pred p) (contract params ...)))]
+    [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
+     #'(compile-maude-contract (putrevealif () (sec ...) (pred p) (contract params ...)))]
 
     [(_ (reveal (tx:id ...) (contract params ...)))
-     #'(compile-maude (putrevealif (tx ...) () (contract params ...)))]))
+     #'(compile-maude-contract (putrevealif (tx ...) () (contract params ...)))]))
+
+(define-syntax (compile-maude-strat stx)
+  (syntax-parse stx
+    #:literals (strategy bif)
+    [(_ (strategy (name:id) part:string action))
+     #'""]))
+
+(define-syntax (compile-maude-action stx)
+  (syntax-parse stx
+    #:literals (b-if do-reveal do-auth not-destory)
+
+    [(_ (do-reveal part:string secret:id) b-if pred)
+     #'(string-append "eq strategy(ctx:Context S:Configuration" (compile-maude-pred pred)
+                      ", " part " lock-reveal " (symbol->string 'secret) ") = false . \n")]
+    [(_ (do-reveal part:string secret:id))
+     #'(string-append "eq strategy(S:SemConfiguration, " part " lock-reveal " (symbol->string 'secret) ") = false . \n")]
+    
+
+    
+    [(_ (do-auth part:string contract))
+     #'(string-append "eq strategy(S:SemConfiguration, " part " lock " (compile-maude-contract contract strip-auth) " in x:Name) = false . \n")]
+    [(_ (do-auth part:string contract) b-if pred)
+     #'(string-append "eq strategy(S:SemConfiguration, " part " lock " (compile-maude-contract contract strip-auth) " in x:Name) = false . \n"
+                      "eq strategy(ctx:Context S:Configuration " (compile-maude-pred pred)
+                      ", " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = true . \n"
+                      "eq strategy(S:SemConfiguration, " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = false .")]
+
+    
+    [(_ (not-destory part:string vol-deposit))
+     #'(string-append "eq strategy(S:SemConfiguration, " part " authorize-destroy-of " (symbol->string 'vol-deposit) ") = false .\n")]
+    [(_ (do-destory part:string vol-deposit))
+     #'(string-append "eq strategyS:SemConfiguration, " part " authorize-destroy-of " (symbol->string 'vol-deposit) ") = true .\n")]))
+
+;eq strategy(ctx:Context S:Configuration | B : b # 1, A authorize-destroy-of x) = false .
+(define-syntax (compile-maude-pred stx)
+  (syntax-parse stx
+    #:literals (do-reveal do-auth not-destory do-destory state)
+    [(_ (do-reveal part:string secret:id))
+     #'(string-append " | " part " : " (symbol->string 'secret) " # 1 ")]
+    [(_ (do-auth part:string contract))
+    #'(string-append " | " part " [ x:Name |> " (compile-maude-contract contract) " ] ")]))
