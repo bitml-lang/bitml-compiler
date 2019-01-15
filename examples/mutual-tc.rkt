@@ -13,5 +13,6 @@
                        (reveal (b) (split (1 -> (withdraw "A"))
                                           (1 -> (withdraw "B"))))
                        (after 10 (withdraw "A"))))
-          (after 10 (withdraw "B"))))
+          (after 10 (withdraw "B"))
+          ))
 
