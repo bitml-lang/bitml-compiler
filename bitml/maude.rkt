@@ -52,10 +52,10 @@
      #'(begin
          (let ([maude-str 
                 (string-append maude-output
-                              (compile-maude-strat strategy)...
-                              (get-maude-closing)
-                              "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, <> contract-free, 'bitml) .\n"
-                              "quit .\n")])
+                               (compile-maude-strat strategy)...
+                               (get-maude-closing)
+                               "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, <> contract-free, 'bitml) .\n"
+                               "quit .\n")])
            (write-maude-file maude-str)
            (display "\n/*\nModel checking result for ")
            (displayln '(check-liquid strategy ...))
@@ -66,11 +66,11 @@
      #'(begin
          (let ([maude-str 
                 (string-append maude-output
-                              (compile-maude-strat strategy)...
-                              (get-maude-closing)
-                              "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, []<> " part
-                              " has-deposit>= " (number->string val) " BTC, 'bitml) . \n"
-                              "quit .\n")])
+                               (compile-maude-strat strategy)...
+                               (get-maude-closing)
+                               "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, []<> " part
+                               " has-deposit>= " (number->string val) " BTC, 'bitml) . \n"
+                               "quit .\n")])
            (write-maude-file maude-str)
            (display "\n/*\nModel checking result for ")
            (displayln '(check part has-more-than val strategy ...))
@@ -130,13 +130,10 @@
   (let ([maude-path (environment-variables-ref (current-environment-variables) #"MAUDE_PATH")]
         (maude-mc-path (environment-variables-ref (current-environment-variables) #"MAUDE_MC_PATH"))
         (bitml-maude-path (environment-variables-ref (current-environment-variables) #"BITML_MAUDE_PATH")))
-    (if (equal? (system-type) 'windows)
-        (with-output-to-string (lambda ()
-                                 (system (format "~a/maude.exe ~a/model-checker.maude ~a/bitml.maude test.maude"
-                                                 maude-path maude-mc-path bitml-maude-path) #:set-pwd? #t)))
-        (with-output-to-string (lambda ()
-                                 (system (format "$~a/maude $~a/model-checker.maude $~a/bitml.maude test.maude"
-                                                 maude-path maude-path bitml-maude-path) #:set-pwd? #t))))))
+    
+    (with-output-to-string (lambda ()
+                             (system (format "~a/maude.exe ~a/model-checker.maude ~a/bitml.maude test.maude"
+                                             maude-path maude-mc-path bitml-maude-path) #:set-pwd? #t)))))
 
 (define (display-maude-out str)
   (match (string-replace (string-replace str "\n" "") "\t" "")
