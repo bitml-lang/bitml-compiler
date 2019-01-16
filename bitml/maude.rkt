@@ -135,7 +135,7 @@
                                  (system (format "~a/maude.exe ~a/model-checker.maude ~a/bitml.maude test.maude"
                                                  maude-path maude-mc-path bitml-maude-path) #:set-pwd? #t)))
         (with-output-to-string (lambda ()
-                                 (system (format "$~a/maude.exe $~a/model-checker.maude $~a/bitml.maude test.maude"
+                                 (system (format "$~a/maude $~a/model-checker.maude $~a/bitml.maude test.maude"
                                                  maude-path maude-path bitml-maude-path) #:set-pwd? #t))))))
 
 (define (display-maude-out str)
