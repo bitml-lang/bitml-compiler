@@ -11,6 +11,9 @@
  (sum (reveal (a) (withdraw "A"))
       (after 10 (withdraw "B")))
 
+ (check-liquid
+        #;(strategy "A" (do-reveal a)))
+
  (check "A" has-more-than 1
         (strategy "A" (do-reveal a))))
 

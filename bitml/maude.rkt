@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require (for-syntax racket/base syntax/parse)
-         racket/list racket/port racket/system
+         racket/list racket/port racket/system racket/match racket/string
          "string-helpers.rkt" "env.rkt" "terminals.rkt")
 
 (define maude-output "")
@@ -28,7 +28,7 @@
 
 (provide (all-defined-out))
 
-(define (maude-closing)
+(define (get-maude-closing)
   (let* ([sem-secrets (map (lambda (s) (string-append " | { " (get-secret-part s) " : " (symbol->string s) " # 1 }")) (get-secrets))]
          [sem-secret-dec (list+sep->string sem-secrets "")]
          [sem-vdeps (map (lambda (d) (let* ([vdep (get-volatile-dep d)]
@@ -37,11 +37,11 @@
                                        (string-append " | < " part ", " val " BTC > " (symbol->string d) " "))) (get-volatile-deps))]
          [sem-vdeps (list+sep->string sem-vdeps "")])
     
-    (add-maude-output (string-append "\neq Cconf = toSemConf < C , "
-                                     (number->string tx-v) " BTC > 'xconf\n"
-                                     sem-secret-dec "\n" sem-vdeps " .\n"))
-    (add-maude-output "endm\n")
-    (add-maude-output "smod LIQUIDITY_CHECK is\nprotecting BITML-CHECK .\nincluding BITML-CONTRACT .\nendsm\n")))
+    (string-append "\neq Cconf = toSemConf < C , "
+                   (number->string tx-v) " BTC > 'xconf\n"
+                   sem-secret-dec "\n" sem-vdeps " .\n"
+                   "endm\n"
+                   "smod LIQUIDITY_CHECK is\nprotecting BITML-CHECK .\nincluding BITML-CONTRACT .\nendsm\n")))
 
 
 
@@ -50,26 +50,32 @@
     #:literals (check-liquid check has-more-than)
     [(_ (check-liquid strategy ...))
      #'(begin
-         (for ([s (list strategy ...)])
-           (add-maude-output (compile-maud-strat s)))
-         (maude-closing)
-         (string-append "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, <> contract-free, 'bitml) .\n")
-         (add-maude-output "quit .\n")
-         (write-maude-file)
-         (displayln (execute-maude)))]
+         (let ([maude-str 
+                (string-append maude-output
+                              (compile-maude-strat strategy)...
+                              (get-maude-closing)
+                              "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, <> contract-free, 'bitml) .\n"
+                              "quit .\n")])
+           (write-maude-file maude-str)
+           (display "\n/*\nModel checking result for ")
+           (displayln '(check-liquid strategy ...))
+           (display-maude-out (execute-maude))
+           (display "*/\n")))]
     
     [(_ (check part:string has-more-than val:number strategy ...))
      #'(begin
-         (add-maude-output (compile-maude-strat strategy))...
-         (maude-closing)
-         (add-maude-output "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, []<> " part
-                           " has-deposit>= " (number->string val) " BTC, 'bitml) . \n")
-         (add-maude-output "quit .\n")
-         (write-maude-file)
-         (display "/*\nModel checking result for ")
-         (displayln '(check part has-more-than val strategy ...))
-         (displayln (execute-maude))
-         (display "*/"))]))
+         (let ([maude-str 
+                (string-append maude-output
+                              (compile-maude-strat strategy)...
+                              (get-maude-closing)
+                              "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, []<> " part
+                              " has-deposit>= " (number->string val) " BTC, 'bitml) . \n"
+                              "quit .\n")])
+           (write-maude-file maude-str)
+           (display "\n/*\nModel checking result for ")
+           (displayln '(check part has-more-than val strategy ...))
+           (display-maude-out (execute-maude))
+           (display "*/\n")))]))
 
 (define-syntax (compile-maude-strat stx)
   (syntax-parse stx
@@ -115,19 +121,36 @@
     [(_ (part:string do-auth contract))
      #'(string-append " | " part " [ x:Name |> " (compile-maude-contract contract) " ] ")]))
 
-(define (write-maude-file)
+(define (write-maude-file str)
   (define out (open-output-file "test.maude" #:exists 'replace))
-  (display maude-output out)
+  (display str out)
   (close-output-port out))
 
 (define (execute-maude)
   (let ([maude-path (environment-variables-ref (current-environment-variables) #"MAUDE-PATH")]
         (maude-mc-path (environment-variables-ref (current-environment-variables) #"MAUDE-MC-PATH"))
         (bitml-maude-path (environment-variables-ref (current-environment-variables) #"BITML-MAUDE-PATH")))
-  (if (equal? (system-type) 'windows)
-      (with-output-to-string (lambda ()
-                               (system (format "~a/maude.exe ~a/model-checker.maude ~a/bitml.maude test.maude"
-                                               maude-path maude-mc-path bitml-maude-path) #:set-pwd? #t)))
-      (with-output-to-string (lambda ()
-                               (system (format "~a/maude.exe ~a/model-checker.maude ~a/bitml.maude test.maude"
-                                               maude-path maude-path bitml-maude-path) #:set-pwd? #t))))))
+    (if (equal? (system-type) 'windows)
+        (with-output-to-string (lambda ()
+                                 (system (format "~a/maude.exe ~a/model-checker.maude ~a/bitml.maude test.maude"
+                                                 maude-path maude-mc-path bitml-maude-path) #:set-pwd? #t)))
+        (with-output-to-string (lambda ()
+                                 (system (format "~a/maude.exe ~a/model-checker.maude ~a/bitml.maude test.maude"
+                                                 maude-path maude-path bitml-maude-path) #:set-pwd? #t))))))
+
+(define (display-maude-out str)
+  (match (string-replace (string-replace str "\n" "") "\t" "")
+    [(regexp #px"rewrites:.* \\((.*) real\\).*result ModelCheckResult: (counterexample\\(.*\\))Bye" (list _ time cex))
+     (displayln (string-append "Computation time: " time))
+     (displayln "Result: false\n")
+     (displayln cex)]
+    [(regexp #px"rewrites:.* \\((.*) real\\).*(result Bool: true.*)Bye" (list _ time res))
+     (displayln (string-append "Computation time: " time))
+     (displayln "Result: true")]))
+
+#;
+(define (display-maude-out str)
+  (displayln str)
+  (match str
+    [(regexp #rx"(result.*)" (list _ res))
+     (displayln (string-append res "\n"))]))
