@@ -127,9 +127,9 @@
   (close-output-port out))
 
 (define (execute-maude)
-  (let ([maude-path (environment-variables-ref (current-environment-variables) #"MAUDE-PATH")]
-        (maude-mc-path (environment-variables-ref (current-environment-variables) #"MAUDE-MC-PATH"))
-        (bitml-maude-path (environment-variables-ref (current-environment-variables) #"BITML-MAUDE-PATH")))
+  (let ([maude-path (environment-variables-ref (current-environment-variables) #"MAUDE_PATH")]
+        (maude-mc-path (environment-variables-ref (current-environment-variables) #"MAUDE_MC_PATH"))
+        (bitml-maude-path (environment-variables-ref (current-environment-variables) #"BITML_MAUDE_PATH")))
     (if (equal? (system-type) 'windows)
         (with-output-to-string (lambda ()
                                  (system (format "~a/maude.exe ~a/model-checker.maude ~a/bitml.maude test.maude"
@@ -147,10 +147,3 @@
     [(regexp #px"rewrites:.* \\((.*) real\\).*(result Bool: true.*)Bye" (list _ time res))
      (displayln (string-append "Computation time: " time))
      (displayln "Result: true")]))
-
-#;
-(define (display-maude-out str)
-  (displayln str)
-  (match str
-    [(regexp #rx"(result.*)" (list _ res))
-     (displayln (string-append res "\n"))]))
