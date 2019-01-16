@@ -13,6 +13,8 @@
           put reveal revealif
           pred sum split generate-keys ->
           (rename-out [btrue true] [band and] [bnot not] [b= =] [b< <] [b+ +] [b- -] [b<= <=] [bsize size])
+          strategy b-if do-reveal do-auth not-destory do-destory
+          state check-liquid check has-more-than 
           #%module-begin #%datum #%top-interaction)
 
 ;SYNTAX DEFINITIONS
@@ -115,10 +117,7 @@
      (hash-keys pk-terms-table))
     (add-output "" #t))
            
-  (displayln output)
-  (define out (open-output-file "test.maude" #:exists 'replace))
-  (display maude-output out)
-  (close-output-port out))
+  (displayln output))
 
 
 ;compilation command
@@ -126,7 +125,9 @@
   (syntax-parse stx
     #:literals (guards sum)
     [(_ (guards guard ...)
-        (sum (contract params ...) ...))
+        (sum (contract params ...) ...)
+        maude-query ...)
+    
      
      #`(begin
          (reset-state)
@@ -145,15 +146,15 @@
            ;start the maude code declaration
            (maude-opening)
            (add-maude-output (string-append "eq C = " (compile-maude-contract (sum (contract params ...) ...)) " . \n"))
-           (maude-closing)
+           (compile-maude-query maude-query)...
            
            (show-compiled)))]
     
     [(_ (guards guard ...)
-        (contract params ...))
+        (contract params ...)
+        maude-query ...)
      
-     #`(compile (guards guard ...)
-                (sum (contract params ...)))]))
+     #`(compile (guards guard ...) (sum (contract params ...)) maude-query ...)]))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
 (define-syntax (get-script stx)

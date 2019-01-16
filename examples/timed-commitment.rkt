@@ -6,7 +6,11 @@
 (generate-keys)
 
 
-(compile (guards (deposit "A" 1 "txA@0")(secret "A" a "000a"))        
-         (sum (reveal (a) (withdraw "A"))
-              (after 10 (withdraw "B"))))
+(compile
+ (guards (deposit "A" 1 "txA@0")(secret "A" a "000a"))        
+ (sum (reveal (a) (withdraw "A"))
+      (after 10 (withdraw "B")))
+
+ (check "A" has-more-than 1
+        (strategy "A" (do-reveal a))))
 

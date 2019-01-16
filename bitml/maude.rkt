@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require (for-syntax racket/base syntax/parse)
-         racket/list
+         racket/list racket/port racket/system
          "string-helpers.rkt" "env.rkt" "terminals.rkt")
 
 (define maude-output "")
@@ -40,7 +40,8 @@
     (add-maude-output (string-append "\neq Cconf = toSemConf < C , "
                                      (number->string tx-v) " BTC > 'xconf\n"
                                      sem-secret-dec "\n" sem-vdeps " .\n"))
-    (add-maude-output "endm\n")))
+    (add-maude-output "endm\n")
+    (add-maude-output "smod LIQUIDITY_CHECK is\nprotecting BITML-CHECK .\nincluding BITML-CONTRACT .\nendsm\n")))
 
 
 
@@ -53,7 +54,9 @@
            (add-maude-output (compile-maud-strat s)))
          (maude-closing)
          (string-append "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, <> contract-free, 'bitml) .\n")
-         (add-maude-output "quit .\n"))]
+         (add-maude-output "quit .\n")
+         (write-maude-file)
+         (displayln (execute-maude)))]
     
     [(_ (check part:string has-more-than val:number strategy ...))
      #'(begin
@@ -61,7 +64,12 @@
          (maude-closing)
          (add-maude-output "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, []<> " part
                            " has-deposit>= " (number->string val) " BTC, 'bitml) . \n")
-         (add-maude-output "quit .\n"))]))
+         (add-maude-output "quit .\n")
+         (write-maude-file)
+         (display "/*\nModel checking result for ")
+         (displayln '(check part has-more-than val strategy ...))
+         (displayln (execute-maude))
+         (display "*/"))]))
 
 (define-syntax (compile-maude-strat stx)
   (syntax-parse stx
@@ -106,3 +114,20 @@
      #'(string-append " | " part " : " (symbol->string 'secret) " # 1 ")]
     [(_ (part:string do-auth contract))
      #'(string-append " | " part " [ x:Name |> " (compile-maude-contract contract) " ] ")]))
+
+(define (write-maude-file)
+  (define out (open-output-file "test.maude" #:exists 'replace))
+  (display maude-output out)
+  (close-output-port out))
+
+(define (execute-maude)
+  (let ([maude-path (environment-variables-ref (current-environment-variables) #"MAUDE-PATH")]
+        (maude-mc-path (environment-variables-ref (current-environment-variables) #"MAUDE-MC-PATH"))
+        (bitml-maude-path (environment-variables-ref (current-environment-variables) #"BITML-MAUDE-PATH")))
+  (if (equal? (system-type) 'windows)
+      (with-output-to-string (lambda ()
+                               (system (format "~a/maude.exe ~a/model-checker.maude ~a/bitml.maude test.maude"
+                                               maude-path maude-mc-path bitml-maude-path) #:set-pwd? #t)))
+      (with-output-to-string (lambda ()
+                               (system (format "~a/maude.exe ~a/model-checker.maude ~a/bitml.maude test.maude"
+                                               maude-path maude-path bitml-maude-path) #:set-pwd? #t))))))
