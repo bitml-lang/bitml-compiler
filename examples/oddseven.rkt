@@ -17,4 +17,6 @@
                  (after 10 (withdraw "B"))))
           (2 -> (sum
                  (revealif (a b) (pred (= (size a) (size b))) (withdraw "A"))
-                 (revealif (a b) (pred (not (= (size a) (size b)))) (withdraw "B"))))))
+                 (revealif (a b) (pred (!= (size a) (size b))) (withdraw "B")))))
+
+         (check-liquid))

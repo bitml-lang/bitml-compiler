@@ -11,6 +11,7 @@
 (define-syntax (band stx) (raise-syntax-error #f "wrong usage of and" stx))
 (define-syntax (bnot stx) (raise-syntax-error #f "wrong usage of not" stx))
 (define-syntax (b= stx) (raise-syntax-error #f "wrong usage of =" stx))
+(define-syntax (b!= stx) (raise-syntax-error #f "wrong usage of =" stx))
 (define-syntax (b< stx) (raise-syntax-error #f "wrong usage of <" stx))
 (define-syntax (b<= stx) (raise-syntax-error #f "wrong usage of <" stx))
 (define-syntax (b+ stx) (raise-syntax-error #f "wrong usage of +" stx))

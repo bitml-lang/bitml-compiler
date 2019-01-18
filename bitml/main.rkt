@@ -12,7 +12,7 @@
           after auth key secret vol-deposit putrevealif
           put reveal revealif
           pred sum split generate-keys ->
-          (rename-out [btrue true] [band and] [bnot not] [b= =] [b< <] [b+ +] [b- -] [b<= <=] [bsize size])
+          (rename-out [btrue true] [band and] [bnot not] [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size])
           strategy b-if do-reveal do-auth not-destory do-destory
           state check-liquid check has-more-than 
           #%module-begin #%datum #%top-interaction)
