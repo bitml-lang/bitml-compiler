@@ -2,7 +2,7 @@
 
 (require (for-syntax racket/base syntax/parse)
          racket/list racket/port racket/system racket/match racket/string
-         "string-helpers.rkt" "env.rkt" "terminals.rkt")
+         "bitml.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt")
 
 (define maude-output "")
 
@@ -94,10 +94,8 @@
                       ", " part " reveal " (symbol->string 'secret) ") = true . \n"
                       "eq strategy(ctx:Context S:Configuration , " part " lock-reveal " (symbol->string 'secret) ") = false .")]
     [(_ part:string (do-reveal secret:id))
-     #'(string-append "eq strategy(S:SemConfiguration, " part " lock-reveal " (symbol->string 'secret) ") = false . \n")]
-    
+     #'(string-append "eq strategy(S:SemConfiguration, " part " lock-reveal " (symbol->string 'secret) ") = false . \n")]  
 
-    
     [(_ part:string (do-auth contract))
      #'(string-append "eq strategy(S:SemConfiguration, " part " lock " (compile-maude-contract contract strip-auth) " in x:Name) = false . \n")]
     [(_ part:string (do-auth contract) b-if pred)
@@ -144,3 +142,55 @@
     [(regexp #px"rewrites:.* \\((.*) real\\).*(result Bool: true.*)Bye" (list _ time res))
      (displayln (string-append "Computation time: " time))
      (displayln "Result: true")]))
+
+(define-syntax (compile-maude-contract stx)
+  (syntax-parse stx
+    #:literals (withdraw after auth split putrevealif pred sum strip-auth)
+    [(_ (withdraw part:string))
+     #'(string-append "withdraw " part)]
+    [(_ (after t (contract params ...)))
+     #'(format "after ~a : ~a" t (compile-maude-contract (contract params ...)))]
+    [(_ (auth part:string ... (contract params ...)))
+     #'(string-append "(" (list+sep->string (list part ...) " , ") ") : " (compile-maude-contract (contract params ...)))]
+    [(_ (auth part:string ... (contract params ...)) strip-auth)
+     #'(compile-maude-contract (contract params ...))]
+
+    [(_ (split (val:number -> (contract params ...))... ))
+     #'(let* ([vals (list val ...)]
+              [g-contracts (list (compile-maude-contract (contract params ...)) ...)]
+              [decl-parts (map
+                           (lambda (v gc) (string-append (number->string v) " BTC ~> ( " gc " )"))
+                           vals
+                           g-contracts)]
+              [decl (list+sep->string decl-parts "\n")])
+           
+         (string-append "split( " decl " )" ))]
+
+    [(_ (sum (contract params ...)...))
+     #'(let ([g-contracts (list (compile-maude-contract (contract params ...))...)])         
+         (string-append "( " (list+sep->string g-contracts " + ") " )"))]
+
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)))
+     #'(let* ([txs (list (symbol->string 'tx-id) ...)]
+              [secs (list (symbol->string 'sec) ...)]
+              [txs-len (length txs)]
+              [secs-len (length secs)]
+              [compiled-pred (~? (string-append " if " (compile-pred-maude p)) "")]
+              [compiled-cont (compile-maude-contract (contract params ...))])
+         
+         (if (and (= 0 secs-len) (> txs-len 0))
+             (string-append "( put (" (list+sep->string txs) ") . " compiled-cont " )")
+             (if (and (> secs-len 0) (= txs-len 0))
+                 (string-append "( reveal (" (list+sep->string secs) ")" compiled-pred " . " compiled-cont " )")
+                 (if (and (> secs-len 0) (> txs-len 0))
+                     (string-append "( put (" (list+sep->string txs) ") reveal (" (list+sep->string secs) ")" compiled-pred " . " compiled-cont " )")
+                     ""))))]
+
+    [(_ (reveal (sec:id ...) (contract params ...)))
+     #'(compile-maude-contract (putrevealif () (sec ...) (contract params ...)))]
+
+    [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
+     #'(compile-maude-contract (putrevealif () (sec ...) (pred p) (contract params ...)))]
+
+    [(_ (reveal (tx:id ...) (contract params ...)))
+     #'(compile-maude-contract (putrevealif (tx ...) () (contract params ...)))]))
