@@ -150,10 +150,7 @@
            
            (show-compiled)))]
     
-    [(_ (guards guard ...)
-        (contract params ...)
-        maude-query ...)
-     
+    [(_ (guards guard ...) (contract params ...) maude-query ...)     
      #`(compile (guards guard ...) (sum (contract params ...)) maude-query ...)]))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
@@ -400,7 +397,7 @@
      #'(string-append "(" (list+sep->string (list part ...) " , ") ") : " (compile-maude-contract (contract params ...)))]
     [(_ (auth part:string ... (contract params ...)) strip-auth)
      #'(compile-maude-contract (contract params ...))]
-    ;  split ( v -> C v' -> C' ... )
+
     [(_ (split (val:number -> (contract params ...))... ))
      #'(let* ([vals (list val ...)]
               [g-contracts (list (compile-maude-contract (contract params ...)) ...)]
