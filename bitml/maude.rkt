@@ -2,7 +2,9 @@
 
 (require (for-syntax racket/base syntax/parse)
          racket/list racket/port racket/system racket/match racket/string
-         "bitml.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt")
+         "bitml.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "exp.rkt")
+
+(provide (all-defined-out))
 
 (define maude-output "")
 
@@ -25,8 +27,6 @@
          [sem-conf "op Cconf : -> SemConfiguration .\n"]
          )
     (add-maude-output parts-dec sec-dec vdep-dec contract sem-conf)))
-
-(provide (all-defined-out))
 
 (define (get-maude-closing)
   (let* ([sem-secrets (map (lambda (s) (string-append " | { " (get-secret-part s) " : " (symbol->string s) " # 1 }")) (get-secrets))]

@@ -1,7 +1,7 @@
 #lang racket/base
 
-(require (for-syntax racket/base syntax/parse)
-         "bitml.rkt" "maude.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt")
+(require (for-syntax racket/base syntax/parse) syntax/to-string
+         "bitml.rkt" "maude.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "constraints.rkt")
 
 ;provides the default reader for an s-exp lang
 (module reader syntax/module-reader
@@ -38,6 +38,8 @@
 
            ;start the compilation of the continuation contracts
            (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0 (get-script-params (contract params ...)) script-params)...
+
+           (displayln (get-constr-tree (sum (contract params ...)...)))
            
            ;start the maude code declaration
            (maude-opening)
