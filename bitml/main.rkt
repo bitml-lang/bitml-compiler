@@ -39,7 +39,8 @@
            ;start the compilation of the continuation contracts
            (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0 (get-script-params (contract params ...)) script-params)...
 
-           (displayln (get-constr-tree (sum (contract params ...)...)))
+           (get-constr-tree (sum (contract params ...)...))
+           (displayln constraints)
            
            ;start the maude code declaration
            (maude-opening)
