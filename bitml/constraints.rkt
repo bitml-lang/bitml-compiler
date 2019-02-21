@@ -1,4 +1,4 @@
-#lang rosette
+#lang racket/base
 
 (require (for-syntax racket/base syntax/parse)
          racket/list racket/port racket/system racket/match racket/string
@@ -20,12 +20,13 @@
      #'(begin
          (get-constr-tree (contract params ...) (~? parent))...
          (when (or (not (equal? (get-constr (contract params ...)) #t))...)
-           (add-constraint (list 'and (~? parent) (list 'not (list 'and (get-constr (contract params ...))...))))))]
+           (~? (add-constraint (list (list 'and parent (list 'not (list 'yand (get-constr (contract params ...))...))))))
+               (add-constraint (list (list 'not (list 'and (get-constr (contract params ...))...))))))]
 
     [(_ (withdraw part:string) parent)
-     #'(add-constraint parent)]S
+     #'(add-constraint (list parent))]
     [(_ (withdraw part:string))
-     #'(begin)]
+     #'(values)]
     
     [(_ (after t (contract params ...)) (~optional parent))
      #'(get-constr-tree (contract params ...) (~? parent))]
@@ -42,12 +43,21 @@
     
 
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)) (~optional parent))
-     #'(get-constr-tree (contract params ...)
-                        (~? (if (not (equal? (~? (compile-pred-constraint p) #t) #t))
-                                (list 'and (~? parent) (~? (compile-pred-constraint p)))
-                                parent)
-                            (values)))]
-
+    
+     #'(let ([maybe-parent (~? parent #t)]
+             [maybe-pred (~? (compile-pred-constraint p) #t)])
+         (match (list maybe-parent maybe-pred)
+           [(list #t #t)
+            (get-constr-tree (contract params ...))]
+           [(list x #t)
+            (get-constr-tree (contract params ...))]
+           [(list #t x)
+            (get-constr-tree (contract params ...) x)]
+           [(list a b)
+            (get-constr-tree (contract params ...) (list 'and a b))]))]                                
+                                
+             
+    
     [(_ (reveal (sec:id ...) (contract params ...)) (~optional parent))
      #'(get-constr-tree (putrevealif () (sec ...) (contract params ...)) (~? parent))]
 
