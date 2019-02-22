@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require (for-syntax racket/base syntax/parse) syntax/to-string
+(require (for-syntax racket/base syntax/parse) rosette
          "bitml.rkt" "maude.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "constraints.rkt")
 
 ;provides the default reader for an s-exp lang
@@ -40,10 +40,16 @@
            (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0 (get-script-params (contract params ...)) script-params)...
 
            (get-constr-tree (sum (contract params ...)...))
+
+           (define-symbolic a integer?)
+           (define-symbolic b integer?)
+           
            (for ([c constraints])
              (begin
-               (displayln (c 1 1))
-               #;(displayln c)))
+               (define sol (solve (assert (c a b))))
+               (if (sat? sol)
+                 (displayln (complete-solution sol (list a b)))
+                 (displayln "unsat"))))
            
            ;start the maude code declaration
            (maude-opening)

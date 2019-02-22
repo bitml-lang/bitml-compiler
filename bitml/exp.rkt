@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require (for-syntax racket/base syntax/parse) racket/promise
+(require (for-syntax racket/base syntax/parse)
          "env.rkt" "terminals.rkt")
 
 (provide (all-defined-out)) 
@@ -56,20 +56,23 @@
   (syntax-parse stx
     #:literals(btrue band bnot b= b< b<= b!=)
     [(_ btrue) #'#t]
-    [(_ (band a b)) #'(and (compile-pred-constraint a) (compile-pred-constraint b))]
-    [(_ (bnot a)) #'(not (compile-pred-constraint a))]
-    [(_ (b= a b)) #'(equal? (compile-pred-exp-contraint a) (compile-pred-exp-contraint b))]
-    [(_ (b!= a b)) #'(not (equal? (compile-pred-exp-contraint a) (compile-pred-exp-contraint b)))]
-    [(_ (b< a b)) #'(< (compile-pred-exp-contraint a) (compile-pred-exp-contraint b))]
-    [(_ (b<= a b)) #'(<= (compile-pred-exp-contraint a) (compile-pred-exp-contraint b))]))
+    [(_ (band p1 p2)) #'(lambda (a b) (and ((compile-pred-constraint p1) a b) ((compile-pred-constraint p2) a b)))]
+    [(_ (bnot p1)) #'(lambda (a b) (not ((compile-pred-constraint p1) a b)))]
+    [(_ (b= p1 p2)) #'(lambda (a b) (equal? ((compile-pred-exp-contraint p1) a b) ((compile-pred-exp-contraint p2) a b)))]
+    [(_ (b!= p1 p2)) #'(lambda (a b) (not (equal? ((compile-pred-exp-contraint p1) a b) ((compile-pred-exp-contraint p2) a b))))]
+    [(_ (b< p1 p2)) #'(lambda (a b) (< ((compile-pred-exp-contraint p1) a b) ((compile-pred-exp-contraint p2) a b)))]
+    [(_ (b<= p1 p2)) #'(lambda (a b) (<= ((compile-pred-exp-contraint p1) a b) ((compile-pred-exp-contraint p2) a b)))]))
 
 (define-syntax (compile-pred-exp-contraint stx)
   (syntax-parse stx
     #:literals(b+ b- bsize)
-    [(_ (b+ a b)) #'(+ (compile-pred-exp-contraint a) (compile-pred-exp-contraint b))]
-    [(_ (b- a b)) #'(- (compile-pred-exp-contraint a) (compile-pred-exp-contraint b))]
-    [(_ (bsize a:id)) #'a]
-    [(_ n:number) #'n]
+    [(_ (b+ p1 p2)) #'(lambda (a b) (+ ((compile-pred-exp-contraint p1) a b) ((compile-pred-exp-contraint p2) a b)))]
+    [(_ (b- p1 p2)) #'(lambda (a b) (- ((compile-pred-exp-contraint p1) a b) ((compile-pred-exp-contraint p2) a b)))]
+    [(_ (bsize x:id))
+     #:with a #'a
+     #:with y (datum->syntax #'a (syntax-e #'x))
+     #`(lambda (a b) y)]
+    [(_ n:number) #'(lambda (a b) n)]
     [(_) (raise-syntax-error #f "wrong if predicate" stx)]))
 
 (define-syntax (get-constr-var stx)

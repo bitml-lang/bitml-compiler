@@ -1,8 +1,8 @@
 #lang racket/base
 
 (require (for-syntax racket/base syntax/parse)
-         racket/list racket/port racket/system racket/match racket/string racket/promise
-         "bitml.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "exp.rkt")
+         racket/match
+         "bitml.rkt" "terminals.rkt" "exp.rkt")
 
 (provide (all-defined-out))
 
@@ -22,8 +22,8 @@
      #'(begin
          (get-constr-tree (contract params ...) (~? parent))...
          (when (or (not (equal? (get-constr (contract params ...)) #t))...)
-           (~? (add-constraint (lambda (a b) (and (parent a b) (not (and (get-constr (contract params ...))...)))))
-               (add-constraint (lambda (a b) (not (and (get-constr (contract params ...))...)))))))]
+           (~? (add-constraint (lambda (a b) (and (parent a b) (not (and ((get-constr (contract params ...)) a b)...)))))
+               (add-constraint (lambda (a b) (not (and ((get-constr (contract params ...)) a b)...)))))))]
     
     [(_ (withdraw part:string) parent)
      #'(add-constraint parent)]
@@ -41,8 +41,8 @@
      #'(begin
          (get-constr-tree (contract params ...) (~? parent))...
          (when (or (not (equal? (get-constr (contract params ...)) #t))...)
-           (~? (add-constraint (lambda (a b) (and (parent a b) (not (and (get-constr (contract params ...))...)))))
-               (add-constraint (lambda (a b) (not (and (get-constr (contract params ...))...)))))))]
+           (~? (add-constraint (lambda (a b) (and (parent a b) (not (and ((get-constr (contract params ...)) a b)...)))))
+               (add-constraint (lambda (a b) (not (and ((get-constr (contract params ...)) a b)...)))))))]
 
     
 
@@ -56,9 +56,9 @@
            [(list x #t)
             (get-constr-tree (contract params ...))]
            [(list #t x)
-            (get-constr-tree (contract params ...) (lambda (a b) x))]
+            (get-constr-tree (contract params ...) (lambda (a b) (x a b)))]
            [(list x y)
-            (get-constr-tree (contract params ...) (lambda (a b) (and x y)))]))]                                
+            (get-constr-tree (contract params ...) (lambda (a b) (and (x a b) (y a b))))]))]                                
                                 
              
     
@@ -76,14 +76,14 @@
   (syntax-parse stx
     #:literals (withdraw after auth split putrevealif pred sum strip-auth)
     [(_ (withdraw part:string))
-     #'#t]
+     #'(lambda (a b) #t)]
     [(_ (after t (contract params ...)))
      #'(get-constr (contract params ...))]
     [(_ (auth part:string ... (contract params ...)))
      #'(get-constr (contract params ...))]
 
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)))
-     #'(~? (compile-pred-constraint p) #t)]
+     #'(~? (compile-pred-constraint p) (lambda (a b) #t))]
 
     [(_ (reveal (sec:id ...) (contract params ...)))
      #'(get-constr (putrevealif () (sec ...) (contract params ...)))]

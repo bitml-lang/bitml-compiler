@@ -4,7 +4,6 @@
 
 (define-syntax (guards stx) (raise-syntax-error #f "wrong usage of guards" stx))
 (define-syntax (sum stx) (raise-syntax-error #f "wrong usage of sum" stx))
-(define-syntax (-> stx) (raise-syntax-error #f "wrong usage of sum" stx))
 
 ;operators for predicate in putrevealif
 (define-syntax (btrue stx) (raise-syntax-error #f "wrong usage of true" stx))
