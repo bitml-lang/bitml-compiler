@@ -40,7 +40,10 @@
            (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0 (get-script-params (contract params ...)) script-params)...
 
            (get-constr-tree (sum (contract params ...)...))
-           (for ([c constraints])  (displayln c))
+           (for ([c constraints])
+             (begin
+               (displayln (c 1 1))
+               #;(displayln c)))
            
            ;start the maude code declaration
            (maude-opening)

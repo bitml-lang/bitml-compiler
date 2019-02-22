@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require (for-syntax racket/base syntax/parse)
-         racket/list racket/port racket/system racket/match racket/string
+         racket/list racket/port racket/system racket/match racket/string racket/promise
          "bitml.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "exp.rkt")
 
 (provide (all-defined-out))
@@ -9,7 +9,9 @@
 (define constraints null)
 
 (define (add-constraint constr)
-  (set! constraints (append constraints constr)))
+  (begin
+    (displayln constr)
+    (set! constraints (cons constr constraints))))
 
 (define-syntax (get-constr-tree stx)
   (syntax-parse stx
@@ -20,11 +22,12 @@
      #'(begin
          (get-constr-tree (contract params ...) (~? parent))...
          (when (or (not (equal? (get-constr (contract params ...)) #t))...)
-           (~? (add-constraint (list (list 'and parent (list 'not (list 'yand (get-constr (contract params ...))...))))))
-               (add-constraint (list (list 'not (list 'and (get-constr (contract params ...))...))))))]
-
+           (~? (add-constraint (lambda (a b) (and (parent a b) (not (and (get-constr (contract params ...))...)))))
+               (add-constraint (lambda (a b) (not (and (get-constr (contract params ...))...)))))))]
+    
     [(_ (withdraw part:string) parent)
-     #'(add-constraint (list parent))]
+     #'(add-constraint parent)]
+    
     [(_ (withdraw part:string))
      #'(values)]
     
@@ -38,7 +41,8 @@
      #'(begin
          (get-constr-tree (contract params ...) (~? parent))...
          (when (or (not (equal? (get-constr (contract params ...)) #t))...)
-           (add-constraint (list 'and (~? parent) (list 'not (list 'and (get-constr (contract params ...))...))))))]
+           (~? (add-constraint (lambda (a b) (and (parent a b) (not (and (get-constr (contract params ...))...)))))
+               (add-constraint (lambda (a b) (not (and (get-constr (contract params ...))...)))))))]
 
     
 
@@ -52,9 +56,9 @@
            [(list x #t)
             (get-constr-tree (contract params ...))]
            [(list #t x)
-            (get-constr-tree (contract params ...) x)]
-           [(list a b)
-            (get-constr-tree (contract params ...) (list 'and a b))]))]                                
+            (get-constr-tree (contract params ...) (lambda (a b) x))]
+           [(list x y)
+            (get-constr-tree (contract params ...) (lambda (a b) (and x y)))]))]                                
                                 
              
     
