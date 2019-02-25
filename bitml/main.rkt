@@ -22,8 +22,7 @@
     #:literals (guards sum)
     [(_ (guards guard ...)
         (sum (contract params ...) ...)
-        maude-query ...)
-    
+        maude-query ...)    
      
      #`(begin
          (reset-state)

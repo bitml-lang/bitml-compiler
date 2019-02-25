@@ -69,8 +69,8 @@
     [(_ (b+ p1 p2)) #'(lambda (a b) (+ ((compile-pred-exp-contraint p1) a b) ((compile-pred-exp-contraint p2) a b)))]
     [(_ (b- p1 p2)) #'(lambda (a b) (- ((compile-pred-exp-contraint p1) a b) ((compile-pred-exp-contraint p2) a b)))]
     [(_ (bsize x:id))
-     #:with a #'a
-     #:with y (datum->syntax #'a (syntax-e #'x))
+     #:with a #'a 
+     #:with y (datum->syntax #'a (syntax-e #'x)) 
      #`(lambda (a b) y)]
     [(_ n:number) #'(lambda (a b) n)]
     [(_) (raise-syntax-error #f "wrong if predicate" stx)]))

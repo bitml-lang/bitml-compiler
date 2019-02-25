@@ -9,19 +9,20 @@
 (define constraints null)
 
 (define (add-constraint constr)
-  (begin
-    (displayln constr)
-    (set! constraints (cons constr constraints))))
+  (set! constraints (cons constr constraints)))
 
 (define-syntax (get-constr-tree stx)
   (syntax-parse stx
-    #:literals (withdraw after auth split putrevealif pred sum strip-auth ->)
+    #:literals (withdraw after auth split putrevealif pred sum ->)
 
+    [(_ (sum (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...)) (~optional parent))
+     #'(get-constr-tree (sum (~? (scontract sparams ...))... (~? (contract params ...))... ...) (~? parent))]
+   
     ;entry point
     [(_ (sum (contract params ...)...) (~optional parent))          
      #'(begin
          (get-constr-tree (contract params ...) (~? parent))...
-         (when (or (is-constr? (contract params ...))...)
+         (when (or (constr-required? (contract params ...))...)
            (~? (add-constraint (lambda (a b) (and (parent a b) (not (and ((get-constr (contract params ...)) a b)...)))))
                (add-constraint (lambda (a b) (not (and ((get-constr (contract params ...)) a b)...)))))))]
     
@@ -36,38 +37,25 @@
     
     [(_ (auth part:string ... (contract params ...)) (~optional parent))
      #'(get-constr-tree (contract params ...) (~? parent))]
-    
-    [(_ (split (val:number -> (sum (contract params ...)))... ) (~optional parent))
-     #'(begin
-         (get-constr-tree (contract params ...) (~? parent))...
-         (when (or (is-constr? (contract params ...))...)
-           (~? (add-constraint (lambda (a b) (and (parent a b) (not (and ((get-constr (contract params ...)) a b)...)))))
-               (add-constraint (lambda (a b) (not (and ((get-constr (contract params ...)) a b)...)))))))]
-    
-    ;allow for split branches with unary sums
+
+            
     [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...) (~optional parent))
-     #'(get-constr-tree (split (val -> (~? (sum (scontract sparams ...))) (~? (sum (contract params ...)...)) )...) (~? parent))]
+     #'(get-constr-tree (sum (~? (scontract sparams ...))... (~? (contract params ...))... ...) (~? parent))]
 
     
 
-    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (sum (contract params ...))...) (~optional parent))    
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)) (~optional parent))    
      #'(let ([maybe-parent (~? parent #t)]
              [maybe-pred (~? (compile-pred-constraint p) #t)])   
          (match (list maybe-parent maybe-pred)
            [(list #t #t)
-            (get-constr-tree (contract params ...))...]
+            (get-constr-tree (contract params ...))]
            [(list x #t)
-            (get-constr-tree (contract params ...))...]
+            (get-constr-tree (contract params ...))]
            [(list #t x)
-            (get-constr-tree (contract params ...) (lambda (a b) (x a b)))...]
+            (get-constr-tree (contract params ...) (lambda (a b) (x a b)))]
            [(list x y)
-            (get-constr-tree (contract params ...) (lambda (a b) (and (x a b) (y a b))))...]))]
-    
-    ;allow for putrevealif continuation with unary sums
-    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)) (~optional parent))
-     #'(get-constr-tree (putrevealif (tx-id ...) (sec ...) (~? (pred p)) (sum (contract params ...))) (~? parent))]
-
-                                
+            (get-constr-tree (contract params ...) (lambda (a b) (and (x a b) (y a b))))]))]                              
              
     
     [(_ (reveal (sec:id ...) (contract params ...)) (~optional parent))
@@ -102,18 +90,18 @@
     [(_ (reveal (tx:id ...) (contract params ...)) parent)
      #'(get-constr (putrevealif (tx ...) () (contract params ...)))]))
 
-(define-syntax (is-constr? stx)
+(define-syntax (constr-required? stx)
   (syntax-parse stx
     #:literals (withdraw after auth split putrevealif pred sum strip-auth)
     [(_ (withdraw part:string))
      #'#f]
     [(_ (after t (contract params ...)))
-     #'(is-constr? (contract params ...))]
+     #'(constr-required? (contract params ...))]
     [(_ (auth part:string ... (contract params ...)))
-     #'(is-constr? (contract params ...))]
+     #'(constr-required? (contract params ...))]
 
     [(_ (sum (contract params ...)...))       
-     #'(or (is-constr? (contract params ...))...)]
+     #'(or (constr-required? (contract params ...))...)]
 
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (pred p) (contract params ...)))
      #'#t]
@@ -122,10 +110,10 @@
      #'#f]
 
     [(_ (reveal (sec:id ...) (contract params ...)))
-     #'(is-constr? (putrevealif () (sec ...) (contract params ...)))]
+     #'(constr-required? (putrevealif () (sec ...) (contract params ...)))]
 
     [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
-     #'(is-constr? (putrevealif () (sec ...) (pred p) (contract params ...)))]
+     #'(constr-required? (putrevealif () (sec ...) (pred p) (contract params ...)))]
 
     [(_ (reveal (tx:id ...) (contract params ...)) parent)
-     #'(is-constr? (putrevealif (tx ...) () (contract params ...)))]))
+     #'(constr-required? (putrevealif (tx ...) () (contract params ...)))]))
