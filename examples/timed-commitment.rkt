@@ -9,7 +9,7 @@
 (compile
  (guards (deposit "A" 1 "txA@0")(secret "A" a "000a"))
  
- (sum (reveal (a) (withdraw "A"))
+ (sum (revealif (a) (pred (= (size a) 1)) (withdraw "A"))
       (after 10 (withdraw "B")))
 
  (check-liquid

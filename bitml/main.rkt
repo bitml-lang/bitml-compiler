@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require (for-syntax racket/base syntax/parse) rosette
+(require (for-syntax racket/base syntax/parse) racket/list
          "bitml.rkt" "maude.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "constraints.rkt")
 
 ;provides the default reader for an s-exp lang
@@ -9,8 +9,8 @@
 
 (provide  participant compile withdraw deposit guards
           after auth key secret vol-deposit putrevealif
-          put reveal revealif
-          pred sum split generate-keys ->
+          put reveal revealif ->
+          pred sum split generate-keys 
           (rename-out [btrue true] [band and] [bnot not] [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size])
           strategy b-if do-reveal do-auth not-destory do-destory
           state check-liquid check has-more-than 
@@ -41,15 +41,25 @@
 
            (get-constr-tree (sum (contract params ...)...))
 
-           (define-symbolic a integer?)
-           (define-symbolic b integer?)
-           
+           #|
+           (define-symbolic* a integer?)
+           (define-symbolic* b integer?)
+
            (for ([c constraints])
              (begin
                (define sol (solve (assert (c a b))))
                (if (sat? sol)
-                 (displayln (complete-solution sol (list a b)))
-                 (displayln "unsat"))))
+                   (displayln (complete-solution sol (list a b)))
+                   (displayln "unsat"))))|#
+
+           (for ([c constraints])
+             (begin
+               (define prob (make-csp))
+               (add-var! prob 'a (range 0 100))
+               (add-var! prob 'b (range 0 100))
+               (add-constraint! prob c '(a b))
+               (displayln (solve prob))))
+           
            
            ;start the maude code declaration
            (maude-opening)
