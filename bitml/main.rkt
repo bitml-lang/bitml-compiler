@@ -38,7 +38,7 @@
            ;start the compilation of the continuation contracts
            (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0 (get-script-params (contract params ...)) script-params)...
 
-           (get-constr-tree (sum (contract params ...)...))
+           (get-constraints (sum (contract params ...)...) (a))
 
            #|
            (define-symbolic* a integer?)
