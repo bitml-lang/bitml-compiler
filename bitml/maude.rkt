@@ -141,7 +141,8 @@
      (displayln cex)]
     [(regexp #px"rewrites:.* \\((.*) real\\).*(result Bool: true.*)Bye" (list _ time res))
      (displayln (string-append "Computation time: " time))
-     (displayln "Result: true")]))
+     (displayln "Result: true")]
+    [x (displayln (string-append "Error: " x))]))
 
 (define-syntax (compile-maude-contract stx)
   (syntax-parse stx

@@ -9,9 +9,10 @@
 ;methods used to transcompile predicates to balzac predicates
 (define-syntax (compile-pred stx)
   (syntax-parse stx
-    #:literals(btrue band bnot b= b< b<= b!=)
+    #:literals(btrue band bor bnot b= b< b<= b!=)
     [(_ btrue) #'"true"]
-    [(_ (band a b)) #'(string-append (compile-pred a) " && " (compile-pred b))]
+    [(_ (band a b)) #'(string-append "(" (compile-pred a) " && " (compile-pred b) ")")]
+    [(_ (bor a b)) #'(string-append "(" (compile-pred a) " || " (compile-pred b) ")")]
     [(_ (bnot a)) #'(string-append "!(" (compile-pred a) ")")]
     [(_ (b= a b)) #'(string-append (compile-pred-exp a) "==" (compile-pred-exp b))]
     [(_ (b!= a b)) #'(string-append (compile-pred-exp a) "!=" (compile-pred-exp b))]
@@ -32,9 +33,10 @@
 ;methods used to transcompile predicates to maude predicates
 (define-syntax (compile-pred-maude stx)
   (syntax-parse stx
-    #:literals(btrue band bnot b= b< b<= b!=)
+    #:literals(btrue band bor bnot b= b< b<= b!=)
     [(_ btrue) #'"True"]
-    [(_ (band a b)) #'(string-append (compile-pred-maude a) " && " (compile-pred-maude b))]
+    [(_ (band a b)) #'(string-append "(" (compile-pred-maude a) " && " (compile-pred-maude b) ")")]
+    [(_ (bor a b)) #'(string-append "(" (compile-pred-maude a) " || " (compile-pred-maude b) ")")]
     [(_ (bnot a)) #'(string-append "!(" (compile-pred-maude a) ")")]
     [(_ (b= a b)) #'(string-append (compile-pred-exp-maude a) " == " (compile-pred-exp-maude b))]
     [(_ (b!= a b)) #'(string-append (compile-pred-exp-maude a) " != " (compile-pred-exp-maude b))]
@@ -54,9 +56,10 @@
 ;methods used to compile preditcates contraints for constraint solving
 (define-syntax (compile-pred-constraint stx)
   (syntax-parse stx
-    #:literals(btrue band bnot b= b< b<= b!=)
+    #:literals(btrue band bor bnot b= b< b<= b!=)
     [(_ btrue) #'#t]
     [(_ (band p1 p2)) #'(lambda (a b) (and ((compile-pred-constraint p1) a b) ((compile-pred-constraint p2) a b)))]
+    [(_ (bor p1 p2)) #'(lambda (a b) (or ((compile-pred-constraint p1) a b) ((compile-pred-constraint p2) a b)))]
     [(_ (bnot p1)) #'(lambda (a b) (not ((compile-pred-constraint p1) a b)))]
     [(_ (b= p1 p2)) #'(lambda (a b) (equal? ((compile-pred-exp-contraint p1) a b) ((compile-pred-exp-contraint p2) a b)))]
     [(_ (b!= p1 p2)) #'(lambda (a b) (not (equal? ((compile-pred-exp-contraint p1) a b) ((compile-pred-exp-contraint p2) a b))))]

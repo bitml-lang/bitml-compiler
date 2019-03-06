@@ -11,7 +11,8 @@
           after auth key secret vol-deposit putrevealif
           put reveal revealif ->
           pred sum split generate-keys 
-          (rename-out [btrue true] [band and] [bnot not] [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size])
+          (rename-out [btrue true] [band and] [bor or] [bnot not]
+                      [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size])
           strategy b-if do-reveal do-auth not-destory do-destory
           state check-liquid check has-more-than 
           #%module-begin #%datum #%top-interaction)
@@ -36,7 +37,8 @@
 
 
            ;start the compilation of the continuation contracts
-           (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0 (get-script-params (contract params ...)) script-params)...
+           (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0
+                     (get-script-params (contract params ...)) script-params)...
 
            (get-constraints (sum (contract params ...)...) (a))
 
@@ -51,13 +53,17 @@
                    (displayln (complete-solution sol (list a b)))
                    (displayln "unsat"))))|#
 
-           (for ([c constraints])
-             (begin
-               (define prob (make-csp))
-               (add-var! prob 'a (range 0 100))
-               (add-var! prob 'b (range 0 100))
-               (add-constraint! prob c '(a b))
-               (displayln (solve prob))))
+           (define solutions
+             (remove-duplicates
+              (for/list ([c constraints])
+                (begin
+                  (define prob (make-csp))
+                  (add-var! prob 'a (range 0 100))
+                  (add-var! prob 'b (range 0 100))
+                  (add-constraint! prob c '(a b))
+                  (solve prob)))))
+
+           (map displayln solutions)
            
            
            ;start the maude code declaration

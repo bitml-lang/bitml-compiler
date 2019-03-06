@@ -241,12 +241,17 @@
 
          
            (add-output (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
-         
-           (contract params ... '(sum (contract params ...)...)
-                     tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract))...))]
+
+
+           (displayln (format "~a ~a ~a ~a ~a ~a ~a ~a ~a ~a"
+                              'contract '('params ...) '(sum (contract params ...)...)
+                     tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract)))...
+           
+           ((contract params ... '(sum (contract params ...)...)
+                     tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract))...)))]
     
     [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)
-     #'(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (sum (contract params ...)) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)]))
+     #'(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (sum (contract params ...)) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
 
 
 (define-syntax (split stx)
