@@ -40,7 +40,7 @@
            (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0
                      (get-script-params (contract params ...)) script-params)...
 
-           (get-constraints (sum (contract params ...)...) (a))
+           (get-constr-tree (sum (contract params ...)...))
 
            #|
            (define-symbolic* a integer?)
