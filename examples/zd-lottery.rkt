@@ -18,4 +18,7 @@
           (after 10 (withdraw "A")))
                    
 
-         (check-liquid))
+         (check-liquid)
+
+         (check "A" has-more-than 1
+                (strategy "A" (do-reveal a))))

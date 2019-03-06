@@ -10,6 +10,7 @@
 ;operators for predicate in putrevealif
 (define-syntax (btrue stx) (raise-syntax-error #f "wrong usage of true" stx))
 (define-syntax (band stx) (raise-syntax-error #f "wrong usage of and" stx))
+(define-syntax (bor stx) (raise-syntax-error #f "wrong usage of or" stx))
 (define-syntax (bnot stx) (raise-syntax-error #f "wrong usage of not" stx))
 (define-syntax (b= stx) (raise-syntax-error #f "wrong usage of =" stx))
 (define-syntax (b!= stx) (raise-syntax-error #f "wrong usage of =" stx))
