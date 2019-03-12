@@ -39,8 +39,11 @@
      #'(get-constr-tree (contract params ...) (~? parent))]
 
             
+    [(_ (split (val:number -> (sum (contract params ...)...)) ...) (~optional parent))
+     #'(get-constr-tree (sum (contract params ...)... ...) (~? parent))]
+
     [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...) (~optional parent))
-     #'(get-constr-tree (sum (~? (scontract sparams ...))... (~? (contract params ...))... ...) (~? parent))]
+     #'(get-constr-tree (split (val -> (~? (sum (scontract sparams ...))) (~? (sum (contract params ...)...)) )...) (~? parent))]
 
     
 
@@ -78,6 +81,9 @@
     [(_ (auth part:string ... (contract params ...)))
      #'(get-constr (contract params ...))]
 
+    [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...))
+     #'(lambda (a b)  (and (~? ((get-constr (scontract sparams ...)) a b))... (~? ((get-constr (contract params ...)) a b))... ...))]
+
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)))
      #'(~? (compile-pred-constraint p) (lambda (a b) #t))]
 
@@ -102,6 +108,9 @@
 
     [(_ (sum (contract params ...)...))       
      #'(or (constr-required? (contract params ...))...)]
+
+    [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...))
+     #'(or (~? (constr-required? (contract params ...)))... ... (~? (constr-required? (scontract sparams ...)))...)]
 
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (pred p) (contract params ...)))
      #'#t]

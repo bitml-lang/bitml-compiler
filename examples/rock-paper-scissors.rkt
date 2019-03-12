@@ -11,14 +11,14 @@
          
          (split
           (2 -> (sum
-                 (revealif (b) (pred (and (<= 0 (size b)) (<= (size b) 1))) (withdraw "B"))
-                 (after 10 (withdraw "A"))))
+                 (revealif (b) (pred (and (<= 0 (size b)) (<= (size b) 2))) (withdraw "B"))
+                 (after 10 (withdraw " A"))))
           (2 -> (sum
                  (reveal (a) (withdraw "A"))
                  (after 10 (withdraw "B"))))
           (2 -> (sum
                  (revealif (a b) (pred (= (size a) (size b)))
-                             (split (1 -> (withdraw "A")) (1 -> (withdraw "B"))))
+                           (split (1 -> (withdraw "A")) (1 -> (sum (withdraw "B")))))
                  
                  (revealif (a b) (pred (or (or (and (= (size a) 0) (= (size b) 2))
                                                (and (= (size a) 2) (= (size b) 1)))

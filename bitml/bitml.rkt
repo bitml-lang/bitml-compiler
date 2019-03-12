@@ -241,7 +241,8 @@
 
          
            (add-output (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
-         
+
+           
            (contract params ... '(sum (contract params ...)...)
                      tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract))...))]
     
@@ -251,10 +252,10 @@
 
 (define-syntax (split stx)
   (syntax-parse stx
-    #:literals(sum)    
+    #:literals(sum ->)    
     [(_ (val:number -> (sum (contract params ...)...))...
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #`(begin    
+     #'(begin    
          (let* ([tx-name (format "T~a" (new-tx-index))]
                 [values-list (list val ...)]
                 [subscripts-list (list (list (get-script (contract params ...)) ...)...)]
