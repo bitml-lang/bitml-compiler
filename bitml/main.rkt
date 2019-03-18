@@ -40,7 +40,7 @@
            (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0
                      (get-script-params (contract params ...)) script-params)...
 
-           (get-constr-tree (sum (contract params ...)...))
+           (get-constr-tree (sum (contract params ...)...) (guard ...))
 
            #|
            (define-symbolic* a integer?)
@@ -53,17 +53,19 @@
                    (displayln (complete-solution sol (list a b)))
                    (displayln "unsat"))))|#
 
-           (define solutions
+           #;((define solutions
              (remove-duplicates
-              (for/list ([c constraints])
+              (for/list ([constr constraints])
                 (begin
                   (define prob (make-csp))
                   (add-var! prob 'a (range 0 100))
                   (add-var! prob 'b (range 0 100))
-                  (add-constraint! prob c '(a b))
+                  (add-var! prob 'c (range 0 100))
+
+                  (add-constraint! prob constr '(a b c))
                   (solve prob)))))
 
-           (map displayln solutions)
+           (map displayln solutions))
            
            
            ;start the maude code declaration
