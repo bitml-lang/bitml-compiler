@@ -53,7 +53,7 @@
                    (displayln (complete-solution sol (list a b)))
                    (displayln "unsat"))))|#
 
-           #;((define solutions
+           (define solutions
              (remove-duplicates
               (for/list ([constr constraints])
                 (begin
@@ -65,7 +65,7 @@
                   (add-constraint! prob constr '(a b c))
                   (solve prob)))))
 
-           (map displayln solutions))
+           (map displayln solutions)
            
            
            ;start the maude code declaration

@@ -70,8 +70,8 @@
     [(_ (bor p1 p2) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
      #`(lambda y (or
-                      ((compile-pred-constraint p1 ((secret part ident hash)...)) #,@#'y)
-                      ((compile-pred-constraint p2 ((secret part ident hash)...)) #,@#'y)))]
+                  ((compile-pred-constraint p1 ((secret part ident hash)...)) #,@#'y)
+                  ((compile-pred-constraint p2 ((secret part ident hash)...)) #,@#'y)))]
     
     [(_ (bnot p1) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
@@ -80,23 +80,27 @@
     [(_ (b= p1 p2) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
      #`(lambda y (equal? ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
-                             ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]
+                         ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]
     
     [(_ (b!= p1 p2) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
      #`(lambda y (not (equal?
-                           ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
-                           ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y))))]
+                       ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
+                       ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y))))]
     
     [(_ (b< p1 p2) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
+
+     (displayln #`(lambda y (< ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
+                               ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y))))
+     
      #`(lambda y (< ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
-                        ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]
+                    ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]
     
     [(_ (b<= p1 p2) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
      #`(lambda y (<= ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
-                         ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]))
+                     ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]))
 
 (define-syntax (compile-pred-exp-contraint stx)
   (syntax-parse stx
@@ -110,13 +114,17 @@
     [(_ (b- p1 p2) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
      #`(lambda y (- ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
-                        ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]
+                    ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]
     
     [(_ (bsize x:id) ((secret part:string ident:id hash:string) ...))
-     #:with a #'a 
-     #:with y (datum->syntax #'a (syntax-e #'x))
      #:with p (datum->syntax #'f (syntax->list #'(ident ...)))
-     #`(lambda p y)]
+     ;#:with y (datum->syntax #'f (syntax-e #'x))
+
+     (let* ([idents (syntax->list #'(ident ...))]
+            [q (syntax-e #'x)]
+            [y (datum->syntax #'f (findf (lambda (s) (eq? (syntax-e s) q)) idents))])
+
+       #`(lambda p #,y))]
     
     [(_ n:number ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
