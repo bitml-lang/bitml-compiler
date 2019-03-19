@@ -7,8 +7,7 @@
 
 (compile (guards
           (deposit "A" 3 "txA@0")(secret "A" a "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b")
-          (deposit "B" 3 "txB@0")(secret "B" b "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"))         
-         
+          (deposit "B" 3 "txB@0")(secret "B" b "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"))
          (split
           (2 -> (sum
                  (revealif (b) (pred (and (<= 0 (size b)) (<= (size b) 2))) (withdraw "B"))

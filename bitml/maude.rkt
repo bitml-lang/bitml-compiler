@@ -2,14 +2,52 @@
 
 (require (for-syntax racket/base syntax/parse)
          racket/list racket/port racket/system racket/match racket/string
-         "bitml.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "exp.rkt")
+         "bitml.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "exp.rkt" "constraints.rkt")
 
 (provide (all-defined-out))
 
 (define maude-output "")
 
+(define (reset-maude-out)
+  (set! maude-output ""))
+
 (define (add-maude-output . str-list )
   (set! maude-output (string-append maude-output (list+sep->string str-list "") "\n" )))
+
+(define-syntax (model-check stx)
+  (syntax-parse stx
+    [(_ contract (guard ...) query ...)
+     #'(begin
+         (define start-time (current-inexact-milliseconds))           
+         (define flag #f)
+         (define secrets-list (get-secrets-lengths contract (guard ...)))
+
+         ;for each query
+         (begin
+           (display "\n/*\nModel checking result for ")
+           (displayln 'query)
+           (displayln "")
+           (set! flag #f)
+
+           ;model check the query for each solution of the constraints
+           (for ([secrets-map secrets-list])
+             #:break flag        
+             (reset-maude-out)
+             (maude-opening)
+             (add-maude-output (string-append "eq C = " (compile-maude-contract contract) " . \n"))
+             (let ([result (execute-maude-query secrets-map query)])
+
+               ;if the model checking returns false display the cex
+               (unless (car result)
+                 (displayln "Result: false")
+                 (secrets-pretty-print secrets-map)
+                 (displayln (cdr result))
+                 (set! flag #t))))
+           
+           (unless flag
+             (displayln "Result: true"))           
+           (displayln "*/\n"))...
+           (displayln (format "// Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time)))))]))
 
 ;writes the opening declarations for maude
 (define (maude-opening)
@@ -24,12 +62,14 @@
                        (string-append "ops " (list+sep->string string-vdep " ") " : -> Name .\n")
                        "")]
          [contract "op C : -> Contract .\n"]
-         [sem-conf "op Cconf : -> SemConfiguration .\n"]
-         )
+         [sem-conf "op Cconf : -> SemConfiguration .\n"])
     (add-maude-output parts-dec sec-dec vdep-dec contract sem-conf)))
 
-(define (get-maude-closing)
-  (let* ([sem-secrets (map (lambda (s) (string-append " | { " (get-secret-part s) " : " (symbol->string s) " # 1 }")) (get-secrets))]
+(define (get-maude-closing secrets-map)
+  (let* ([sem-secrets (map
+                       (lambda (s) (string-append " | { " (get-secret-part s) " : "
+                                                  (symbol->string s) " # " (number->string (hash-ref secrets-map s)) " }"))
+                       (get-secrets))]
          [sem-secret-dec (list+sep->string sem-secrets "")]
          [sem-vdeps (map (lambda (d) (let* ([vdep (get-volatile-dep d)]
                                             [part (first vdep)]
@@ -45,37 +85,31 @@
 
 
 
-(define-syntax (compile-maude-query stx)
+(define-syntax (execute-maude-query stx)
   (syntax-parse stx
     #:literals (check-liquid check has-more-than)
-    [(_ (check-liquid strategy ...))
+    [(_ secret-map (check-liquid strategy ...))
      #'(begin
          (let ([maude-str 
                 (string-append maude-output
                                (compile-maude-strat strategy)...
-                               (get-maude-closing)
+                               (get-maude-closing secret-map)
                                "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, <> contract-free, 'bitml) .\n"
                                "quit .\n")])
            (write-maude-file maude-str)
-           (display "\n/*\nModel checking result for ")
-           (displayln '(check-liquid strategy ...))
-           (display-maude-out (execute-maude))
-           (display "*/\n")))]
+           (format-maude-out (execute-maude))))]
     
-    [(_ (check part:string has-more-than val:number strategy ...))
+    [(_ secret-map (check part:string has-more-than val:number strategy ...))
      #'(begin
          (let ([maude-str 
                 (string-append maude-output
                                (compile-maude-strat strategy)...
-                               (get-maude-closing)
+                               (get-maude-closing secret-map)
                                "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, []<> " part
                                " has-deposit>= " (number->string val) " BTC, 'bitml) . \n"
                                "quit .\n")])
            (write-maude-file maude-str)
-           (display "\n/*\nModel checking result for ")
-           (displayln '(check part has-more-than val strategy ...))
-           (display-maude-out (execute-maude))
-           (display "*/\n")))]))
+           (format-maude-out (execute-maude))))]))
 
 (define-syntax (compile-maude-strat stx)
   (syntax-parse stx
@@ -133,16 +167,19 @@
                              (system (format "~a/maude ~a/model-checker.maude ~a/bitml.maude test.maude"
                                              maude-path maude-mc-path bitml-maude-path) #:set-pwd? #t)))))
 
-(define (display-maude-out str)
+(define (format-maude-out str)
   (match (string-replace (string-replace str "\n" "") "\t" "")
     [(regexp #px"rewrites:.* \\((.*) real\\).*result ModelCheckResult: (counterexample\\(.*\\))Bye" (list _ time cex))
-     (displayln (string-append "Computation time: " time))
-     (displayln "Result: false\n")
-     (displayln cex)]
+     ;(displayln (string-append "Computation time: " time))
+     ;(displayln "Result: false\n")
+     ;(displayln cex)
+     (cons #f cex)]
     [(regexp #px"rewrites:.* \\((.*) real\\).*(result Bool: true.*)Bye" (list _ time res))
-     (displayln (string-append "Computation time: " time))
-     (displayln "Result: true")]
-    [x (displayln (string-append "Error: " x))]))
+     ;(displayln (string-append "Computation time: " time))
+     ;(displayln "Result: true")
+     (cons #t "")]
+    [x ;(displayln (string-append "Error: " x))
+     (cons #f (string-append "Error: " x))]))
 
 (define-syntax (compile-maude-contract stx)
   (syntax-parse stx

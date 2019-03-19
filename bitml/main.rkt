@@ -1,7 +1,7 @@
 #lang racket/base
 
-(require (for-syntax racket/base syntax/parse) racket/list
-         "bitml.rkt" "maude.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "constraints.rkt")
+(require (for-syntax racket/base syntax/parse)
+         "bitml.rkt" "maude.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt")
 
 ;provides the default reader for an s-exp lang
 (module reader syntax/module-reader
@@ -38,40 +38,10 @@
 
            ;start the compilation of the continuation contracts
            (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0
-                     (get-script-params (contract params ...)) script-params)...
-
-           (get-constr-tree (sum (contract params ...)...) (guard ...))
-
-           #|
-           (define-symbolic* a integer?)
-           (define-symbolic* b integer?)
-
-           (for ([c constraints])
-             (begin
-               (define sol (solve (assert (c a b))))
-               (if (sat? sol)
-                   (displayln (complete-solution sol (list a b)))
-                   (displayln "unsat"))))|#
-
-           (define solutions
-             (remove-duplicates
-              (for/list ([constr constraints])
-                (begin
-                  (define prob (make-csp))
-                  (add-var! prob 'a (range 0 100))
-                  (add-var! prob 'b (range 0 100))
-                  (add-var! prob 'c (range 0 100))
-
-                  (add-constraint! prob constr '(a b c))
-                  (solve prob)))))
-
-           (map displayln solutions)
-           
+                     (get-script-params (contract params ...)) script-params)...         
            
            ;start the maude code declaration
-           (maude-opening)
-           (add-maude-output (string-append "eq C = " (compile-maude-contract (sum (contract params ...) ...)) " . \n"))
-           (compile-maude-query maude-query)...
+           (model-check (sum (contract params ...)...) (guard ...) maude-query ...)
            
            (show-compiled)))]
     

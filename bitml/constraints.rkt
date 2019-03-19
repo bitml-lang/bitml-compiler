@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require (for-syntax racket/base syntax/parse)
+(require (for-syntax racket/base syntax/parse) racket/list
          racket/match csp
          "bitml.rkt" "terminals.rkt" "exp.rkt")
 
@@ -10,6 +10,37 @@
 
 (define (add-constraint constr)
   (set! constraints (cons constr constraints)))
+
+(define-syntax (get-secrets-lengths stx)
+  (syntax-parse stx
+    #:literals (withdraw after auth split putrevealif pred sum -> secret )
+    [(_ (sum (contract params ...) ...)
+        ((~or (secret part:string ident:id hash:string)
+              (deposit p1 ...)
+              (vol-deposit p2 ...)) ...))
+
+     #'(begin
+
+         (get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...))
+
+         (let ([secret-list 
+                (remove-duplicates
+                 (for/list ([constr constraints])
+                   (begin
+                     (define prob (make-csp))
+                     (add-var! prob 'ident (range 0 100))...
+
+                     (add-constraint! prob constr '(ident ...))
+                     (solve prob))))])
+
+           ;if no constraints were imposed, add default values
+           (when (= 0 (length secret-list))
+             (set! secret-list (list (list (cons 'ident 1)...))))
+
+           ;convert each list in a map
+           ;output will be a list of maps
+           (for/list ([secrets secret-list])
+             (foldr (lambda (x m) (hash-set m (car x) (cdr x))) (make-immutable-hash) secrets))))]))
 
 (define-syntax (get-constr-tree stx)
   (syntax-parse stx

@@ -34,4 +34,11 @@
 (define (format-timelock tl)
   (if (> tl 0) (format " absLock = block ~a\n" tl) ""))
 
+(define (secrets-pretty-print sec-map)
+  (display "Secrets: ")
+  (hash-for-each sec-map
+                 (lambda (k v) (printf "~a:~a " k v)))
+
+  (displayln "\n"))
+
 (provide (all-defined-out))
