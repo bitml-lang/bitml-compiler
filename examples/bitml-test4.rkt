@@ -7,7 +7,7 @@
 
 
 
-(compile (guards (deposit "A" 1 "txA@0")
+(contract (guards (deposit "A" 1 "txA@0")
                  (deposit "A" 1 "txA1@0")
                  (deposit "B" 2 "txB@0"))
          (sum (auth "B" (withdraw "A")) (after 30 (withdraw "B"))))

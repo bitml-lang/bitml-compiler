@@ -10,7 +10,7 @@
 
 
 
-(compile (guards (deposit "A" 1 "txA@0")(deposit "A" 1 "txA1@0")(deposit "B" 2 "txB")
+(contract (guards (deposit "A" 1 "txA@0")(deposit "A" 1 "txA1@0")(deposit "B" 2 "txB")
                  (secret "A" a "000a")(secret "B" b "000b")
                  (vol-deposit "A" x 1 "txVA") (vol-deposit "B" y 1 "txVB"))
          

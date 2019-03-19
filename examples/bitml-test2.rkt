@@ -9,7 +9,7 @@
 (key "B" (auth "A" "B" (after 10 (putrevealif (a) () (withdraw "A")))) "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
 
 
-(compile (guards
+(contract (guards
             (deposit "A" 1 "txA@0")
             (deposit "B" 1 "txA1@0")
             (vol-deposit "B" a 1 "txVA@2")

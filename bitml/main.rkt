@@ -7,7 +7,7 @@
 (module reader syntax/module-reader
   bitml)
 
-(provide  participant compile withdraw deposit guards
+(provide  participant contract withdraw deposit guards
           after auth key secret vol-deposit putrevealif
           put reveal revealif ->
           pred sum split generate-keys 
@@ -18,7 +18,7 @@
           #%module-begin #%datum #%top-interaction)
    
 ;compilation command
-(define-syntax (compile stx)
+(define-syntax (contract stx)
   (syntax-parse stx
     #:literals (guards sum)
     [(_ (guards guard ...)

@@ -6,7 +6,7 @@
 (generate-keys)
 
 
-(compile
+(contract
  (guards (deposit "A" 1 "txA@0")(secret "A" a "000a"))
  
  (sum (reveal (a) (withdraw "A"))
