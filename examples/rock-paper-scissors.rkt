@@ -10,23 +10,23 @@
           (deposit "B" 3 "txB@0")(secret "B" b "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"))
          (split
           (2 -> (sum
-                 (revealif (b) (pred (and (<= 0 (size b)) (<= (size b) 2))) (withdraw "B"))
+                 (revealif (b) (pred (and (<= 0 b) (<= b 2))) (withdraw "B"))
                  (after 10 (withdraw " A"))))
           (2 -> (sum
                  (reveal (a) (withdraw "A"))
                  (after 10 (withdraw "B"))))
           (2 -> (sum
-                 (revealif (a b) (pred (= (size a) (size b)))
+                 (revealif (a b) (pred (= a b))
                            (split (1 -> (withdraw "A")) (1 -> (sum (withdraw "B")))))
                  
-                 (revealif (a b) (pred (or (or (and (= (size a) 0) (= (size b) 2))
-                                               (and (= (size a) 2) (= (size b) 1)))
-                                           (and (= (size a) 1) (= (size b) 0))))
+                 (revealif (a b) (pred (or (or (and (= a 0) (= b 2))
+                                               (and (= a 2) (= b 1)))
+                                           (and (= a 1) (= b 0))))
                            (withdraw "A"))
                  
-                 (revealif (a b) (pred (or (or (and (= (size b) 0) (= (size a) 2))
-                                               (and (= (size b) 2) (= (size a) 1)))
-                                           (and (= (size b) 1) (= (size a) 0))))
+                 (revealif (a b) (pred (or (or (and (= b 0) (= a 2))
+                                               (and (= b 2) (= a 1)))
+                                           (and (= b 1) (= a 0))))
                            (withdraw "B"))
                  )))
 

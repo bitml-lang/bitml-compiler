@@ -24,7 +24,7 @@
     #:literals(b+ b- bsize)
     [(_ (b+ a b)) #'(string-append "(" (compile-pred-exp a) "+" (compile-pred-exp b) ")")]
     [(_ (b- a b)) #'(string-append "(" (compile-pred-exp a) "-" (compile-pred-exp b) ")")]
-    [(_ (bsize a:id)) #'(string-append "(size(" (symbol->string 'a) ") - " (number->string sec-param) ")")]
+    [(_ a:id) #'(string-append "(size(" (symbol->string 'a) ") - " (number->string sec-param) ")")]
     [(_ a:number) #'(number->string a)]
     [(_) (raise-syntax-error #f "wrong if predicate" stx)]))
 
@@ -48,7 +48,7 @@
     #:literals(b= b< b<= b+ b- bsize)
     [(_ (b+ a b)) #'(string-append "(" (compile-pred-exp-maude a) " + " (compile-pred-exp-maude b) ")")]
     [(_ (b- a b)) #'(string-append "(" (compile-pred-exp-maude a) " - " (compile-pred-exp-maude b) ")")]
-    [(_ (bsize a:id)) #'(string-append "size(" (symbol->string 'a) ")")]
+    [(_ a:id) #'(string-append "size(" (symbol->string 'a) ")")]
     [(_ a:number) #'(string-append "const(" (number->string a) ")")]
     [(_) (raise-syntax-error #f "wrong if predicate" stx)]))
 
@@ -116,7 +116,7 @@
      #`(lambda y (- ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
                     ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]
     
-    [(_ (bsize x:id) ((secret part:string ident:id hash:string) ...))
+    [(_ x:id ((secret part:string ident:id hash:string) ...))
      #:with p (datum->syntax #'f (syntax->list #'(ident ...)))
      ;#:with y (datum->syntax #'f (syntax-e #'x))
 
@@ -131,25 +131,3 @@
      #'(lambda y n)]
     
     [(_) (raise-syntax-error #f "wrong if predicate" stx)]))
-
-#|
-(define-syntax (get-constr-var stx)
-  (syntax-parse stx
-    #:literals(btrue band bnot b= b< b<= b!=)
-    [(_ btrue) #''()]
-    [(_ (band a b)) #'(append (get-constr-var a) (get-constr-var b))]
-    [(_ (bnot a)) #'(get-constr-var a)]
-    [(_ (b= a b)) #'(append (get-constr-exp-var a) (get-constr-exp-var b))]
-    [(_ (b!= a b)) #'(append (get-constr-exp-var a) (get-constr-exp-var b))]
-    [(_ (b< a b)) #'(append (get-constr-exp-var a) (get-constr-exp-var b))]
-    [(_ (b<= a b)) #'(append (get-constr-exp-var a) (get-constr-exp-var b))]))
-
-(define-syntax (get-constr-exp-var stx)
-  (syntax-parse stx
-    #:literals(b+ b- bsize)
-    [(_ (b+ a b)) #'(append (get-constr-exp-var a) (get-constr-exp-var b))]
-    [(_ (b- a b)) #'(append (get-constr-exp-var a) (get-constr-exp-var b))]
-    [(_ (bsize a:id)) #'(list 'a)]
-    [(_ a:number) #''()]
-    [(_) (raise-syntax-error #f "wrong if predicate" stx)]))
-|#

@@ -5,8 +5,8 @@
 
 (key "B" (withdraw "A") "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
 (key "A" (withdraw "A") "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
-(key "A" (putrevealif (x y) (a) (pred (= (size a) 100)) (withdraw "A")) "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
-(key "B" (putrevealif (x y) (a) (pred (= (size a) 100)) (withdraw "A")) "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
+(key "A" (putrevealif (x y) (a) (pred (= a 100)) (withdraw "A")) "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
+(key "B" (putrevealif (x y) (a) (pred (= a 100)) (withdraw "A")) "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
 
 
 
@@ -14,5 +14,5 @@
                  (secret "A" a "000a")(secret "B" b "000b")
                  (vol-deposit "A" x 1 "txVA") (vol-deposit "B" y 1 "txVB"))
          
-         (putrevealif (x y) (a) (pred (= (size a) 100)) (withdraw "A")))
+         (putrevealif (x y) (a) (pred (= a 100)) (withdraw "A")))
 

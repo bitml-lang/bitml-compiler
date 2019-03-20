@@ -11,13 +11,13 @@
          
          (split
           (2 -> (sum
-                 (revealif (b) (pred (and (<= 0 (size b)) (<= (size b) 1))) (withdraw "B"))
+                 (revealif (b) (pred (and (<= 0 b) (<= b 1))) (withdraw "B"))
                  (after 10 (withdraw "A"))))
           (2 -> (sum
                  (reveal (a) (withdraw "A"))
                  (after 10 (withdraw "B"))))
           (2 -> (sum
-                 (revealif (a b) (pred (= (size a) (size b))) (withdraw "A"))
-                 (revealif (a b) (pred (!= (size a) (size b))) (withdraw "B")))))
+                 (revealif (a b) (pred (= a b)) (withdraw "A"))
+                 (revealif (a b) (pred (!= a b)) (withdraw "B")))))
 
          (check-liquid))
