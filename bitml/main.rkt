@@ -22,28 +22,28 @@
   (syntax-parse stx
     #:literals (guards sum)
     [(_ (guards guard ...)
-        (sum (contract params ...) ...)
+        (sum (contr params ...) ...)
         maude-query ...)    
      
-     #`(begin
+     #'(begin
          (reset-state)
          guard ...
 
-         (let* ([scripts-list (list (get-script (contract params ...)) ...)]
+         (let* ([scripts-list (list (get-script (contr params ...)) ...)]
                 [script (list+sep->string scripts-list " || ")]
-                [script-params (get-script-params (sum (contract params ...) ...))])
+                [script-params (get-script-params (sum (contr params ...) ...))])
 
            (compile-init parts deposit-txout tx-v script script-params)
 
 
            ;start the compilation of the continuation contracts
-           (contract params ... '(sum (contract params ...)...) "Tinit" 0 tx-v (get-participants) 0
-                     (get-script-params (contract params ...)) script-params)...         
+           (contr params ... '(sum (contr params ...)...) "Tinit" 0 tx-v (get-participants) 0
+                     (get-script-params (contr params ...)) script-params)...         
            
            ;start the maude code declaration
-           (model-check (sum (contract params ...)...) (guard ...) maude-query ...)
+           (model-check (sum (contr params ...)...) (guard ...) maude-query ...)
            
            (show-compiled)))]
     
-    [(_ (guards guard ...) (contract params ...) maude-query ...)     
-     #`(compile (guards guard ...) (sum (contract params ...)) maude-query ...)]))
+    [(_ (guards guard ...) (contr params ...) maude-query ...)     
+     #'(contract (guards guard ...) (sum (contr params ...)) maude-query ...)]))
