@@ -9,7 +9,7 @@
 ;methods used to transcompile predicates to balzac predicates
 (define-syntax (compile-pred stx)
   (syntax-parse stx
-    #:literals(btrue band bor bnot b= b< b<= b!=)
+    #:literals(btrue band bor bnot b= b< b<= b!= between)
     [(_ btrue) #'"true"]
     [(_ (band a b)) #'(string-append "(" (compile-pred a) " && " (compile-pred b) ")")]
     [(_ (bor a b)) #'(string-append "(" (compile-pred a) " || " (compile-pred b) ")")]
@@ -17,7 +17,8 @@
     [(_ (b= a b)) #'(string-append (compile-pred-exp a) "==" (compile-pred-exp b))]
     [(_ (b!= a b)) #'(string-append (compile-pred-exp a) "!=" (compile-pred-exp b))]
     [(_ (b< a b)) #'(string-append (compile-pred-exp a) "<" (compile-pred-exp b))]
-    [(_ (b<= a b)) #'(string-append (compile-pred-exp a) "<=" (compile-pred-exp b))]))
+    [(_ (b<= a b)) #'(string-append (compile-pred-exp a) "<=" (compile-pred-exp b))]
+    [(_ (between a b c)) #'(string-append "between(" (compile-pred-exp a) "," (compile-pred-exp b) "," (compile-pred-exp c) ")")]))
 
 (define-syntax (compile-pred-exp stx)
   (syntax-parse stx
@@ -33,7 +34,7 @@
 ;methods used to transcompile predicates to maude predicates
 (define-syntax (compile-pred-maude stx)
   (syntax-parse stx
-    #:literals(btrue band bor bnot b= b< b<= b!=)
+    #:literals(btrue band bor bnot b= b< b<= b!= between)
     [(_ btrue) #'"True"]
     [(_ (band a b)) #'(string-append "(" (compile-pred-maude a) " && " (compile-pred-maude b) ")")]
     [(_ (bor a b)) #'(string-append "(" (compile-pred-maude a) " || " (compile-pred-maude b) ")")]
@@ -41,7 +42,9 @@
     [(_ (b= a b)) #'(string-append (compile-pred-exp-maude a) " == " (compile-pred-exp-maude b))]
     [(_ (b!= a b)) #'(string-append (compile-pred-exp-maude a) " != " (compile-pred-exp-maude b))]
     [(_ (b< a b)) #'(string-append (compile-pred-exp-maude a) " < " (compile-pred-exp-maude b))]
-    [(_ (b<= a b)) #'(string-append (compile-pred-exp-maude a) " <= " (compile-pred-exp-maude b))]))
+    [(_ (b<= a b)) #'(string-append (compile-pred-exp-maude a) " <= " (compile-pred-exp-maude b))]
+    [(_ (between a b c)) #'(string-append "((" (compile-pred-exp-maude a) " >= " (compile-pred-exp-maude b) ") && "
+                                          "(" (compile-pred-exp-maude a) " <= " (compile-pred-exp-maude c) "))")]))
 
 (define-syntax (compile-pred-exp-maude stx)
   (syntax-parse stx
@@ -56,7 +59,7 @@
 ;methods used to compile preditcates contraints for constraint solving
 (define-syntax (compile-pred-constraint stx)
   (syntax-parse stx
-    #:literals(btrue band bor bnot b= b< b<= b!=)
+    #:literals(btrue band bor bnot b= b< b<= b!= between)
     
     [(_ btrue ((secret part:string ident:id hash:string) ...))
      #'#t]
@@ -100,7 +103,12 @@
     [(_ (b<= p1 p2) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
      #`(lambda y (<= ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
-                     ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]))
+                     ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]
+    [(_ (between p1 p2 p3) ((secret part:string ident:id hash:string) ...))
+     #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
+     #`(lambda y (<= ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)
+                     ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
+                     ((compile-pred-exp-contraint p3 ((secret part ident hash)...)) #,@#'y)))]))
 
 (define-syntax (compile-pred-exp-contraint stx)
   (syntax-parse stx

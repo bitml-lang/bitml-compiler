@@ -10,7 +10,7 @@
           (deposit "B" 1 "txB@0")(secret "B" b "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"))        
 
          (sum
-          (revealif (b) (pred (and (<= 0 b) (<= b 1)))
+          (revealif (b) (pred (between b 0 1))
                     (sum
                      (revealif (a) (pred (= a b)) (withdraw "A"))
                      (revealif (a) (pred (!= a b)) (withdraw "B"))

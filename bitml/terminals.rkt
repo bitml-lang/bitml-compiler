@@ -20,6 +20,7 @@
 (define-syntax (b- stx) (raise-syntax-error #f "wrong usage of -" stx))
 (define-syntax (bsize stx) (raise-syntax-error #f "wrong usage of size" stx))
 (define-syntax (pred stx) (raise-syntax-error #f "wrong usage of pred" stx))
+(define-syntax (between stx) (raise-syntax-error #f "wrong usage of between" stx))
 
 (define-syntax (strategy stx) (raise-syntax-error #f "wrong usage of strategy" stx))
 (define-syntax (b-if stx) (raise-syntax-error #f "wrong usage of if" stx))  

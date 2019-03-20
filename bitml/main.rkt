@@ -10,7 +10,7 @@
 (provide  participant contract withdraw deposit guards
           after auth key secret vol-deposit putrevealif
           put reveal revealif ->
-          pred sum split generate-keys 
+          pred sum split generate-keys between
           (rename-out [btrue true] [band and] [bor or] [bnot not]
                       [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size])
           strategy b-if do-reveal do-auth not-destory do-destory

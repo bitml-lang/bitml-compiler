@@ -11,7 +11,7 @@
          
          (split
           (2 -> (sum
-                 (revealif (b) (pred (and (<= 0 b) (<= b 1))) (withdraw "B"))
+                 (revealif (b) (pred (between b 0 1)) (withdraw "B"))
                  (after 10 (withdraw "A"))))
           (2 -> (sum
                  (reveal (a) (withdraw "A"))
