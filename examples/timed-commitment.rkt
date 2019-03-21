@@ -5,15 +5,16 @@
 
 (generate-keys)
 
+(define timeout (after 10 (withdraw "B")))
 
 (contract
  (guards (deposit "A" 1 "txA@0")(secret "A" a "000a"))
  
  (sum (reveal (a) (withdraw "A"))
-      (after 10 (withdraw "B")))
+      (ref timeout))
 
  (check-liquid
-        #;(strategy "A" (do-reveal a)))
+  #;(strategy "A" (do-reveal a)))
 
  (check "A" has-more-than 1
         (strategy "A" (do-reveal a))))

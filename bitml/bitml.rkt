@@ -26,47 +26,6 @@
     [(_ ident:string term pubkey:string)
      #'(add-pk-for-term 'ident 'term pubkey)]))
 
-;compiles withdraw to transaction
-(define-syntax (withdraw stx)
-  (syntax-parse stx    
-    [(_ part parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(begin         
-         (let* ([tx-name (new-tx-name)]
-                [tx-sigs (participants->tx-sigs parts tx-name)]
-                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "0")) all-secrets) " ")]
-                [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ": " sec-wit " " tx-sigs "]")])
-
-
-           (add-output (participants->sigs-declar parts tx-name parent-contract))
-         
-           (add-output (string-append
-                        (format "transaction ~a { \n ~a \n output = ~a BTC : fun(x) . versig(pubkey~a; x) \n "
-                                tx-name inputs value part)
-                        (if (> timelock 0)
-                            (format "absLock = block ~a \n}\n" timelock)
-                            "\n}\n")))))]
-    [(_)
-     (raise-syntax-error #f "wrong usage of withdraw" stx)]))
-
-;handles after
-(define-syntax (after stx)
-  (syntax-parse stx   
-    [(_ t (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(contract params ... parent-contract parent-tx input-idx value parts (max t timelock) sec-to-reveal all-secrets)]
-    
-    [(_)
-     (raise-syntax-error #f "wrong usage of after" stx)]))
-
-;handles auth
-(define-syntax (auth stx)
-  (syntax-parse stx   
-    [(_ part:string ... (contract params ...) orig-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     ;#'(contract params ... parent-tx input-idx value (remove part parts) timelock)]
-     #'(contract params ... orig-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)] 
-
-    [(_)
-     (raise-syntax-error #f "wrong usage of auth" stx)]))
-
 (define-syntax (deposit stx)
   (syntax-parse stx
     [(_ part:string v:number txout)
@@ -201,10 +160,11 @@
     (add-output (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" inputs tx-v script-params script))))
 
 
-(define-syntax (putrevealif stx)
+(define-syntax (compile stx)
   (syntax-parse stx
-    #:literals(pred sum)
-    [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+    #:literals(pred sum -> putrevealif split withdraw after auth reveal revealif put)
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (sum (contract params ...)...))
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #'(begin
          (let* ([tx-name (format "T~a" (new-tx-index))]
                 [vol-dep-list (map (lambda (x) (get-volatile-dep x)) (list 'tx-id ...))] 
@@ -243,17 +203,16 @@
            (add-output (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
 
            
-           (contract params ... '(sum (contract params ...)...)
-                     tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract))...))]
+           (compile (contract params ...) '(sum (contract params ...)...)
+                    tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract))...))]
+
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...))
+        parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)
+     #'(compile (putrevealif (tx-id ...) (sec ...) (~? (pred p)) (sum (contract params ...)))
+                parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
     
-    [(_ (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...) parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)
-     #'(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (sum (contract params ...)) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
-
-
-(define-syntax (split stx)
-  (syntax-parse stx
-    #:literals(sum ->)    
-    [(_ (val:number -> (sum (contract params ...)...))...
+    
+    [(_ (split (val:number -> (sum (contract params ...)...))...)
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #'(begin    
          (let* ([tx-name (format "T~a" (new-tx-index))]
@@ -296,10 +255,69 @@
                   (set! count (add1 count)))...))))]
 
     ;allow for split branches with unary sums
-    [(_ (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...
+    [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...)
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(split (val -> (~? (sum (scontract sparams ...))) (~? (sum (contract params ...)...)) )...
-              parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
+     #'(compile (split (val -> (~? (sum (scontract sparams ...))) (~? (sum (contract params ...)...)) )...)
+                parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+
+    ;syntax sugar for putrevealif
+    [(_ (put (tx-id:id ...) (sum (contract params ...)...))
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(compile (putrevealif (tx-id ...) () (sum (contract params ...)...))
+                parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+    [(_ (put (tx-id:id ...) (contract params ...))
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(compile (putrevealif (tx-id ...) () (contract params ...))
+                parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+
+    [(_ (reveal (sec:id ...) (sum (contract params ...)...))
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(compile (putrevealif () (sec ...) (sum (contract params ...)...))
+                parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+    [(_ (reveal (sec:id ...) (contract params ...))
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(compile (putrevealif () (sec ...) (contract params ...))
+                parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+
+    [(_ (revealif (sec:id ...) (pred p) (sum (contract params ...)...))
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(compile (putrevealif () (sec ...) (pred p) (sum (contract params ...)...))
+                parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+    [(_ (revealif (sec:id ...) (pred p) (contract params ...))
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(compile (putrevealif () (sec ...) (pred p) (contract params ...))
+                parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+
+    ;compiles withdraw to transaction  
+    [(_ (withdraw part)
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(begin         
+         (let* ([tx-name (new-tx-name)]
+                [tx-sigs (participants->tx-sigs parts tx-name)]
+                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "0")) all-secrets) " ")]
+                [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ": " sec-wit " " tx-sigs "]")])
+
+
+           (add-output (participants->sigs-declar parts tx-name parent-contract))
+         
+           (add-output (string-append
+                        (format "transaction ~a { \n ~a \n output = ~a BTC : fun(x) . versig(pubkey~a; x) \n "
+                                tx-name inputs value part)
+                        (if (> timelock 0)
+                            (format "absLock = block ~a \n}\n" timelock)
+                            "\n}\n")))))]
+  
+    [(_ (after t (contract params ...))
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(compile (contract params ...)
+                parent-contract parent-tx input-idx value parts (max t timelock) sec-to-reveal all-secrets)]
+
+    [(_ (auth part:string ... (contract params ...))
+        orig-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     ;#'(contract params ... parent-tx input-idx value (remove part parts) timelock)]
+     #'(compile (contract params ...)
+                orig-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
+
 
 (define-syntax (execute-split stx)
   (syntax-parse stx
@@ -311,32 +329,5 @@
          ;(displayln (get-script-params (contract params ...)))
          ;(displayln ""))...
          
-         (contract params ... '(contract params ...) parent-tx input-idx value parts 0
-                   sum-secrets (get-script-params (contract params ...)))...)]))
-
-
-;syntax sugar for putrevealif
-;--------------------------------------------------------------------------
-(define-syntax (put stx)
-  (syntax-parse stx
-    #:literals(sum)
-    [(_ (tx-id:id ...) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(putrevealif (tx-id ...) () (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
-    [(_ (tx-id:id ...) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(putrevealif (tx-id ...) () (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
-
-(define-syntax (reveal stx)
-  (syntax-parse stx
-    #:literals(sum)
-    [(_ (sec:id ...) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(putrevealif () (sec ...) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
-    [(_ (sec:id ...) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(putrevealif () (sec ...) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
-
-(define-syntax (revealif stx)
-  (syntax-parse stx
-    #:literals(sum pred)
-    [(_ (sec:id ...) (pred p) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(putrevealif () (sec ...) (pred p) (sum (contract params ...)...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
-    [(_ (sec:id ...) (pred p) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(putrevealif () (sec ...) (pred p) (contract params ...) parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
+         (compile (contract params ...) '(contract params ...) parent-tx input-idx value parts 0
+                  sum-secrets (get-script-params (contract params ...)))...)]))
