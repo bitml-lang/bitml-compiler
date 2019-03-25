@@ -18,8 +18,6 @@
 
 (define W2 (withdraw "B"))
 
-
-
 (contract
  (guards (deposit "A" 1 "txA@0")(secret "A" a "000a")
          (deposit "B" 1 "txB@0")(secret "B" b "000b"))
