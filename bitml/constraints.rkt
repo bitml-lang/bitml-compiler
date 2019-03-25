@@ -139,6 +139,11 @@
     [(_ (auth part:string ... (contract params ...)) ((secret spart:string ident:id hash:string) ...))
      #'(get-constr (contract params ...) ((secret part ident hash)...))]
 
+    [(_ (split (val:number -> (scontract sparams ...))...)
+        ((secret part:string ident:id hash:string) ...))
+     #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
+     #`(lambda y  (and ((get-constr (scontract sparams ...) ((secret part ident hash)...)) #,@#'y)...))]
+
     [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...)
         ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
@@ -177,6 +182,9 @@
 
     [(_ (sum (contract params ...)...))       
      #'(or (constr-required? (contract params ...))...)]
+
+    [(_ (split (val:number ->(scontract sparams ...))...))
+     #'(or (constr-required? (scontract sparams ...))...)]
 
     [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...))
      #'(or (~? (constr-required? (contract params ...)))... ... (~? (constr-required? (scontract sparams ...)))...)]
