@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require (for-syntax racket/base syntax/parse)
-         racket/list racket/port racket/system racket/match racket/string
+         racket/list racket/port racket/system racket/match racket/string racket/math
          "bitml.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "exp.rkt" "constraints.rkt")
 
 (provide (all-defined-out))
@@ -73,7 +73,7 @@
          [sem-secret-dec (list+sep->string sem-secrets "")]
          [sem-vdeps (map (lambda (d) (let* ([vdep (get-volatile-dep d)]
                                             [part (first vdep)]
-                                            [val (number->string (second vdep))])
+                                            [val (number->string (format-num (second (vdep))))])
                                        (string-append " | < " part ", " val " BTC > " (symbol->string d) " "))) (get-volatile-deps))]
          [sem-vdeps (list+sep->string sem-vdeps "")])
     
@@ -106,7 +106,7 @@
                                (compile-maude-strat strategy)...
                                (get-maude-closing secret-map)
                                "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, []<> " part
-                               " has-deposit>= " (number->string val) " BTC, 'bitml) . \n"
+                               " has-deposit>= " (number->string (format-num val)) " BTC, 'bitml) . \n"
                                "quit .\n")])
            (write-maude-file maude-str)
            (format-maude-out (execute-maude))))]))
@@ -194,7 +194,7 @@
      #'(compile-maude-contract (contract params ...))]
 
     [(_ (split (val:number -> (contract params ...))... ))
-     #'(let* ([vals (list val ...)]
+     #'(let* ([vals (list (format-num val) ...)]
               [g-contracts (list (compile-maude-contract (contract params ...)) ...)]
               [decl-parts (map
                            (lambda (v gc) (string-append (number->string v) " BTC ~> ( " gc " )"))
@@ -232,3 +232,6 @@
 
     [(_ (reveal (tx:id ...) (contract params ...)))
      #'(compile-maude-contract (putrevealif (tx ...) () (contract params ...)))]))
+
+(define (format-num n)
+  (exact-floor (* n (expt 10 8))))
