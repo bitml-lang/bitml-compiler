@@ -1,8 +1,5 @@
-parts = ["A0", "A1", "A2", "A3"]
-secs = ["a0", "a1", "a2", "a3"]
-
-parts = ["A0"]
-secs = ["a0"]
+parts = ["A0", "A1", "A2", "A3", "A4"]
+secs = ["a0", "a1", "a2", "a3", "a4"]
 
 n = len(parts)
 
