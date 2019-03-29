@@ -162,7 +162,7 @@
 
 (define-syntax (compile stx)
   (syntax-parse stx
-    #:literals(pred sum -> putrevealif split withdraw after auth reveal revealif put)
+    #:literals(pred sum -> putrevealif split withdraw after auth reveal revealif put tau)
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (sum (contract params ...)...))
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #'(begin
@@ -235,24 +235,24 @@
 
            (add-output (participants->sigs-declar parts tx-name parent-contract))
 
-           (if(> (apply + values-list) value)
-              (raise-syntax-error 'bitml
-                                  (format "split spends ~a BTC but it receives ~a BTC" (+ val ...) value)
-                                  '(split (val (sum (contract params ...)...))...))
+           (if (not (= (apply + values-list) value))
+               (raise-syntax-error 'bitml
+                                   (format "split spends ~a BTC but it receives ~a BTC" (+ val ...) value)
+                                   '(split (val (sum (contract params ...)...))...))
 
-              (begin
-                ;compile the secrets declarations
-                (for-each
-                 (lambda (x) (add-output (string-append "const sec_" x " : string = _ //add value of secret " (string-replace x ":int" ""))))
-                 sec-to-reveal)
+               (begin
+                 ;compile the secrets declarations
+                 (for-each
+                  (lambda (x) (add-output (string-append "const sec_" x " : string = _ //add value of secret " (string-replace x ":int" ""))))
+                  sec-to-reveal)
 
-                (add-output (format "\ntransaction ~a { \n ~a \n ~a \n~a}\n" tx-name inputs output (format-timelock timelock)))
+                 (add-output (format "\ntransaction ~a { \n ~a \n ~a \n~a}\n" tx-name inputs output (format-timelock timelock)))
            
-                ;compile the continuations
+                 ;compile the continuations
                 
-                (begin             
-                  (execute-split '(contract params ...)... tx-name count val parts)
-                  (set! count (add1 count)))...))))]
+                 (begin             
+                   (execute-split '(contract params ...)... tx-name count val parts)
+                   (set! count (add1 count)))...))))]
 
     ;allow for split branches with unary sums
     [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...)
@@ -287,6 +287,12 @@
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #'(compile (putrevealif () (sec ...) (pred p) (contract params ...))
                 parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+
+    [(_ (tau (contract params ...))
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
+     #'(compile (putrevealif () () (contract params ...))
+                parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+
 
     ;compiles withdraw to transaction  
     [(_ (withdraw part)

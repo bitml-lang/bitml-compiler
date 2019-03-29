@@ -21,7 +21,7 @@
 
      #'(begin
 
-         (get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...))
+         ;(get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...))
 
          (let ([secret-list 
                 (remove-duplicates
@@ -44,7 +44,7 @@
 
 (define-syntax (get-constr-tree stx)
   (syntax-parse stx
-    #:literals (withdraw after auth split putrevealif pred sum -> secret )
+    #:literals (withdraw after auth split putrevealif pred sum -> secret put reveal revealif tau)
 
     #|
     [(_ (sum (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...))
@@ -70,6 +70,7 @@
      #'(add-constraint parent)]
     
     [(_ (withdraw part:string) ((secret spart:string ident:id hash:string) ...))
+     (displayln "finito")
      #'(values)]
     
     [(_ (after t (contract params ...)) ((secret part:string ident:id hash:string) ...) (~optional parent))
@@ -119,15 +120,20 @@
         ((secret part:string ident:id hash:string) ...) (~optional parent))
      #'(get-constr-tree (putrevealif () (sec ...) (pred p) (contract params ...)) ((secret part ident hash)...) (~? parent))]
 
-    [(_ (reveal (tx:id ...) (contract params ...))
+    [(_ (put (tx:id ...) (contract params ...))
         ((secret part:string ident:id hash:string) ...)
         (~optional parent))
-     #'(get-constr-tree (putrevealif (tx ...) () (contract params ...)) ((secret part ident hash)...) (~? parent))]))
+     #'(get-constr-tree (putrevealif (tx ...) () (contract params ...)) ((secret part ident hash)...) (~? parent))]
+
+    [(_ (tau (contract params ...))
+        ((secret part:string ident:id hash:string) ...)
+        (~optional parent))
+     #'(get-constr-tree (putrevealif () () (contract params ...)) ((secret part ident hash)...) (~? parent))]))
 
 ;descends only a level in the syntax tree
 (define-syntax (get-constr stx)
   (syntax-parse stx
-    #:literals (withdraw after auth split putrevealif pred sum strip-auth)
+    #:literals (withdraw after auth split putrevealif pred sum strip-auth put reveal revealif tau)
     
     [(_ (withdraw part:string) ((secret spart:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
@@ -165,14 +171,19 @@
      #'(get-constr (putrevealif () (sec ...) (pred p) (contract params ...))
                    ((secret part ident hash)...))]
 
-    [(_ (reveal (tx:id ...) (contract params ...))
-        ((secret part:string ident:id hash:string) ...) parent)
+    [(_ (put (tx:id ...) (contract params ...))
+        ((secret part:string ident:id hash:string) ...))
      #'(get-constr (putrevealif (tx ...) () (contract params ...))
+                   ((secret part ident hash)...))]
+
+    [(_ (tau (contract params ...))
+        ((secret part:string ident:id hash:string) ...))
+     #'(get-constr (putrevealif () () (contract params ...))
                    ((secret part ident hash)...))]))
 
 (define-syntax (constr-required? stx)
   (syntax-parse stx
-    #:literals (withdraw after auth split putrevealif pred sum strip-auth)
+    #:literals (withdraw after auth split putrevealif pred sum strip-auth put reveal revealif tau)
     [(_ (withdraw part:string))
      #'#f]
     [(_ (after t (contract params ...)))
@@ -201,5 +212,8 @@
     [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
      #'(constr-required? (putrevealif () (sec ...) (pred p) (contract params ...)))]
 
-    [(_ (reveal (tx:id ...) (contract params ...)) parent)
-     #'(constr-required? (putrevealif (tx ...) () (contract params ...)))]))
+    [(_ (put (tx:id ...) (contract params ...)))
+     #'(constr-required? (putrevealif (tx ...) () (contract params ...)))]
+
+    [(_ (tau (contract params ...)))
+     #'(constr-required? (putrevealif () () (contract params ...)))]))

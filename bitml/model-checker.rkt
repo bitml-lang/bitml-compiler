@@ -73,12 +73,12 @@
          [sem-secret-dec (list+sep->string sem-secrets "")]
          [sem-vdeps (map (lambda (d) (let* ([vdep (get-volatile-dep d)]
                                             [part (first vdep)]
-                                            [val (number->string (format-num (second (vdep))))])
+                                            [val (format-num (second (vdep)))])
                                        (string-append " | < " part ", " val " BTC > " (symbol->string d) " "))) (get-volatile-deps))]
          [sem-vdeps (list+sep->string sem-vdeps "")])
     
     (string-append "\neq Cconf = toSemConf < C , "
-                   (number->string tx-v) " BTC > 'xconf\n"
+                   (format-num tx-v) " BTC > 'xconf\n"
                    sem-secret-dec "\n" sem-vdeps " .\n"
                    "endm\n"
                    "smod LIQUIDITY_CHECK is\nprotecting BITML-CHECK .\nincluding BITML-CONTRACT .\nendsm\n")))
@@ -106,7 +106,7 @@
                                (compile-maude-strat strategy)...
                                (get-maude-closing secret-map)
                                "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, []<> " part
-                               " has-deposit>= " (number->string (format-num val)) " BTC, 'bitml) . \n"
+                               " has-deposit>= " (format-num val) " BTC, 'bitml) . \n"
                                "quit .\n")])
            (write-maude-file maude-str)
            (format-maude-out (execute-maude))))]))
@@ -183,7 +183,7 @@
 
 (define-syntax (compile-maude-contract stx)
   (syntax-parse stx
-    #:literals (withdraw after auth split putrevealif pred sum strip-auth)
+    #:literals (withdraw after auth split putrevealif pred sum strip-auth tau)
     [(_ (withdraw part:string))
      #'(string-append "withdraw " part)]
     [(_ (after t (contract params ...)))
@@ -197,7 +197,7 @@
      #'(let* ([vals (list (format-num val) ...)]
               [g-contracts (list (compile-maude-contract (contract params ...)) ...)]
               [decl-parts (map
-                           (lambda (v gc) (string-append (number->string v) " BTC ~> ( " gc " )"))
+                           (lambda (v gc) (string-append v " BTC ~> ( " gc " )"))
                            vals
                            g-contracts)]
               [decl (list+sep->string decl-parts "\n")])
@@ -228,10 +228,13 @@
      #'(compile-maude-contract (putrevealif () (sec ...) (contract params ...)))]
 
     [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
-     #'(compile-maude-contract (putrevealif () (sec ...) (pred p) (contract params ...)))]
+     #'(compile-maude-contract (putrevealif () (sec ...) (pretaud p) (contract params ...)))]
 
     [(_ (reveal (tx:id ...) (contract params ...)))
-     #'(compile-maude-contract (putrevealif (tx ...) () (contract params ...)))]))
+     #'(compile-maude-contract (putrevealif (tx ...) () (contract params ...)))]
+
+    [(_ (tau (contract params ...)))
+     #'(compile-maude-contract (contract params ...))]))
 
 (define (format-num n)
-  (exact-floor (* n (expt 10 8))))
+  (number->string (exact-floor (* n (expt 10 8)))))

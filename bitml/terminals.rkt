@@ -2,7 +2,7 @@
 
 (require (for-syntax racket/base syntax/parse))
 
-(define-syntax (guards stx) (raise-syntax-error #f "wrong usage of guards" stx))
+(define-syntax (pre stx) (raise-syntax-error #f "wrong usage of pre" stx))
 (define-syntax (sum stx) (raise-syntax-error #f "wrong usage of sum" stx))
 (define-syntax (-> stx) (raise-syntax-error #f "wrong usage of ->" stx))
 (define-syntax (putrevealif stx) (raise-syntax-error #f "wrong usage of putrevealif" stx))
@@ -13,6 +13,7 @@
 (define-syntax (withdraw stx) (raise-syntax-error #f "wrong usage of withdraw" stx))
 (define-syntax (after stx) (raise-syntax-error #f "wrong usage of after" stx))
 (define-syntax (auth stx) (raise-syntax-error #f "wrong usage of auth" stx))
+(define-syntax (tau stx) (raise-syntax-error #f "wrong usage of tau" stx))
 
 ;operators for predicate in putrevealif
 (define-syntax (btrue stx) (raise-syntax-error #f "wrong usage of true" stx))
