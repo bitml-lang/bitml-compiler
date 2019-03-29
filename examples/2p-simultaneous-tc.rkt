@@ -28,4 +28,9 @@
       (deposit "A1" 1 "txB@0")(secret "A1" a1 "000b"))
  (ref C00)
 
- (check-liquid))
+ (check-liquid)
+ 
+ (check-query "[]<> ~(a0 revealed) /\\ a1 revealed -> (A1 has-deposit>= 200000000 BTC /\\ A0 has-deposit<= 0 BTC)")
+ 
+ (check "A0" has-more-than 1
+        (strategy "A0" (do-reveal a0))))

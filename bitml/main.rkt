@@ -16,7 +16,7 @@
                       [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size]
                       [$expand ref])
           strategy b-if do-reveal do-auth not-destory do-destory
-          state check-liquid check has-more-than 
+          state check-liquid check has-more-than check-query
           #%module-begin #%datum #%top-interaction)
 
 ;expands the constants

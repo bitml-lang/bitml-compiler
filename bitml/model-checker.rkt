@@ -87,7 +87,7 @@
 
 (define-syntax (execute-maude-query stx)
   (syntax-parse stx
-    #:literals (check-liquid check has-more-than)
+    #:literals (check-liquid check has-more-than check-query)
     [(_ secret-map (check-liquid strategy ...))
      #'(begin
          (let ([maude-str 
@@ -108,6 +108,16 @@
                                "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, []<> " part
                                " has-deposit>= " (format-num val) " BTC, 'bitml) . \n"
                                "quit .\n")])
+           (write-maude-file maude-str)
+           (format-maude-out (execute-maude))))]
+    [(_ secret-map (check-query query:string strategy ...))
+     #'(begin
+         (let ([maude-str 
+                (string-append maude-output
+                               (compile-maude-strat strategy)...
+                               (get-maude-closing secret-map)
+                               "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, "
+                               query ", 'bitml) . \n quit .\n")])
            (write-maude-file maude-str)
            (format-maude-out (execute-maude))))]))
 
