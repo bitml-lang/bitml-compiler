@@ -1,5 +1,8 @@
-parts = ["A", "B", "C", "D"]
-secs = ["a", "b", "c", "d"]
+parts = ["A0", "A1", "A2", "A3"]
+secs = ["a0", "a1", "a2", "a3"]
+
+parts = ["A0"]
+secs = ["a0"]
 
 n = len(parts)
 
@@ -9,13 +12,11 @@ def bitfield(i):
 
 def C(i,p):      
     if i < n-1:  
-        print "(define C" + str(i) + str(p) + " (reveal (" + secs[i] + ") (sum (ref C" + str(i+1) + str(p+pow(2,i)) + ") (after " + str(10*(i+1)) + " (ref C" + str(i+1) + str(p) + ")))))"
-        print "\n"
+        print "(define C" + str(i) + str(p) + " (sum (reveal (" + secs[i] + ") (ref C" + str(i+1) + str(p+pow(2,i)) + ")) (after " + str(10*(i+1)) + " (tau (ref C" + str(i+1) + str(p) + ")))))\n"
         C(i+1, p+pow(2,i))
         C(i+1, p)
     else:
-        print "(define C" + str(i) + str(p) + " (reveal (" + secs[i] + ") (sum (ref W" +  str(p+pow(2,i)) + ") (after " + str(10*(i+1)) + " (ref W" + str(p) + ")))))"
-        print "\n"
+        print "(define C" + str(i) + str(p) + " (sum (reveal (" + secs[i] + ") (ref W" +  str(p+pow(2,i)) + ")) (after " + str(10*(i+1)) + " (ref W" + str(p) + "))))\n"
 
 def W(i):
 

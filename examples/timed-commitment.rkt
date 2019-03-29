@@ -8,7 +8,7 @@
 (define timeout (after 10 (withdraw "B")))
 
 (contract
- (guards (deposit "A" 1 "txA@0")(secret "A" a "000a"))
+ (pre (deposit "A" 1 "txA@0")(secret "A" a "000a"))
  
  (sum (reveal (a) (withdraw "A"))
       (ref timeout))

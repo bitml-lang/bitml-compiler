@@ -1,59 +1,53 @@
 #lang bitml
 
-(participant "A" "029c5f6f5ef0095f547799cb7861488b9f4282140d59a6289fbc90c70209c1cced")
-(participant "B" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
-(participant "C" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
+(participant "A0" "029c5f6f5ef0095f547799cb7861488b9f4282140d59a6289fbc90c70209c1cced")
+(participant "A1" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
+(participant "A2" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
 
 (generate-keys)
 
-(define C10 (reveal (b) (sum (ref C22)
-                             (after 20 (ref C20)))))
+(define C00 (sum (reveal (a0) (ref C11)) (after 10 (tau (ref C10)))))
 
-(define C11 (reveal (b) (sum (ref C23)
-                             (after 20 (ref C21)))))
+(define C11 (sum (reveal (a1) (ref C23)) (after 20 (tau (ref C21)))))
 
-(define C20 (reveal (c) (sum (ref W4)
-                             (after 30 (ref W0)))))
+(define C23 (sum (reveal (a2) (ref W7)) (after 30 (ref W3))))
 
-(define C21 (reveal (c) (sum (ref W5)
-                             (after 30 (ref W1)))))
+(define C21 (sum (reveal (a2) (ref W5)) (after 30 (ref W1))))
 
-(define C22 (reveal (c) (sum (ref W6)
-                             (after 30 (ref W2)))))
+(define C10 (sum (reveal (a1) (ref C22)) (after 20 (tau (ref C20)))))
 
-(define C23 (reveal (c) (sum (ref W7)
-                             (after 30 (ref W3)))))
+(define C22 (sum (reveal (a2) (ref W6)) (after 30 (ref W2))))
 
-(define W0 (split (1 -> (withdraw "A"))
-                  (1 -> (withdraw "B"))
-                  (1 -> (withdraw "C"))))
+(define C20 (sum (reveal (a2) (ref W4)) (after 30 (ref W0))))
 
-(define W1 (withdraw "A"))
+(define W0 
+  (split (1 -> (withdraw "A0"))(1 -> (withdraw "A1"))(1 -> (withdraw "A2"))))
 
-(define W2 (withdraw "B"))
+(define W1
+  (split (3.0 -> (withdraw "A0"))))
 
-(define W3 (split (1.5 -> (withdraw "A"))
-                  (1.5 -> (withdraw "B"))))
+(define W2
+  (split (3.0 -> (withdraw "A1"))))
 
-(define W4 (withdraw "C"))
+(define W3
+  (split (1.5 -> (withdraw "A0"))(1.5 -> (withdraw "A1"))))
 
-(define W5 (split (1.5 -> (withdraw "A"))
-                  (1.5 -> (withdraw "C"))))
+(define W4
+  (split (3.0 -> (withdraw "A2"))))
 
-(define W6 (split (1.5 -> (withdraw "B"))
-                  (1.5 -> (withdraw "C"))))
+(define W5
+  (split (1.5 -> (withdraw "A0"))(1.5 -> (withdraw "A2"))))
 
-(define W7 (split (1 -> (withdraw "A"))
-                  (1 -> (withdraw "B"))
-                  (1 -> (withdraw "C"))))
+(define W6
+  (split (1.5 -> (withdraw "A1"))(1.5 -> (withdraw "A2"))))
 
+(define W7
+  (split (1.0 -> (withdraw "A0"))(1.0 -> (withdraw "A1"))(1.0 -> (withdraw "A2"))))
 
 (contract
- (guards (deposit "A" 1 "txA@0")(secret "A" a "000a")
-         (deposit "B" 1 "txB@0")(secret "B" b "000b")
-         (deposit "C" 1 "txC@0")(secret "C" c "000c"))
- (sum
-  (reveal (a) (ref C11))
-  (after 10 (ref C10)))
+ (pre (deposit "A0" 1 "txA@0")(secret "A0" a0 "000a")
+      (deposit "A1" 1 "txB@0")(secret "A1" a1 "000b")
+      (deposit "A2" 1 "txC@0")(secret "A2" a2 "000c"))
+ (ref C00)
 
  (check-liquid))

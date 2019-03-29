@@ -6,7 +6,7 @@
 (generate-keys)
 
 
-(contract (guards (deposit "A" 1 "txA@0")(secret "A" a "000a")
+(contract (pre (deposit "A" 1 "txA@0")(secret "A" a "000a")
                  (deposit "B" 1 "txB@0")(secret "B" b "000b"))        
          (sum
           (reveal (a) (sum

@@ -5,7 +5,7 @@
 
 (generate-keys)
 
-(contract (guards (deposit "A" 1 "txA@0")
+(contract (pre (deposit "A" 1 "txA@0")
                  (deposit "A" 1 "txA1@0")
                  (deposit "B" 2 "txB@0"))
          (auth "A" "B" (after 30 (after 20 (withdraw "B")))))
