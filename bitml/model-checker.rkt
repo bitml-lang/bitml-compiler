@@ -238,13 +238,13 @@
      #'(compile-maude-contract (putrevealif () (sec ...) (contract params ...)))]
 
     [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
-     #'(compile-maude-contract (putrevealif () (sec ...) (pretaud p) (contract params ...)))]
+     #'(compile-maude-contract (putrevealif () (sec ...) (pred p) (contract params ...)))]
 
     [(_ (reveal (tx:id ...) (contract params ...)))
      #'(compile-maude-contract (putrevealif (tx ...) () (contract params ...)))]
 
     [(_ (tau (contract params ...)))
-     #'(compile-maude-contract (contract params ...))]))
+     #'(string-append "tau . ( " (compile-maude-contract (contract params ...)) " )")]))
 
 (define (format-num n)
   (number->string (exact-floor (* n (expt 10 8)))))
