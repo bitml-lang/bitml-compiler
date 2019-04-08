@@ -62,7 +62,7 @@
 
 (define-syntax (bdefine stx)
   (syntax-parse stx
-    [(_ name (cont params ...))
+    [(_ name def)
      #'(define-syntax (name stx)
-         #'(cont params ...)
+         #'def
          )]))

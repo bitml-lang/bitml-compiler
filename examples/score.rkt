@@ -24,7 +24,7 @@
                     (auth "AV" (tau (ref Exec2)))
                     (auth "AV" (ref Canc))))
 
-(define ApprE2 (sum (auth "AV" (tau (ref Ver2)))
+(define ApprE2 (sum (auth "AV" (tau (ref Ver1)))
                     (auth "AV" (ref Canc))))
 
 (define Ver1 (sum (auth "ACV" (tau (ref ApprV)))
