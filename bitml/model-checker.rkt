@@ -47,7 +47,8 @@
            (unless flag
              (displayln "Result: true"))           
            (displayln "*/\n"))...
-           (displayln (format "// Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time)))))]))
+           (unless (= 0 (length (list 'query ...)))
+             (displayln (format "// Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))))]))
 
 ;writes the opening declarations for maude
 (define (maude-opening)

@@ -58,7 +58,7 @@
             (lambda ()
               (if gen-keys
                   (begin 
-                    (add-pk-for-term id term "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
+                    (add-pk-for-term id term (participant-pk id))
                     (pk-for-term id term))
                   (raise (error 'bitml "no public key defined for participant ~a and contract ~a" id term))))))
 
