@@ -12,8 +12,8 @@
          (sum
           (revealif (b) (pred (between b 0 1))
                     (sum
-                     (revealif (a) (pred (= a b)) (withdraw "A"))
-                     (revealif (a) (pred (!= a b)) (withdraw "B"))
+                     (revealif (a b) (pred (= a b)) (withdraw "A"))
+                     (revealif (a b) (pred (!= a b)) (withdraw "B"))
                      (after 10 (withdraw "B"))))
           (after 10 (withdraw "A")))
                    

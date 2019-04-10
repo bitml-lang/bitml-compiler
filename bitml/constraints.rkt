@@ -21,7 +21,7 @@
 
      #'(begin
 
-         ;(get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...))
+         (get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...))
 
          (let ([secret-list 
                 (remove-duplicates
@@ -36,6 +36,8 @@
            ;if no constraints were imposed, add default values
            (when (= 0 (length secret-list))
              (set! secret-list (list (list (cons 'ident 1)...))))
+
+           (displayln secret-list)
 
            ;convert each list in a map
            ;output will be a list of maps
@@ -59,18 +61,17 @@
               (deposit p1 ...)
               (vol-deposit p2 ...)) ...)
         (~optional parent))
-     #:with y (datum->syntax #'f (syntax->list #'(ident ...)))     
+     #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
      #`(begin
          (get-constr-tree (contract params ...) ((secret part ident hash) ...) (~? parent))...
-         (when (or (constr-required? (contract params ...))...)
-           (~? (add-constraint (lambda y (and (parent #,@#'y) (not (and ((get-constr (contract params ...) ((secret part ident hash) ...)) #,@#'y)...)))))
-               (add-constraint (lambda y (not (and ((get-constr (contract params ...) ((secret part ident hash) ...)) #,@#'y)...)))))))]
+         
+         (when (constr-required? (contract params ...))
+           (add-constraint (lambda y (and (~? (parent #,@#'y) #t) (not ((get-constr (contract params ...) ((secret part ident hash) ...)) #,@#'y))))))...)]
     
     [(_ (withdraw part:string) ((secret spart:string ident:id hash:string) ...) parent)
      #'(add-constraint parent)]
     
     [(_ (withdraw part:string) ((secret spart:string ident:id hash:string) ...))
-     (displayln "finito")
      #'(values)]
     
     [(_ (after t (contract params ...)) ((secret part:string ident:id hash:string) ...) (~optional parent))
@@ -144,17 +145,17 @@
     
     [(_ (auth part:string ... (contract params ...)) ((secret spart:string ident:id hash:string) ...))
      #'(get-constr (contract params ...) ((secret part ident hash)...))]
+    
+    #;[(_ (split (val:number -> (scontract sparams ...))...)
+          ((secret part:string ident:id hash:string) ...))
+       #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
+       #`(lambda y  (and ((get-constr (scontract sparams ...) ((secret part ident hash)...)) #,@#'y)...))]
 
-    [(_ (split (val:number -> (scontract sparams ...))...)
-        ((secret part:string ident:id hash:string) ...))
-     #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
-     #`(lambda y  (and ((get-constr (scontract sparams ...) ((secret part ident hash)...)) #,@#'y)...))]
-
-    [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...)
-        ((secret part:string ident:id hash:string) ...))
-     #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
-     #`(lambda y  (and (~? ((get-constr (scontract sparams ...) ((secret part ident hash)...)) #,@#'y))...
-                       (~? ((get-constr (contract params ...) ((secret part ident hash)...)) #,@#'y))... ...))]
+    #;[(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...)
+          ((secret part:string ident:id hash:string) ...))
+       #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
+       #`(lambda y  (and (~? ((get-constr (scontract sparams ...) ((secret part ident hash)...)) #,@#'y))...
+                         (~? ((get-constr (contract params ...) ((secret part ident hash)...)) #,@#'y))... ...))]
 
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...))
         ((secret part:string ident:id hash:string) ...))
@@ -179,7 +180,11 @@
     [(_ (tau (contract params ...))
         ((secret part:string ident:id hash:string) ...))
      #'(get-constr (putrevealif () () (contract params ...))
-                   ((secret part ident hash)...))]))
+                   ((secret part ident hash)...))]
+    [(_ any-contract
+        ((secret part:string ident:id hash:string) ...))
+     #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
+     #`(lambda y  #t)]))
 
 (define-syntax (constr-required? stx)
   (syntax-parse stx
@@ -192,13 +197,13 @@
      #'(constr-required? (contract params ...))]
 
     [(_ (sum (contract params ...)...))       
-     #'(or (constr-required? (contract params ...))...)]
+     #'#f]
 
     [(_ (split (val:number ->(scontract sparams ...))...))
-     #'(or (constr-required? (scontract sparams ...))...)]
+     #'#f]
 
     [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...))
-     #'(or (~? (constr-required? (contract params ...)))... ... (~? (constr-required? (scontract sparams ...)))...)]
+     #'#f]
 
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (pred p) (contract params ...)))
      #'#t]
@@ -207,13 +212,13 @@
      #'#f]
 
     [(_ (reveal (sec:id ...) (contract params ...)))
-     #'(constr-required? (putrevealif () (sec ...) (contract params ...)))]
+     #'#f]
 
     [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
-     #'(constr-required? (putrevealif () (sec ...) (pred p) (contract params ...)))]
+     #'#t]
 
     [(_ (put (tx:id ...) (contract params ...)))
-     #'(constr-required? (putrevealif (tx ...) () (contract params ...)))]
+     #'#f]
 
     [(_ (tau (contract params ...)))
-     #'(constr-required? (putrevealif () () (contract params ...)))]))
+     #'#f]))
