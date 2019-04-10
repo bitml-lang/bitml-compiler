@@ -19,31 +19,41 @@
               (deposit p1 ...)
               (vol-deposit p2 ...)) ...))
 
-     #'(begin
-         (when (constr-tree-required? (sum (contract params ...)...))
-           (displayln "required")
-           (get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...)))
+     (if #'(constr-tree-required? (sum (contract params ...)...))
 
-         (let ([secret-list 
-                (remove-duplicates
-                 (for/list ([constr constraints])
-                   (begin
-                     (define prob (make-csp))
-                     (add-var! prob 'ident (range 0 100))...
+         #'(begin
+             ;if no constraints were imposed, add default values
+             (let ([secret-list (list (list (cons 'ident 1)...))])
+               (displayln secret-list)
 
-                     (add-constraint! prob constr '(ident ...))
-                     (solve prob))))])
+               ;convert each list in a map
+               ;output will be a list of maps
+               (for/list ([secrets secret-list])
+                 (foldr (lambda (x m) (hash-set m (car x) (cdr x))) (make-immutable-hash) secrets))))
 
-           ;if no constraints were imposed, add default values
-           (when (= 0 (length secret-list))
-             (set! secret-list (list (list (cons 'ident 1)...))))
+         #'(begin
+             (get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...))
 
-           (displayln secret-list)
+             (let ([secret-list 
+                    (remove-duplicates
+                     (for/list ([constr constraints])
+                       (begin
+                         (define prob (make-csp))
+                         (add-var! prob 'ident (range 0 100))...
 
-           ;convert each list in a map
-           ;output will be a list of maps
-           (for/list ([secrets secret-list])
-             (foldr (lambda (x m) (hash-set m (car x) (cdr x))) (make-immutable-hash) secrets))))]))
+                         (add-constraint! prob constr '(ident ...))
+                         (solve prob))))])
+
+               ;if no constraints were imposed, add default values
+               (when (= 0 (length secret-list))
+                 (set! secret-list (list (list (cons 'ident 1)...))))
+
+               (displayln secret-list)
+
+               ;convert each list in a map
+               ;output will be a list of maps
+               (for/list ([secrets secret-list])
+                 (foldr (lambda (x m) (hash-set m (car x) (cdr x))) (make-immutable-hash) secrets)))))]))
 
 (define-syntax (get-constr-tree stx)
   (syntax-parse stx
