@@ -20,8 +20,9 @@
               (vol-deposit p2 ...)) ...))
 
      #'(begin
-
-         (get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...))
+         (when (constr-tree-required? (sum (contract params ...)...))
+           (displayln "required")
+           (get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...)))
 
          (let ([secret-list 
                 (remove-duplicates
@@ -55,7 +56,7 @@
                         ((secret part ident hash) ...) (~? parent))]
 |#
    
-    ;entry point
+    ;entry point with secrets
     [(_ (sum (contract params ...)...)
         ((~or (secret part:string ident:id hash:string)
               (deposit p1 ...)
@@ -67,6 +68,13 @@
          
          (when (constr-required? (contract params ...))
            (add-constraint (lambda y (and (~? (parent #,@#'y) #t) (not ((get-constr (contract params ...) ((secret part ident hash) ...)) #,@#'y))))))...)]
+
+    ;entry point without secrets
+    [(_ (sum (contract params ...)...)
+        ((~or (deposit p1 ...)
+              (vol-deposit p2 ...)) ...)
+        (~optional parent))
+     #'(get-constr-tree (sum (contract params ...)...) (secret "A" a "a") (~? parent))]
     
     [(_ (withdraw part:string) ((secret spart:string ident:id hash:string) ...) parent)
      #'(add-constraint parent)]
@@ -195,30 +203,49 @@
      #'(constr-required? (contract params ...))]
     [(_ (auth part:string ... (contract params ...)))
      #'(constr-required? (contract params ...))]
-
     [(_ (sum (contract params ...)...))       
      #'#f]
-
     [(_ (split (val:number ->(scontract sparams ...))...))
      #'#f]
-
     [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...))
      #'#f]
-
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (pred p) (contract params ...)))
      #'#t]
-
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (contract params ...)))
      #'#f]
-
     [(_ (reveal (sec:id ...) (contract params ...)))
      #'#f]
-
     [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
      #'#t]
-
     [(_ (put (tx:id ...) (contract params ...)))
      #'#f]
-
     [(_ (tau (contract params ...)))
      #'#f]))
+
+(define-syntax (constr-tree-required? stx)
+  (syntax-parse stx
+    #:literals (withdraw after auth split putrevealif pred sum -> secret put reveal revealif tau)
+    [(_ (sum (contract params ...)...))
+     #'(or (constr-tree-required? (contract params ...))...)]
+    [(_ (withdraw part:string))
+     #'#f]
+    [(_ (after t (contract params ...)))
+     #'(constr-tree-required? (contract params ...))]
+    [(_ (auth part:string ... (contract params ...)))
+     #'(constr-tree-required? (contract params ...))]
+    [(_ (split (val:number -> (sum (contract params ...)...)) ...))
+     #'(or (constr-tree-required? (contract params ...))... ...)]
+    [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...))
+     #'(constr-tree-required? (split (val -> (~? (sum (scontract sparams ...))) (~? (sum (contract params ...)...)) )...))]
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (contract params ...)))
+     #'(constr-tree-required? (contract params ...))]
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (pred p) (contract params ...)))
+     #'#t]          
+    [(_ (reveal (sec:id ...) (contract params ...)))
+     #'(constr-tree-required? (contract params ...))]
+    [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
+     #'#t]
+    [(_ (put (tx:id ...) (contract params ...)))
+     #'(constr-tree-required? (contract params ...))]
+    [(_ (tau (contract params ...)))
+     #'(constr-tree-required? (contract params ...))]))
