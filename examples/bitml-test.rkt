@@ -1,13 +1,12 @@
 #lang bitml
 
-(participant "A" "029c5f6f5ef0095f547799cb7861488b9f4282140d59a6289fbc90c70209c1cced")
-(participant "B" "02e76d1d57d47b549d9b297e0a3d71d69139cac2698eb1caa033c5e42322e833d8")
+(participant "A" "0339bd7fade9167e09681d68c5fc80b72166fe55bbb84211fd12bde1d57247fbe1")
+(participant "B" "034a7192e922118173906555a39f28fa1e0b65657fc7f403094da4f85701a5f809")
 
 (generate-keys)
 
-(define txA "txid:546abe624f7cdcc3c2411d012dbdfba7088f250c64c8065b68524c3ad4691a7a@0")
+(define txA "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
 
 (contract
- (pre (deposit "A" 1 (ref txA)))         
+ (pre (deposit "A" 0.01 (ref txA)))         
  (withdraw "B"))
-

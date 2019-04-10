@@ -296,8 +296,8 @@
 
     ;compiles withdraw to transaction  
     [(_ (withdraw part)
-        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(begin         
+        parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)     
+     #'(begin
          (let* ([tx-name (new-tx-name)]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
                 [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "0")) all-secrets) " ")]

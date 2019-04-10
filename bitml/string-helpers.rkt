@@ -6,7 +6,7 @@
 
 ;helpers to generate string transactions
 (define (participants->tx-sigs participants tx-name)
-  (foldl (lambda (p acc) (format "sig~a~a ~a" p tx-name acc))  "" participants))
+  (foldr (lambda (p acc) (format "sig~a~a ~a" p tx-name acc))  "" participants))
 
 (define (participants->sigs-declar participants tx-name pk-for-term [contract #f])
   (foldr (lambda (p acc) (format "const sig~a~a : signature = _ ~a\n~a" p tx-name
