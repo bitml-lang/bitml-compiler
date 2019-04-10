@@ -1,7 +1,7 @@
 #lang racket/base
 
-(require (for-syntax racket/base syntax/parse) racket/list
-         racket/match csp
+(require (for-syntax racket/base syntax/parse racket/list)
+         racket/list racket/match csp
          "bitml.rkt" "terminals.rkt" "exp.rkt")
 
 (provide (all-defined-out) make-csp add-var! add-constraint! solve)
@@ -18,20 +18,11 @@
         ((~or (secret part:string ident:id hash:string)
               (deposit p1 ...)
               (vol-deposit p2 ...)) ...))
-
-     (if #'(constr-tree-required? (sum (contract params ...)...))
-
-         #'(begin
-             ;if no constraints were imposed, add default values
-             (let ([secret-list (list (list (cons 'ident 1)...))])
-               (displayln secret-list)
-
-               ;convert each list in a map
-               ;output will be a list of maps
-               (for/list ([secrets secret-list])
-                 (foldr (lambda (x m) (hash-set m (car x) (cdr x))) (make-immutable-hash) secrets))))
+     
+     (if (constr-tree-required? #''(sum (contract params ...)...))      
 
          #'(begin
+             (displayln "constr required")
              (get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...))
 
              (let ([secret-list 
@@ -48,6 +39,17 @@
                (when (= 0 (length secret-list))
                  (set! secret-list (list (list (cons 'ident 1)...))))
 
+               (displayln secret-list)
+
+               ;convert each list in a map
+               ;output will be a list of maps
+               (for/list ([secrets secret-list])
+                 (foldr (lambda (x m) (hash-set m (car x) (cdr x))) (make-immutable-hash) secrets))))
+
+         #'(begin
+             (displayln "constr not required")
+             ;if no constraints were imposed, add default values
+             (let ([secret-list (list (list (cons 'ident 1)...))])
                (displayln secret-list)
 
                ;convert each list in a map
@@ -232,30 +234,7 @@
     [(_ (tau (contract params ...)))
      #'#f]))
 
-(define-syntax (constr-tree-required? stx)
-  (syntax-parse stx
-    #:literals (withdraw after auth split putrevealif pred sum -> secret put reveal revealif tau)
-    [(_ (sum (contract params ...)...))
-     #'(or (constr-tree-required? (contract params ...))...)]
-    [(_ (withdraw part:string))
-     #'#f]
-    [(_ (after t (contract params ...)))
-     #'(constr-tree-required? (contract params ...))]
-    [(_ (auth part:string ... (contract params ...)))
-     #'(constr-tree-required? (contract params ...))]
-    [(_ (split (val:number -> (sum (contract params ...)...)) ...))
-     #'(or (constr-tree-required? (contract params ...))... ...)]
-    [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...))
-     #'(constr-tree-required? (split (val -> (~? (sum (scontract sparams ...))) (~? (sum (contract params ...)...)) )...))]
-    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (contract params ...)))
-     #'(constr-tree-required? (contract params ...))]
-    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (pred p) (contract params ...)))
-     #'#t]          
-    [(_ (reveal (sec:id ...) (contract params ...)))
-     #'(constr-tree-required? (contract params ...))]
-    [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
-     #'#t]
-    [(_ (put (tx:id ...) (contract params ...)))
-     #'(constr-tree-required? (contract params ...))]
-    [(_ (tau (contract params ...)))
-     #'(constr-tree-required? (contract params ...))]))
+(begin-for-syntax
+  (define (constr-tree-required? stx)
+    (let ([stx-lst (flatten (syntax->datum stx))])
+      (not (equal? #f (member 'pred stx-lst))))))
