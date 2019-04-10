@@ -34,7 +34,7 @@
              #:break flag        
              (reset-maude-out)
              (maude-opening)
-             (add-maude-output (string-append "eq C = " (compile-maude-contract contract) " . \n"))
+             (add-maude-output (string-append "eq MContr = " (compile-maude-contract contract) " . \n"))
              (let ([result (execute-maude-query secrets-map query)])
 
                ;if the model checking returns false display the cex
@@ -62,7 +62,7 @@
          [vdep-dec (if (> (length string-vdep) 0)
                        (string-append "ops " (list+sep->string string-vdep " ") " : -> Name .\n")
                        "")]
-         [contract "op C : -> Contract .\n"]
+         [contract "op MContr : -> Contract .\n"]
          [sem-conf "op Cconf : -> SemConfiguration .\n"])
     (add-maude-output parts-dec sec-dec vdep-dec contract sem-conf)))
 
@@ -78,7 +78,7 @@
                                        (string-append " | < " part ", " val " BTC > " (symbol->string d) " "))) (get-volatile-deps))]
          [sem-vdeps (list+sep->string sem-vdeps "")])
     
-    (string-append "\neq Cconf = toSemConf < C , "
+    (string-append "\neq Cconf = toSemConf < MContr , "
                    (format-num tx-v) " BTC > 'xconf\n"
                    sem-secret-dec "\n" sem-vdeps " .\n"
                    "endm\n"
