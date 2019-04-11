@@ -1,5 +1,5 @@
 sudo apt-get update
-sudo apt-get -y install git libgmpxx4ldbl libbdd0c2
+sudo apt-get -y install git libgmpxx4ldbl libbdd0c2 racket
 
 raco pkg install --auto
 
@@ -9,10 +9,12 @@ wget http://de.archive.ubuntu.com/ubuntu/pool/main/r/readline/libreadline7_7.0-3
 sudo dpkg -i libreadline7_7.0-3_amd64.deb 
 rm libreadline7_7.0-3_amd64.deb
 
+rm maude.tar.gz || true
 wget http://blockchain.unica.it/maude/maude.tar.gz 
 tar -xf maude.tar.gz
 
-git clone https://github.com/bitml-lang/bitml-maude.git || true
+rm -r bitml-maude || true
+git clone https://github.com/bitml-lang/bitml-maude.git
 
 sudo rm /etc/profile.d/bitml.sh
 sudo sh -c "echo \"export MAUDE_PATH=`pwd`/maude\" >> /etc/profile.d/bitml.sh"
