@@ -6,13 +6,8 @@ More at https://eprint.iacr.org/2018/122.pdf
 
 ## Installation
 
-* Install [Racket](https://download.racket-lang.org/)
-* Execute the following commands:
-
 ```bash
-git clone https://github.com/bitml-lang/bitml-compiler.git
-cd bitml-compiler
-raco pkg install
+./install.sh
 ```
 
 ## Documentation
