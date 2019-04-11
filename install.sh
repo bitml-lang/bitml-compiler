@@ -9,15 +9,15 @@ wget http://de.archive.ubuntu.com/ubuntu/pool/main/r/readline/libreadline7_7.0-3
 sudo dpkg -i libreadline7_7.0-3_amd64.deb 
 rm libreadline7_7.0-3_amd64.deb
 
-rm maude.tar.gz || true
+rm -f maude.tar.gz
 wget http://blockchain.unica.it/maude/maude.tar.gz 
 tar -xf maude.tar.gz
 rm maude.tar.gz
 
-rm -rf bitml-maude || true
+rm -rf bitml-maude
 git clone https://github.com/bitml-lang/bitml-maude.git
 
-sudo rm /etc/profile.d/bitml.sh || true
+sudo rm -f /etc/profile.d/bitml.sh
 sudo sh -c "echo \"export MAUDE_PATH=`pwd`/maude\" >> /etc/profile.d/bitml.sh"
 sudo sh -c "echo \"export MAUDE_MC_PATH=`pwd`/maude\" >> /etc/profile.d/bitml.sh"
 sudo sh -c "echo \"export BITML_MAUDE_PATH=`pwd`/bitml-maude\" >> /etc/profile.d/bitml.sh"
