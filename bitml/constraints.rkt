@@ -25,7 +25,7 @@
              (displayln "constr required")
              (get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...))
 
-             (let ([secret-list 
+             (let* ([secret-list-with-f 
                     (remove-duplicates
                      (for/list ([constr constraints])
                        (begin
@@ -33,7 +33,8 @@
                          (add-var! prob 'ident (range 0 100))...
 
                          (add-constraint! prob constr '(ident ...))
-                         (solve prob))))])
+                         (solve prob))))]
+                   [secret-list (filter (lambda (x) x) secret-list-with-f)])
 
                ;if no constraints were imposed, add default values
                (when (= 0 (length secret-list))
@@ -75,11 +76,17 @@
               (vol-deposit p2 ...)) ...)
         (~optional parent))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
+     
      #`(begin
          (get-constr-tree (contract params ...) ((secret part ident hash) ...) (~? parent))...
+
+         (when (or (constr-required? (contract params ...))...)
+           (add-constraint (lambda y (and (~? (parent #,@#'y) #t)
+                                          (and (not ((get-constr (contract params ...) ((secret part ident hash) ...)) #,@#'y))...)))))
          
-         (when (constr-required? (contract params ...))
-           (add-constraint (lambda y (and (~? (parent #,@#'y) #t) (not ((get-constr (contract params ...) ((secret part ident hash) ...)) #,@#'y))))))...)]
+         ;;(when (constr-required? (contract params ...))
+         ;;(add-constraint (lambda y (and (~? (parent #,@#'y) #t) (not ((get-constr (contract params ...) ((secret part ident hash) ...)) #,@#'y))))))...
+         )]
 
     ;entry point without secrets
     [(_ (sum (contract params ...)...)
@@ -89,7 +96,8 @@
      #'(get-constr-tree (sum (contract params ...)...) (secret "A" a "a") (~? parent))]
     
     [(_ (withdraw part:string) ((secret spart:string ident:id hash:string) ...) parent)
-     #'(add-constraint parent)]
+     #'(begin
+         (add-constraint parent))]
     
     [(_ (withdraw part:string) ((secret spart:string ident:id hash:string) ...))
      #'(values)]
@@ -106,7 +114,8 @@
               (deposit p1 ...)
               (vol-deposit p2 ...)) ...)
         (~optional parent))
-     #'(get-constr-tree (sum (contract params ...)... ...) ((secret part ident hash) ...) (~? parent))]
+     #'(begin
+         (get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...) (~? parent))...)]
 
     [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...)
         ((secret part:string ident:id hash:string) ...) (~optional parent))

@@ -82,12 +82,12 @@
     
     [(_ (b= p1 p2) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
-     #`(lambda y (equal? ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
+     #`(lambda y (= ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
                          ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]
     
     [(_ (b!= p1 p2) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
-     #`(lambda y (not (equal?
+     #`(lambda y (not (=
                        ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
                        ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y))))]
     

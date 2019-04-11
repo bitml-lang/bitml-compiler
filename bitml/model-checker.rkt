@@ -40,7 +40,8 @@
                ;if the model checking returns false display the cex
                (unless (car result)
                  (displayln "Result: false")
-                 (secrets-pretty-print secrets-map)
+                 (unless (hash-empty? secrets-map)
+                   (secrets-pretty-print secrets-map))
                  (displayln (cdr result))
                  (set! flag #t))))
            
@@ -48,7 +49,7 @@
              (displayln "Result: true"))           
            (displayln "*/\n"))...
            (unless (= 0 (length (list 'query ...)))
-             (displayln (format "// Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))))]))
+           (displayln (format "// Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))))]))
 
 ;writes the opening declarations for maude
 (define (maude-opening)
