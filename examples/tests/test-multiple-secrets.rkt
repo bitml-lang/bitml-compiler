@@ -14,4 +14,5 @@
   (revealif (a b) (pred (not (< a b))) (withdraw "A"))
   (revealif (a b) (pred (< a (- b 1))) (withdraw "A")))
  
- (check-liquid (strategy "A" (do-reveal a))))
+ (check-liquid (strategy "A" (do-reveal a))
+               (strategy "A" (do-reveal b))))

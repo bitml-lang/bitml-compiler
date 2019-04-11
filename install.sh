@@ -12,11 +12,12 @@ rm libreadline7_7.0-3_amd64.deb
 rm maude.tar.gz || true
 wget http://blockchain.unica.it/maude/maude.tar.gz 
 tar -xf maude.tar.gz
+rm maude.tar.gz
 
-rm -r bitml-maude || true
+rm -rf bitml-maude || true
 git clone https://github.com/bitml-lang/bitml-maude.git
 
-sudo rm /etc/profile.d/bitml.sh
+sudo rm /etc/profile.d/bitml.sh || true
 sudo sh -c "echo \"export MAUDE_PATH=`pwd`/maude\" >> /etc/profile.d/bitml.sh"
 sudo sh -c "echo \"export MAUDE_MC_PATH=`pwd`/maude\" >> /etc/profile.d/bitml.sh"
 sudo sh -c "echo \"export BITML_MAUDE_PATH=`pwd`/bitml-maude\" >> /etc/profile.d/bitml.sh"
