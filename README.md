@@ -7,8 +7,11 @@ More at https://eprint.iacr.org/2018/122.pdf
 ## Installation
 
 ```bash
+git clone https://github.com/bitml-lang/bitml-compiler.git
+cd bitml-compiler
 ./install.sh
 ```
+After the installation, you have to logout and login again.
 
 ## Documentation
 
