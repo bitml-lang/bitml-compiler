@@ -1,6 +1,6 @@
 sudo add-apt-repository -y ppa:plt/racket
 sudo apt-get update
-sudo apt-get -y install git libgmpxx4ldbl libbdd0c2 racket
+sudo apt-get -y install libgmpxx4ldbl libbdd0c2 racket libsigsegv2
 
 raco pkg install --auto
 
