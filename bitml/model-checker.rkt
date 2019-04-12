@@ -24,7 +24,7 @@
 
          ;for each query
          (begin
-           (display "\n/*\nModel checking result for ")
+           (display "\n/*=============================================================================\nModel checking result for ")
            (displayln 'query)
            (displayln "")
            (set! flag #f)
@@ -46,10 +46,10 @@
                  (set! flag #t))))
            
            (unless flag
-             (displayln "Result: true"))           
-           (displayln "*/\n"))...
+             (displayln "Result: true")))...
            (unless (= 0 (length (list 'query ...)))
-           (displayln (format "// Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))))]))
+             (displayln (format "Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))
+             (displayln "*/=============================================================================\n")))]))
 
 ;writes the opening declarations for maude
 (define (maude-opening)
@@ -75,7 +75,7 @@
          [sem-secret-dec (list+sep->string sem-secrets "")]
          [sem-vdeps (map (lambda (d) (let* ([vdep (get-volatile-dep d)]
                                             [part (first vdep)]
-                                            [val (format-num (second (vdep)))])
+                                            [val (format-num (second vdep))])
                                        (string-append " | < " part ", " val " BTC > " (symbol->string d) " "))) (get-volatile-deps))]
          [sem-vdeps (list+sep->string sem-vdeps "")])
     
@@ -133,7 +133,7 @@
 
 (define-syntax (compile-maude-action stx)
   (syntax-parse stx
-    #:literals (b-if do-reveal do-auth not-destory)
+    #:literals (b-if do-reveal do-auth not-destroy do-destroy)
 
     [(_ part:string (do-reveal secret:id) b-if pred)
      #'(string-append "eq strategy(ctx:Context S:Configuration" (compile-maude-pred pred)
@@ -151,15 +151,15 @@
                       "eq strategy(S:SemConfiguration, " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = false .")]
 
     
-    [(_ part:string (not-destory vol-deposit))
+    [(_ part:string (not-destroy vol-deposit))
      #'(string-append "eq strategy(S:SemConfiguration, " part " authorize-destroy-of " (symbol->string 'vol-deposit) ") = false .\n")]
-    [(_ part:string (do-destory vol-deposit))
+    [(_ part:string (do-destroy vol-deposit))
      #'(string-append "eq strategyS:SemConfiguration, " part " authorize-destroy-of " (symbol->string 'vol-deposit) ") = true .\n")]))
 
 ;eq strategy(ctx:Context S:Configuration | B : b # 1, A authorize-destroy-of x) = false .
 (define-syntax (compile-maude-pred stx)
   (syntax-parse stx
-    #:literals (do-reveal do-auth not-destory do-destory state)
+    #:literals (do-reveal do-auth not-destroy do-destroy state)
     [(_ (part:string do-reveal secret:id))
      #'(string-append " | " part " : " (symbol->string 'secret) " # 1 ")]
     [(_ (part:string do-auth contract))

@@ -34,8 +34,8 @@
 (define-syntax (b-if stx) (raise-syntax-error #f "wrong usage of if" stx))  
 (define-syntax (do-reveal stx) (raise-syntax-error #f "wrong usage of do-reveal" stx))
 (define-syntax (do-auth stx) (raise-syntax-error #f "wrong usage of do-auth" stx))
-(define-syntax (not-destory stx) (raise-syntax-error #f "wrong usage of not-destory" stx))
-(define-syntax (do-destory stx) (raise-syntax-error #f "wrong usage of do-destory" stx))
+(define-syntax (not-destroy stx) (raise-syntax-error #f "wrong usage of not-destroy" stx))
+(define-syntax (do-destroy stx) (raise-syntax-error #f "wrong usage of do-destroy" stx))
 (define-syntax (state stx) (raise-syntax-error #f "wrong usage of state" stx))
 
 (define-syntax (check-liquid stx) (raise-syntax-error #f "wrong usage of check-liquid" stx))
