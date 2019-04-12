@@ -1,4 +1,4 @@
-sudo add-apt-repository ppa:plt/racket
+sudo add-apt-repository -y ppa:plt/racket
 sudo apt-get update
 sudo apt-get -y install git libgmpxx4ldbl libbdd0c2 racket
 
