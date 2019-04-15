@@ -11,7 +11,7 @@
   (secret "A" a "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb")
   (vol-deposit "B" txb 1 "txVA@2") (vol-deposit "B" txb2 1 "txVA@2"))
 	 
- (putrevealif (txb txb2) () (withdraw "A"))
+ (put (txb txb2) (withdraw "A"))
 
 
  (check-liquid

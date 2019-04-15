@@ -195,7 +195,7 @@
 
 (define-syntax (compile-maude-contract stx)
   (syntax-parse stx
-    #:literals (withdraw after auth split putrevealif pred sum strip-auth tau)
+    #:literals (withdraw after auth split putrevealif pred sum strip-auth tau put reveal revealif)
     [(_ (withdraw part:string))
      #'(string-append "withdraw " part)]
     [(_ (after t (contract params ...)))
@@ -242,7 +242,7 @@
     [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
      #'(compile-maude-contract (putrevealif () (sec ...) (pred p) (contract params ...)))]
 
-    [(_ (reveal (tx:id ...) (contract params ...)))
+    [(_ (put (tx:id ...) (contract params ...)))
      #'(compile-maude-contract (putrevealif (tx ...) () (contract params ...)))]
 
     [(_ (tau (contract params ...)))

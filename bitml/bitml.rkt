@@ -70,12 +70,12 @@
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
 (define-syntax (get-script stx)
   (syntax-parse stx
-    #:literals (putrevealif auth after pred)
+    #:literals (putrevealif auth after pred revealif put reveal)
     [(_ (reveal (sec:id ...) (contract params ...)))
      #'(get-script (putrevealif () (sec ...) (contract params ...)))]
-    [(_ (reveal (sec:id ...) (pred p) (contract params ...)))
+    [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
      #'(get-script (putrevealif () (sec ...) (pred p) (contract params ...)))]
-    [(_ (reveal (tx:id ...) (contract params ...)))
+    [(_ (put (tx:id ...) (contract params ...)))
      #'(get-script (putrevealif (tx ...) () (contract params ...)))]
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)))
      (let [(contract #''(putrevealif (tx-id ...) (sec ...) (~? (pred p)) (contract params ...)) )]
@@ -112,7 +112,7 @@
 ;return the parameters for the script obtained by get-script
 (define-syntax (get-script-params stx)
   (syntax-parse stx
-    #:literals (putrevealif auth after pred sum split)
+    #:literals (putrevealif auth after pred sum split reveal revealif put)
     [(_ (reveal (sec:id ...) (contract params ...)))
      #'(get-script-params (putrevealif () (sec ...) (contract params ...)))]
     [(_ (revealif (sec:id ...) (pred p) (contract params ...)))

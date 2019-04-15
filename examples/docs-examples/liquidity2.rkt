@@ -2,7 +2,6 @@
 
 (participant "A" "0339bd7fade9167e09681d68c5fc80b72166fe55bbb84211fd12bde1d57247fbe1")
 (participant "B" "034a7192e922118173906555a39f28fa1e0b65657fc7f403094da4f85701a5f809")
-(participant "B1" "034a7192e922118173906555a39f28fa1e0b65657fc7f403094da4f85701a5f809")
 
 
 (generate-keys)
@@ -14,11 +13,10 @@
 	 
  (sum
   (reveal (a) (withdraw "A"))
-  (auth "B1" (auth "B" (withdraw "B"))))
-
+  (auth "B" (after 700000  (withdraw "B"))))
+ 
  (check-liquid
   (strategy "A" (do-reveal a)))
  
  (check-liquid
-  (strategy "B" (do-auth (auth (withdraw "B"))))
-  (strategy "B1" (do-auth (auth "BGATTI" "B1" (withdraw "B"))))))
+  (strategy "B" (do-auth (auth "B"(after 700000 (withdraw "B")))))))
