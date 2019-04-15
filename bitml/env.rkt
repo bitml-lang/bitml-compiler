@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require racket/list)
+(require racket/list racket/match)
 
 ;ENVIRONMENT
 
@@ -37,10 +37,14 @@
   (make-hash))
 
 (define (add-participant id pk)
-  (hash-set! participants-table id pk))
+  (if (hash-has-key? participants-table id)
+      (raise-syntax-error 'bitml (format "Participant ~a already defined" id) #f)
+      (hash-set! participants-table id pk)))
 
 (define (participant-pk id)
-  (hash-ref participants-table id))
+  (hash-ref participants-table id
+            (lambda ()
+              (raise-syntax-error 'bitml (format "Participant ~a not defined" id) #f))))
 
 (define (get-participants)
   (hash-keys participants-table))
@@ -60,7 +64,7 @@
                   (begin 
                     (add-pk-for-term id term (participant-pk id))
                     (pk-for-term id term))
-                  (raise (error 'bitml "no public key defined for participant ~a and contract ~a" id term))))))
+                  (raise-syntax-error 'bitml (format "No public key defined for participant ~a and contract ~a" id term) #f)))))
 
 (define key-index 0)
 
@@ -74,8 +78,11 @@
   (set! parts (cons id parts)))
 
 (define deposit-txout empty)
+
 (define (add-deposit txout)
-  (set! deposit-txout (cons txout deposit-txout)))
+  (if (member txout deposit-txout)
+      (raise-syntax-error 'bitml (format "Tx output ~a already locked by another deposit" txout) #f)
+      (set! deposit-txout (cons txout deposit-txout))))
 
 (define tx-v 0)
 (define (add-tx-v v)
@@ -86,10 +93,20 @@
   (make-hash))
 
 (define (add-volatile-dep part id val tx)
-  (hash-set! volatile-deps-table id (list part val tx)))
+  (let ([id? (hash-has-key? volatile-deps-table id)]
+        [tx? (member tx (flatten (hash-values volatile-deps-table)))])
+    (match (list id? tx?)
+      [(list #t _)
+       (raise-syntax-error 'bitml (format "Volatile deposit ~a already defined" id) #f)]
+      [(list _ (list _))
+       (raise-syntax-error 'bitml (format "tx output ~a already locked by another volatile deposit" tx) #f)]
+      [(list #f #f)
+       (hash-set! volatile-deps-table id (list part val tx))])))
 
 (define (get-volatile-dep id)
-  (hash-ref volatile-deps-table id))
+  (hash-ref volatile-deps-table id
+            (lambda ()
+              (raise-syntax-error 'bitml (format "Volatile deposit ~a not defined" id) #f))))
 
 (define (get-volatile-deps)
   (hash-keys volatile-deps-table))
@@ -99,13 +116,27 @@
   (make-hash))
 
 (define (add-secret part id hash)
-  (hash-set! secrets-table id (list part hash)))
+  (let ([id? (hash-has-key? secrets-table id)]
+        [hash? (member hash (flatten (hash-values secrets-table)))])
+    (match (list id? hash?)
+      [(list #t _)
+       (raise-syntax-error 'bitml (format "Secret ~a already defined" id) #f)]
+      [(list _ (list _))
+       (raise-syntax-error 'bitml (format "Hash ~a already committed by another secret" hash) #f)]
+      [(list #f #f)
+       (hash-set! secrets-table id (list part hash))])))
 
 (define (get-secret-hash id)
-  (second (hash-ref secrets-table id)))
+  (second
+   (hash-ref secrets-table id
+             (lambda ()
+               (raise-syntax-error 'bitml (format "Secret ~a not defined" id) #f)))))
 
 (define (get-secret-part id)
-  (first (hash-ref secrets-table id)))
+  (first
+   (hash-ref secrets-table id
+             (lambda ()
+               (raise-syntax-error 'bitml (format "Secret ~a not defined" id) #f)))))
 
 (define (get-secrets)
   (hash-keys secrets-table))

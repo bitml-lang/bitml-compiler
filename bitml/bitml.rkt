@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require (for-syntax racket/base syntax/parse)
-         racket/list racket/bool racket/string
+         racket/list racket/string
          "string-helpers.rkt" "env.rkt" "exp.rkt" "terminals.rkt")
 
 (provide (all-defined-out))
@@ -322,7 +322,9 @@
         orig-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      ;#'(contract params ... parent-tx input-idx value (remove part parts) timelock)]
      #'(compile (contract params ...)
-                orig-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]))
+                orig-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
+    
+    [(_ contract rest ...) (raise-syntax-error 'bitml "Invalid syntax" #'contract)]))
 
 
 (define-syntax (execute-split stx)

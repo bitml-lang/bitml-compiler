@@ -8,11 +8,9 @@
 (contract
  (pre 
   (deposit "A" 1 "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
-  (secret "A" a "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb")
-  (vol-deposit "B" txb 1 "txVA@2") (vol-deposit "B" txb2 1 "txVA@2"))
+  (vol-deposit "B" txb 1 "txVA@2") (vol-deposit "B" txb2 1 "txVB@2"))
 	 
  (put (txb txb2) (withdraw "A"))
-
 
  (check-liquid
   (strategy "B" (not-destroy txb))))
