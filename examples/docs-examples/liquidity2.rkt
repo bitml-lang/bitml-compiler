@@ -19,4 +19,4 @@
   (strategy "A" (do-reveal a)))
  
  (check-liquid
-  (strategy "B" (do-auth (auth "B"(after 700000 (withdraw "B")))))))
+  (strategy "B" (do-auth (auth "B" (after 700000 (withdraw "B")))))))

@@ -5,17 +5,15 @@
 
 (generate-keys)
 
-(define timeout (after 10 (withdraw "B")))
-
 (contract
  (pre (deposit "A" 1 "txA@0")(secret "A" a "000a"))
  
  (sum (reveal (a) (withdraw "A"))
-      (ref timeout))
+      (after 10 (withdraw "B")))
 
- (check-liquid
-  #;(strategy "A" (do-reveal a)))
+ (check-liquid)
 
- (check "A" has-more-than 1
-        (strategy "A" (do-reveal a))))
+ (check-query "[]<> (a revealed => A has-deposit>= 100000000 BTC)")
+
+ (check-query "[]<> (a revealed \\/ B has-deposit>= 100000000 BTC)"))
 
