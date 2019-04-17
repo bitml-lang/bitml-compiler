@@ -5,13 +5,13 @@
 
 (key "B" (withdraw "A") "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
 (key "A" (withdraw "A") "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
-(key "A" (auth "A" "B" (after 10 (putrevealif (a) () (withdraw "A")))) "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
-(key "B" (auth "A" "B" (after 10 (putrevealif (a) () (withdraw "A")))) "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
+(key "A" (auth "A" "B" (after 10 (putrevealif (txa) (a) (withdraw "A")))) "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
+(key "B" (auth "A" "B" (after 10 (putrevealif (txa) (a) (withdraw "A")))) "0277dc31c59a49ccdad15969ef154674b390e0028b50bdc1fa9b8de98be1320652")
 
 
 (contract (pre
-            (deposit "A" 1 "txA@0")
-            (deposit "B" 1 "txA1@0")
-            (vol-deposit "B" a 1 "txVA@2")
-            (secret "A" a "hash:00a"))
-           (auth "A" "B" (after 10 (putrevealif (a) () (withdraw "A")))))
+           (deposit "A" 1 "txA@0")
+           (deposit "B" 1 "txA1@0")
+           (vol-deposit "B" txa 1 "txVA@2")
+           (secret "A" a "hash:00a"))
+          (auth "A" "B" (after 10 (putrevealif (txa) (a) (withdraw "A")))))

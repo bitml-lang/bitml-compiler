@@ -5,7 +5,7 @@
 (participant "C" "034f5ca30056b9dd89132ca8c7583e6d82b69bc17bb2c1dfef9dea9c3467631e6b")
 (participant "D" "037b60c121050e1fa6e7d5cd299ecc66d87330b2996567004f831c63ef0e2a157e")
 
-(generate-keys)
+(debug-mode)
 
 (contract
  (pre 

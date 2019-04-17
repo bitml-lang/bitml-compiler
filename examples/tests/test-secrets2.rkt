@@ -5,7 +5,7 @@
 (participant "B1" "034a7192e922118173 906555a39f28fa1e0b65657fc7f403094da4f85701a5f809")
 
 
-(generate-keys)
+(debug-mode)
 
 (define txA "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
 

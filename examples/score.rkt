@@ -8,7 +8,7 @@
 (participant "AI" "029c5f6f5ef0095f547799cb7861488b9f4282140d59a6289fbc90c70209c1cced")
 
 
-(generate-keys)
+(debug-mode)
 
 (define Init (sum (auth "AE" (tau (ref Exec1)))
                   (after 10 (ref Canc))))

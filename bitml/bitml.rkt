@@ -9,7 +9,7 @@
 ;SYNTAX DEFINITIONS
 
 ;turns on the generation of the keys
-(define-syntax (generate-keys stx)
+(define-syntax (debug-mode stx)
   #'(set-gen-keys!))
 
 ;declaration of a participant

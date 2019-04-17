@@ -6,7 +6,7 @@
 (participant "A3" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
 (participant "A4" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
 
-(generate-keys)
+(debug-mode)
 
 (define C00 (sum (reveal (a0) (ref C11)) (after 10 (tau (ref C10)))))
 
