@@ -249,11 +249,11 @@
                 [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"\"")) all-secrets) " ")]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" sec-wit " " tx-sigs "]")]
-                [outputs (for/list([value values-list]
+                [outputs (for/list([v values-list]
                                    [script script-list]
                                    [script-params script-params-list]
                                    [secrets script-secrets-list])
-                           (format "~a BTC : fun(~a) . ~a (~a)" value script-params (get-secrets-check-script secrets) script))]
+                           (format "~a BTC : fun(~a) . ~a (~a)" v script-params (get-secrets-check-script secrets) script))]
                 [output (string-append "output = [ " (list+sep->string outputs ";\n\t") " ]")]
                 [count 0])                
 

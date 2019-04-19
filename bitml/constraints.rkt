@@ -23,7 +23,7 @@
 
          #'(begin
              (displayln "constr required")
-             (get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...))
+             ;(get-constr-tree (sum (contract params ...)...) ((secret part ident hash) ...))
 
              (let* ([secret-list-with-f 
                     (remove-duplicates
