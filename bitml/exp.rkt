@@ -14,6 +14,15 @@
     [(_ (band a b)) #'(string-append "(" (compile-pred a) " && " (compile-pred b) ")")]
     [(_ (bor a b)) #'(string-append "(" (compile-pred a) " || " (compile-pred b) ")")]
     [(_ (bnot a)) #'(string-append "!(" (compile-pred a) ")")]
+    
+    ;optimized compilation
+    ;---------------------------------------------------------------------------
+    [(_ (b= a:id b:id)) #'(string-append "size(" (symbol->string 'a) ") == size(" (symbol->string 'b) ")" )]
+    [(_ (b!= a:id b:id)) #'(string-append "size(" (symbol->string 'a) ") != size(" (symbol->string 'b) ")" )]
+    [(_ (b< a:id b:id)) #'(string-append "size(" (symbol->string 'a) ") < size(" (symbol->string 'b) ")" )]
+    [(_ (b<= a:id b:id)) #'(string-append "size(" (symbol->string 'a) ") <= size(" (symbol->string 'b) ")" )]
+    ;------------------------------------------------------------------------------
+    
     [(_ (b= a b)) #'(string-append (compile-pred-exp a) "==" (compile-pred-exp b))]
     [(_ (b!= a b)) #'(string-append (compile-pred-exp a) "!=" (compile-pred-exp b))]
     [(_ (b< a b)) #'(string-append (compile-pred-exp a) "<" (compile-pred-exp b))]
@@ -83,7 +92,7 @@
     [(_ (b= p1 p2) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
      #`(lambda y (= ((compile-pred-exp-contraint p1 ((secret part ident hash)...)) #,@#'y)
-                         ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]
+                    ((compile-pred-exp-contraint p2 ((secret part ident hash)...)) #,@#'y)))]
     
     [(_ (b!= p1 p2) ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
