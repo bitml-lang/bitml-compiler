@@ -176,7 +176,7 @@
     ;compile signatures constants for Tinit
     (for-each (lambda (e t) (add-output (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
   
-    (add-output (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a (~a) \n}\n"
+    (add-output (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a\n (~a) \n}\n"
                         inputs tx-v script-params (get-secrets-check-script script-secrets) script))))
 
 
@@ -200,7 +200,7 @@
                 [scripts-list (list (get-script (contract params ...)) ...)]
                 [script-secrets (remove-duplicates (append (get-script-params-sym (contract params ...)) ...))]
                 [script (string-append (get-secrets-check-script script-secrets)
-                                       "(" (list+sep->string scripts-list " || ") ")")]
+                                       "\n(" (list+sep->string scripts-list " ||\n ") ")")]
 
                 [script-params (list+sep->string (append
                                                   (remove-duplicates (append (get-script-params (contract params ...)) ...))
@@ -242,7 +242,7 @@
                 [script-secrets-list (list (remove-duplicates (append (get-script-params-sym (contract params ...)) ...))...)]
                 [subscripts-list (list (list (get-script (contract params ...)) ...)...)]
                 [script-list (for/list([subscripts subscripts-list])
-                               (list+sep->string subscripts " || "))]
+                               (string-append "("(list+sep->string subscripts " ||\n ") ")"))]
                 [script-params-list (list (list+sep->string (append
                                                              (remove-duplicates (append (get-script-params (contract params ...)) ...))
                                                              (parts->sigs-param-list (get-participants))))...)]  

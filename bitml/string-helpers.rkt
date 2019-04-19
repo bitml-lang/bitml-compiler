@@ -29,7 +29,7 @@
 (define (parts->sigs-param-list participants)
   (map (lambda (s) (string-append "s" s)) participants))
 
-(define format-secret (lambda (x) (string-append "sec_" (string-replace x ":int" ""))))
+(define format-secret (lambda (x) (string-append "sec_" (string-replace x ":string" ""))))
 
 (define (format-timelock tl)
   (if (> tl 0) (format " absLock = block ~a\n" tl) ""))

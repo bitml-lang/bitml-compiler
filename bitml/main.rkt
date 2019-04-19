@@ -42,7 +42,7 @@
          guard ...
 
          (let* ([scripts-list (list (get-script (contr params ...)) ...)]
-                [script (list+sep->string scripts-list " || ")]
+                [script (string-append "( "(list+sep->string scripts-list " ||\n ") " )")]
                 [script-params (get-script-params (sum (contr params ...) ...))]
                 [parent '(sum (contr params ...)...)]
                 [script-secrets (get-script-params-sym (sum (contr params ...) ...))])
