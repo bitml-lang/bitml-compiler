@@ -94,12 +94,7 @@
      #'(let ([pred-comp (~? (string-append (compile-pred p) " && ") "")]
              [secrets (list 'sec ...)]
              [compiled-continuation (~? (get-script* parent p) (get-script* parent ()))])
-         (string-append
-          (foldr (lambda (x res)
-                   (string-append pred-comp "sha256(" (symbol->string x) ") == hash:" (get-secret-hash x)
-                                  " && size(" (symbol->string x) ") >= " (number->string sec-param) " && " res))
-                 "" secrets)
-          compiled-continuation))]
+         (string-append pred-comp compiled-continuation))]
     [(_ parent '(auth part ... cont)) #'(get-script* parent cont)]
     [(_ parent '(after t cont)) #'(get-script* parent cont)]
     [(_ parent x)
@@ -108,6 +103,11 @@
               [keys-string (list+sep->string keys)])
          (string-append "versig(" keys-string "; " (parts->sigs-params (get-participants))  ")"))]))
 
+(define (get-secrets-check-script secrets)
+  (foldr (lambda (x res)
+           (string-append "sha256(" (symbol->string x) ") == hash:" (get-secret-hash x)
+                          " && size(" (symbol->string x) ") >= " (number->string sec-param) " && " res))
+         "" secrets))
 
 ;return the parameters for the script obtained by get-script
 (define-syntax (get-script-params stx)
@@ -124,14 +124,33 @@
      #'(remove-duplicates (append (get-script-params (contract params ...)) ...))]
     
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
-     #'(list (string-append (symbol->string 'sec) ":int") ...)]
+     #'(list (string-append (symbol->string 'sec) ":string") ...)]
     [(_ (auth part ... cont)) #'(get-script-params cont)]
     [(_ (after t cont)) #'(get-script-params cont)]
+    [(_ x) #''()]))
+
+(define-syntax (get-script-params-sym stx)
+  (syntax-parse stx
+    #:literals (putrevealif auth after pred sum split reveal revealif put)
+    [(_ (reveal (sec:id ...) (contract params ...)))
+     #'(get-script-params-sym (putrevealif () (sec ...) (contract params ...)))]
+    [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
+     #'(get-script-params-sym (putrevealif () (sec ...) (pred p) (contract params ...)))]
+    [(_ (put (tx:id ...) (contract params ...)))
+     #'(get-script-params-sym (putrevealif (tx ...) () (contract params ...)))]
+    
+    [(_ (sum (contract params ...)...))
+     #'(remove-duplicates (append (get-script-params-sym (contract params ...)) ...))]
+    
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
+     #'(list 'sec ...)]
+    [(_ (auth part ... cont)) #'(get-script-params-sym cont)]
+    [(_ (after t cont)) #'(get-script-params-sym cont)]
     [(_ x) #''()]))
          
 
 ;compiles the Tinit transaction
-(define (compile-init parts deposit-txout tx-v script script-params-list)
+(define (compile-init parts deposit-txout tx-v script script-params-list script-secrets)
   (let* ([tx-sigs-list (for/list ([p parts]
                                   [i (in-naturals)])
                          (format "sig~a~a" p i))]                  
@@ -157,7 +176,8 @@
     ;compile signatures constants for Tinit
     (for-each (lambda (e t) (add-output (string-append "const " e " : signature = _ //add signature for output " t))) tx-sigs-list deposit-txout)
   
-    (add-output (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" inputs tx-v script-params script))))
+    (add-output (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a (~a) \n}\n"
+                        inputs tx-v script-params (get-secrets-check-script script-secrets) script))))
 
 
 (define-syntax (compile stx)
@@ -178,11 +198,13 @@
                                     (string-append "; " (list+sep->string (map (lambda (x) (format-input x)) vol-inputs)))
                                     "")]
                 [scripts-list (list (get-script (contract params ...)) ...)]
-                [script (list+sep->string scripts-list " || ")]
+                [script-secrets (remove-duplicates (append (get-script-params-sym (contract params ...)) ...))]
+                [script (string-append (get-secrets-check-script script-secrets)
+                                       "(" (list+sep->string scripts-list " || ") ")")]
+
                 [script-params (list+sep->string (append
-                                                  (~? (append (get-script-params (contract params ...)) ...) '())
+                                                  (remove-duplicates (append (get-script-params (contract params ...)) ...))
                                                   (parts->sigs-param-list (get-participants))))]
-                ;[script-params (parts->sigs-params)]
                 [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "0")) all-secrets) " ")]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" sec-wit " " tx-sigs vol-inputs-str "]")])
@@ -196,7 +218,7 @@
 
            ;compile the secrets declarations
            (for-each
-            (lambda (x) (add-output (string-append "const sec_" x " = _ //add value of secret " (string-replace x ":int" ""))))
+            (lambda (x) (add-output (string-append "const sec_" x " = _ //add value of secret " (string-replace x ":string" ""))))
             sec-to-reveal)
 
          
@@ -217,6 +239,7 @@
      #'(begin    
          (let* ([tx-name (format "T~a" (new-tx-index))]
                 [values-list (list val ...)]
+                [script-secrets-list (list (remove-duplicates (append (get-script-params-sym (contract params ...)) ...))...)]
                 [subscripts-list (list (list (get-script (contract params ...)) ...)...)]
                 [script-list (for/list([subscripts subscripts-list])
                                (list+sep->string subscripts " || "))]
@@ -228,8 +251,9 @@
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ":" sec-wit " " tx-sigs "]")]
                 [outputs (for/list([value values-list]
                                    [script script-list]
-                                   [script-params script-params-list])
-                           (format "~a BTC : fun(~a) . ~a" value script-params script))]
+                                   [script-params script-params-list]
+                                   [secrets script-secrets-list])
+                           (format "~a BTC : fun(~a) . ~a (~a)" value script-params (get-secrets-check-script secrets) script))]
                 [output (string-append "output = [ " (list+sep->string outputs ";\n\t") " ]")]
                 [count 0])                
 
@@ -243,7 +267,7 @@
                (begin
                  ;compile the secrets declarations
                  (for-each
-                  (lambda (x) (add-output (string-append "const sec_" x " : string = _ //add value of secret " (string-replace x ":int" ""))))
+                  (lambda (x) (add-output (string-append "const sec_" x " : string = _ //add value of secret " (string-replace x ":string" ""))))
                   sec-to-reveal)
 
                  (add-output (format "\ntransaction ~a { \n ~a \n ~a \n~a}\n" tx-name inputs output (format-timelock timelock)))
