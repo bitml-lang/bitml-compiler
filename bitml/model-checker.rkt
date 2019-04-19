@@ -150,6 +150,14 @@
                       ", " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = true . \n"
                       "eq strategy(S:SemConfiguration, " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = false .")]
 
+    [(_ part:string (do-auth))
+     #'(string-append "eq strategy(S:SemConfiguration, " part " lock D:GuardedContract in x:Name) = false . \n")]
+    [(_ part:string (do-auth) b-if pred)
+     #'(string-append "eq strategy(S:SemConfiguration, " part " lock D:GuardedContract in x:Name) = false . \n"
+                      "eq strategy(ctx:Context S:Configuration " (compile-maude-pred pred)
+                      ", " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = true . \n"
+                      "eq strategy(S:SemConfiguration, " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = false .")]
+
     
     [(_ part:string (not-destroy vol-deposit))
      #'(string-append "eq strategy(S:SemConfiguration, " part " authorize-destroy-of " (symbol->string 'vol-deposit) ") = false .\n")]
@@ -160,9 +168,9 @@
 (define-syntax (compile-maude-pred stx)
   (syntax-parse stx
     #:literals (do-reveal do-auth not-destroy do-destroy state)
-    [(_ (part:string do-reveal secret:id))
+    [(_ (part:string (do-reveal secret:id)))
      #'(string-append " | " part " : " (symbol->string 'secret) " # 1 ")]
-    [(_ (part:string do-auth contract))
+    [(_ (part:string (do-auth contract)))
      #'(string-append " | " part " [ x:Name |> " (compile-maude-contract contract) " ] ")]))
 
 (define (write-maude-file str)

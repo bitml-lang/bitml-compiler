@@ -14,8 +14,8 @@
           pred sum split debug-mode between 
           (rename-out [btrue true] [band and] [bor or] [bnot not] [bdefine define]
                       [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size]
-                      [$expand ref])
-          strategy b-if do-reveal do-auth not-destroy do-destroy
+                      [b-if if] [$expand ref])
+          strategy do-reveal do-auth not-destroy do-destroy
           state check-liquid check has-more-than check-query
           #%module-begin #%datum #%top-interaction)
 
