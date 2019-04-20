@@ -190,11 +190,11 @@
 
 (define (format-maude-out str)
   (match (string-replace (string-replace str "\n" "") "\t" "")
-    [(regexp #px"rewrites:.* \\((.*) real\\).*result ModelCheckResult: (counterexample\\(.*\\))Bye" (list _ time cex))
+    [(regexp #px"rewrites:.* \\((.*) real\\).*result ModelCheckResult: counterexample\\((.*)\\)Bye" (list _ time cex))
      ;(displayln (string-append "Computation time: " time))
      ;(displayln "Result: false\n")
      ;(displayln cex)
-     (cons #f cex)]
+     (cons #f (format-cex cex))]
     [(regexp #px"rewrites:.* \\((.*) real\\).*(result Bool: true.*)Bye" (list _ time res))
      ;(displayln (string-append "Computation time: " time))
      ;(displayln "Result: true")

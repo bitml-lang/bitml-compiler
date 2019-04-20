@@ -41,4 +41,26 @@
 
   (displayln "\n"))
 
+(define (cex-folder a b)
+  (let* ([new-char (string a)]
+         [count (cdr b)]
+         [str (car b)]
+         [next-count (if (equal? new-char "{")
+                         (+ 1 count)
+                         (if (equal? new-char "}")
+                             (- count 1)
+                             count))]
+         [next-b (if (= 0 next-count)
+                     (cons (append str (list new-char "\n")) next-count)
+                     (cons (append str (list new-char)) next-count))])
+    next-b))
+
+(define (cex-add-newlines str)
+  (let([l (foldl cex-folder (cons null 0) (string->list str))])
+
+    (string-join (car l) "")))
+
+(define (format-cex str)
+  (string-append "counterexample:\n" (cex-add-newlines (string-replace str ", " " "))))
+
 (provide (all-defined-out))
