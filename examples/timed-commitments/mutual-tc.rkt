@@ -6,12 +6,20 @@
 (debug-mode)
 
 
-(contract (pre (deposit "A" 1 "txA@0")(secret "A" a "000a")
-                 (deposit "B" 1 "txB@0")(secret "B" b "000b"))        
-         (sum
-          (reveal (a) (sum
-                       (reveal (b) (split (1 -> (withdraw "A"))
-                                          (1 -> (withdraw "B"))))
-                       (after 10 (withdraw "A"))))
-          (after 10 (withdraw "B"))))
+(contract (pre
+           (deposit "A" 1 "txA@0")
+           (secret "A" a "hashofa")
+           (deposit "B" 1 "txB@0")
+           (secret "B" b "hashofb"))        
+          (sum
+           (reveal (a) (sum
+                        (reveal (b) (split (1 -> (withdraw "A"))
+                                           (1 -> (withdraw "B"))))
+                        (after 10 (withdraw "A"))))
+           (after 10 (withdraw "B")))
 
+          (check-liquid)
+
+          (check-query "[] (a revealed => <> A has-deposit>= 100000000 satoshi)")
+
+          (check-query "[] ((a revealed /\\ ~ <>(b revealed)) => <> A has-deposit>= 200000000 satoshi)"))
