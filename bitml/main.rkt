@@ -15,7 +15,7 @@
           (rename-out [btrue true] [band and] [bor or] [bnot not] [bdefine define]
                       [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size]
                       [b-if if] [$expand ref])
-          strategy do-reveal do-auth not-destroy do-destroy
+          strategy do-reveal do-auth not-destroy do-destroy not-reveal
           state check-liquid check has-more-than check-query
           #%module-begin #%datum #%top-interaction)
 
