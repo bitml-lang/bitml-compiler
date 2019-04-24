@@ -135,7 +135,7 @@
   (syntax-parse stx
     #:literals (b-if do-reveal do-auth not-destroy do-destroy not-reveal)
 
-    [(_ part:string (do-reveal secret:id) b-if pred).
+    [(_ part:string (do-reveal secret:id) b-if pred)
      #'(string-append "eq strategy(ctx:Context S:Configuration" (compile-maude-pred pred)
                       ", " part " reveal " (symbol->string 'secret) ") = true . \n"
                       "eq strategy(ctx:Context S:Configuration , " part " reveal " (symbol->string 'secret) ") = false . \n"
