@@ -21,5 +21,4 @@
           (check-liquid)
 
           (check-query "[] (a revealed => <> A has-deposit>= 100000000 satoshi)")
-
-          (check-query "[] ((a revealed /\\ ~ <>(b revealed)) => <> A has-deposit>= 200000000 satoshi)"))
+          (check-query "[] (a revealed => <> (b revealed \\/ A has-deposit>= 200000000 satoshi))"))
