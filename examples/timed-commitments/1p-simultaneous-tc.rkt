@@ -4,7 +4,7 @@
 
 (debug-mode)
 
-(define C00 (sum (reveal (a0) (ref W1)) (after 10 (ref W0))))
+(define C00 (choice (reveal (a0) (ref W1)) (after 10 (ref W0))))
 
 (define W0 
   (split (1 -> (withdraw "A0"))))

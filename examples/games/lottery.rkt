@@ -10,13 +10,13 @@
           (deposit "B" 3 "txB@0")(secret "B" b "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"))
          
          (split
-          (2 -> (sum
+          (2 -> (choice
                  (revealif (b) (pred (between b 0 1)) (withdraw "B"))
                  (after 10 (withdraw "A"))))
-          (2 -> (sum
+          (2 -> (choice
                  (reveal (a) (withdraw "A"))
                  (after 10 (withdraw "B"))))
-          (2 -> (sum
+          (2 -> (choice
                  (revealif (a b) (pred (= a b)) (withdraw "A"))
                  (revealif (a b) (pred (!= a b)) (withdraw "B")))))
 

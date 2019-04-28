@@ -10,31 +10,31 @@
 
 (debug-mode)
 
-(define Init (sum (auth "AE" (tau (ref Exec1)))
+(define Init (choice (auth "AE" (tau (ref Exec1)))
                   (after 10 (ref Canc))))
 
-(define Exec1 (sum (auth "ACE" (tau (ref ApprE1)))
+(define Exec1 (choice (auth "ACE" (tau (ref ApprE1)))
                    (auth "ACE" (tau (ref Exec2)))
                    (auth "ACE" (ref Canc))))
 
-(define Exec2 (sum (auth "ACE" (tau (ref ApprE2)))
+(define Exec2 (choice (auth "ACE" (tau (ref ApprE2)))
                    (auth "ACE" (ref Canc))))
 
-(define ApprE1 (sum (auth "AV" (tau (ref Ver1)))
+(define ApprE1 (choice (auth "AV" (tau (ref Ver1)))
                     (auth "AV" (tau (ref Exec2)))
                     (auth "AV" (ref Canc))))
 
-(define ApprE2 (sum (auth "AV" (tau (ref Ver1)))
+(define ApprE2 (choice (auth "AV" (tau (ref Ver1)))
                     (auth "AV" (ref Canc))))
 
-(define Ver1 (sum (auth "ACV" (tau (ref ApprV)))
+(define Ver1 (choice (auth "ACV" (tau (ref ApprV)))
                   (auth "ACV" (tau (ref Ver2)))
                   (auth "ACV" (ref Canc))))
 
-(define Ver2 (sum (auth "ACV" (tau (ref ApprV)))
+(define Ver2 (choice (auth "ACV" (tau (ref ApprV)))
                   (auth "ACV" (ref Canc))))
 
-(define ApprV (sum (auth "AI" (ref Insp))
+(define ApprV (choice (auth "AI" (ref Insp))
                    (auth "AI" (ref Canc))))
 
 (define Insp (auth "AP" (ref Del)))

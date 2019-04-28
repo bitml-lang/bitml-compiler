@@ -139,7 +139,7 @@
      #'(string-append "eq strategy(ctx:Context S:Configuration" (compile-maude-pred pred)
                       ", " part " reveal " (symbol->string 'secret) ") = true . \n"
                       "eq strategy(ctx:Context S:Configuration , " part " reveal " (symbol->string 'secret) ") = false . \n"
-                      "eq strategy(ctx:Context S:Configuration , " part " lock-reveal " (symbol->string 'secret) ") = false .")]
+                      "eq strategy(ctx:Context S:Configuration , " part " lock-reveal " (symbol->string 'secret) ") = false .\n")]
     [(_ part:string (do-reveal secret:id))
      #'(string-append "eq strategy(S:SemConfiguration, " part " lock-reveal " (symbol->string 'secret) ") = false . \n")]  
 
@@ -152,7 +152,7 @@
      #'(string-append "eq strategy(S:SemConfiguration, " part " lock " (compile-maude-contract contract strip-auth) " in x:Name) = false . \n"
                       "eq strategy(ctx:Context S:Configuration " (compile-maude-pred pred)
                       ", " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = true . \n"
-                      "eq strategy(S:SemConfiguration, " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = false .")]
+                      "eq strategy(S:SemConfiguration, " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = false .\n")]
 
     [(_ part:string (do-auth))
      #'(string-append "eq strategy(S:SemConfiguration, " part " lock D:GuardedContract in x:Name) = false . \n")]
@@ -160,7 +160,7 @@
      #'(string-append "eq strategy(S:SemConfiguration, " part " lock D:GuardedContract in x:Name) = false . \n"
                       "eq strategy(ctx:Context S:Configuration " (compile-maude-pred pred)
                       ", " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = true . \n"
-                      "eq strategy(S:SemConfiguration, " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = false .")]
+                      "eq strategy(S:SemConfiguration, " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = false .\n")]
 
     
     [(_ part:string (not-destroy vol-deposit))
@@ -207,7 +207,7 @@
 
 (define-syntax (compile-maude-contract stx)
   (syntax-parse stx
-    #:literals (withdraw after auth split putrevealif pred sum strip-auth tau put reveal revealif)
+    #:literals (withdraw after auth split putrevealif pred choice strip-auth tau put reveal revealif)
     [(_ (withdraw part:string))
      #'(string-append "withdraw " part)]
     [(_ (after t (contract params ...)))
@@ -228,7 +228,7 @@
            
          (string-append "split( " decl " )" ))]
 
-    [(_ (sum (contract params ...)...))
+    [(_ (choice (contract params ...)...))
      #'(let ([g-contracts (list (compile-maude-contract (contract params ...))...)])         
          (string-append "( " (list+sep->string g-contracts " + ") " )"))]
 

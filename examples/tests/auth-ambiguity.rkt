@@ -11,7 +11,7 @@
   (secret "A" a "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb")
   (secret "A" a1 "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bc"))
 	 
- (sum
+ (choice
   (reveal (a) (auth "B" (withdraw "A")))
   (reveal (a1) (auth "B" (withdraw "A"))))
 
@@ -21,7 +21,7 @@
 
 #|
 The authorization for (auth "B" (withdraw "A"))
-unlocks both branches of the sum, so it is "context independent".
+unlocks both branches of the choice, so it is "context independent".
 
 To disambiguate, create an alias for the same participant with the same pubkey,
 as follows
@@ -35,7 +35,7 @@ as follows
   (secret "A" a "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb")
   (secret "A" a1 "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bc"))
 	 
- (sum
+ (choice
   (reveal (a) (auth "B1" (withdraw "A")))
   (reveal (a1) (auth "B" (withdraw "A"))))
 

@@ -7,5 +7,5 @@
 
 
 (contract (pre (deposit "A" 1 "txA@0")(secret "A" a "000a")(deposit "B" 0 "txB@0")(secret "B" b "000b")(secret "C" c "000b"))        
-         (sum (putrevealif () (a) (split (0.5 -> (withdraw "A")) (0.5 -> (withdraw "B"))))
+         (choice (putrevealif () (a) (split (0.5 -> (withdraw "A")) (0.5 -> (withdraw "B"))))
               (putrevealif () (b c) (withdraw "B"))))

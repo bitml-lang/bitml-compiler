@@ -11,7 +11,7 @@
  (pre (deposit "A" 1 (ref txA)) (secret "A" a "aaa"))
  
  (split
-  (0.5 -> (sum
+  (0.5 -> (choice
                 (revealif (a) (pred (= a 1)) (withdraw "A"))
                 (revealif (a) (pred (!= a 2)) (withdraw "A"))))
   (0.5 -> (reveal (a) (withdraw "A"))))

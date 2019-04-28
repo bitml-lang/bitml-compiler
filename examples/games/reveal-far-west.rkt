@@ -12,9 +12,9 @@
  (pre (deposit "A" 1 (ref txA)) (secret "A" a "a-Hash")
       (deposit "B" 1 (ref txB)) (secret "B" b "b-Hash"))
  
- (sum
+ (choice
   (reveal (a) (withdraw "A"))
-  (reveal (b) (sum
+  (reveal (b) (choice
     (reveal (a) (withdraw "B"))
     (after 200 (withdraw "A"))))
   (after 100
@@ -44,7 +44,7 @@
   
   (check-query "<> (A has-deposit>= 1 satoshi)"
     (strategy "A" (do-reveal a) if ("B" (do-reveal b)))
-    (strategy "B" (do-reveal b))  ; FIXME this triggers a bug unless it is moved above strategy "A"
+    (strategy "B" (do-reveal b))
     ) ; result: false
   
   ; Third, if A does not reveal, she wins half of her deposit
