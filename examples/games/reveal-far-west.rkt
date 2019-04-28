@@ -44,7 +44,7 @@
   
   (check-query "<> (A has-deposit>= 1 satoshi)"
     (strategy "A" (do-reveal a) if ("B" (do-reveal b)))
-    (strategy "B" (do-reveal b))  ; FIXME this triggers a bug unless it is moved above strategy "A"
+    (strategy "B" (do-reveal b))
     ) ; result: false
   
   ; Third, if A does not reveal, she wins half of her deposit

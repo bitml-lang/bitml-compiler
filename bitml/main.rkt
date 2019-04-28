@@ -17,7 +17,7 @@
                       [b-if if] [$expand ref])
           strategy do-reveal do-auth not-destroy do-destroy not-reveal
           state check-liquid check has-more-than check-query
-          #%module-begin #%datum #%top-interaction)
+          #%module-begin #%datum #%top-interaction dw)
 
 ;expands the constants
 (define-syntax (contract stx)
@@ -63,7 +63,23 @@
 
 (define-syntax (bdefine stx)
   (syntax-parse stx
-    [(_ name def)
+    [(_ name body)
      #'(define-syntax (name stx)
-         #'def
-         )]))
+         #'body)]
+
+    ;https://www.greghendershott.com/fear-of-macros/Syntax_parameters.html
+    [(_ name (form-params ...) body)     
+     #'(begin
+         (define-syntax-parameter form-params #f)...
+         (define-syntax (name stx)
+           (syntax-parse stx
+             [(_ act-params ......)
+              (syntax-parametrize ([form-params #'act-params] ...)
+                                  #'body)
+              ])))]))
+
+
+(define-syntax (dw stx)
+  (syntax-parse stx
+    [(_ part)
+     #'(withdraw part)]))
