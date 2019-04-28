@@ -3,7 +3,7 @@
 (require (for-syntax racket/base syntax/parse))
 
 (define-syntax (pre stx) (raise-syntax-error #f "wrong usage of pre" stx))
-(define-syntax (sum stx) (raise-syntax-error #f "wrong usage of sum" stx))
+(define-syntax (choice stx) (raise-syntax-error #f "wrong usage of choice" stx))
 (define-syntax (-> stx) (raise-syntax-error #f "wrong usage of ->" stx))
 (define-syntax (putrevealif stx) (raise-syntax-error #f "wrong usage of putrevealif" stx))
 (define-syntax (put stx) (raise-syntax-error #f "wrong usage of put" stx))

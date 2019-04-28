@@ -8,7 +8,7 @@
 (contract
  (pre (deposit "A" 1 "txA@0")(secret "A" a "000a"))
  
- (sum (reveal (a) (withdraw "A"))
+ (choice (reveal (a) (withdraw "A"))
       (after 10 (withdraw "B")))
 
  (check-liquid)

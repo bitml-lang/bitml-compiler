@@ -8,67 +8,67 @@
 
 (debug-mode)
 
-(define C00 (sum (reveal (a0) (ref C11)) (after 10 (tau (ref C10)))))
+(define C00 (choice (reveal (a0) (ref C11)) (after 10 (tau (ref C10)))))
 
-(define C11 (sum (reveal (a1) (ref C23)) (after 20 (tau (ref C21)))))
+(define C11 (choice (reveal (a1) (ref C23)) (after 20 (tau (ref C21)))))
 
-(define C23 (sum (reveal (a2) (ref C37)) (after 30 (tau (ref C33)))))
+(define C23 (choice (reveal (a2) (ref C37)) (after 30 (tau (ref C33)))))
 
-(define C37 (sum (reveal (a3) (ref C415)) (after 40 (tau (ref C47)))))
+(define C37 (choice (reveal (a3) (ref C415)) (after 40 (tau (ref C47)))))
 
-(define C415 (sum (reveal (a4) (ref W31)) (after 50 (ref W15))))
+(define C415 (choice (reveal (a4) (ref W31)) (after 50 (ref W15))))
 
-(define C47 (sum (reveal (a4) (ref W23)) (after 50 (ref W7))))
+(define C47 (choice (reveal (a4) (ref W23)) (after 50 (ref W7))))
 
-(define C33 (sum (reveal (a3) (ref C411)) (after 40 (tau (ref C43)))))
+(define C33 (choice (reveal (a3) (ref C411)) (after 40 (tau (ref C43)))))
 
-(define C411 (sum (reveal (a4) (ref W27)) (after 50 (ref W11))))
+(define C411 (choice (reveal (a4) (ref W27)) (after 50 (ref W11))))
 
-(define C43 (sum (reveal (a4) (ref W19)) (after 50 (ref W3))))
+(define C43 (choice (reveal (a4) (ref W19)) (after 50 (ref W3))))
 
-(define C21 (sum (reveal (a2) (ref C35)) (after 30 (tau (ref C31)))))
+(define C21 (choice (reveal (a2) (ref C35)) (after 30 (tau (ref C31)))))
 
-(define C35 (sum (reveal (a3) (ref C413)) (after 40 (tau (ref C45)))))
+(define C35 (choice (reveal (a3) (ref C413)) (after 40 (tau (ref C45)))))
 
-(define C413 (sum (reveal (a4) (ref W29)) (after 50 (ref W13))))
+(define C413 (choice (reveal (a4) (ref W29)) (after 50 (ref W13))))
 
-(define C45 (sum (reveal (a4) (ref W21)) (after 50 (ref W5))))
+(define C45 (choice (reveal (a4) (ref W21)) (after 50 (ref W5))))
 
-(define C31 (sum (reveal (a3) (ref C49)) (after 40 (tau (ref C41)))))
+(define C31 (choice (reveal (a3) (ref C49)) (after 40 (tau (ref C41)))))
 
-(define C49 (sum (reveal (a4) (ref W25)) (after 50 (ref W9))))
+(define C49 (choice (reveal (a4) (ref W25)) (after 50 (ref W9))))
 
-(define C41 (sum (reveal (a4) (ref W17)) (after 50 (ref W1))))
+(define C41 (choice (reveal (a4) (ref W17)) (after 50 (ref W1))))
 
-(define C10 (sum (reveal (a1) (ref C22)) (after 20 (tau (ref C20)))))
+(define C10 (choice (reveal (a1) (ref C22)) (after 20 (tau (ref C20)))))
 
-(define C22 (sum (reveal (a2) (ref C36)) (after 30 (tau (ref C32)))))
+(define C22 (choice (reveal (a2) (ref C36)) (after 30 (tau (ref C32)))))
 
-(define C36 (sum (reveal (a3) (ref C414)) (after 40 (tau (ref C46)))))
+(define C36 (choice (reveal (a3) (ref C414)) (after 40 (tau (ref C46)))))
 
-(define C414 (sum (reveal (a4) (ref W30)) (after 50 (ref W14))))
+(define C414 (choice (reveal (a4) (ref W30)) (after 50 (ref W14))))
 
-(define C46 (sum (reveal (a4) (ref W22)) (after 50 (ref W6))))
+(define C46 (choice (reveal (a4) (ref W22)) (after 50 (ref W6))))
 
-(define C32 (sum (reveal (a3) (ref C410)) (after 40 (tau (ref C42)))))
+(define C32 (choice (reveal (a3) (ref C410)) (after 40 (tau (ref C42)))))
 
-(define C410 (sum (reveal (a4) (ref W26)) (after 50 (ref W10))))
+(define C410 (choice (reveal (a4) (ref W26)) (after 50 (ref W10))))
 
-(define C42 (sum (reveal (a4) (ref W18)) (after 50 (ref W2))))
+(define C42 (choice (reveal (a4) (ref W18)) (after 50 (ref W2))))
 
-(define C20 (sum (reveal (a2) (ref C34)) (after 30 (tau (ref C30)))))
+(define C20 (choice (reveal (a2) (ref C34)) (after 30 (tau (ref C30)))))
 
-(define C34 (sum (reveal (a3) (ref C412)) (after 40 (tau (ref C44)))))
+(define C34 (choice (reveal (a3) (ref C412)) (after 40 (tau (ref C44)))))
 
-(define C412 (sum (reveal (a4) (ref W28)) (after 50 (ref W12))))
+(define C412 (choice (reveal (a4) (ref W28)) (after 50 (ref W12))))
 
-(define C44 (sum (reveal (a4) (ref W20)) (after 50 (ref W4))))
+(define C44 (choice (reveal (a4) (ref W20)) (after 50 (ref W4))))
 
-(define C30 (sum (reveal (a3) (ref C48)) (after 40 (tau (ref C40)))))
+(define C30 (choice (reveal (a3) (ref C48)) (after 40 (tau (ref C40)))))
 
-(define C48 (sum (reveal (a4) (ref W24)) (after 50 (ref W8))))
+(define C48 (choice (reveal (a4) (ref W24)) (after 50 (ref W8))))
 
-(define C40 (sum (reveal (a4) (ref W16)) (after 50 (ref W0))))
+(define C40 (choice (reveal (a4) (ref W16)) (after 50 (ref W0))))
 
 (define W0 
  (split (1 -> (withdraw "A0"))(1 -> (withdraw "A1"))(1 -> (withdraw "A2"))(1 -> (withdraw "A3"))(1 -> (withdraw "A4"))))

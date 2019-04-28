@@ -12,9 +12,9 @@
  (pre (deposit "A" 1 (ref txA)) (secret "A" a "a-Hash")
       (deposit "B" 1 (ref txB)) (secret "B" b "b-Hash"))
  
- (sum
+ (choice
   (reveal (a) (withdraw "A"))
-  (reveal (b) (sum
+  (reveal (b) (choice
     (reveal (a) (withdraw "B"))
     (after 200 (withdraw "A"))))
   (after 100

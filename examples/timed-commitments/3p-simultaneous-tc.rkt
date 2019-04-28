@@ -6,19 +6,19 @@
 
 (debug-mode)
 
-(define C00 (sum (reveal (a0) (ref C11)) (after 10 (tau (ref C10)))))
+(define C00 (choice (reveal (a0) (ref C11)) (after 10 (tau (ref C10)))))
 
-(define C11 (sum (reveal (a1) (ref C23)) (after 20 (tau (ref C21)))))
+(define C11 (choice (reveal (a1) (ref C23)) (after 20 (tau (ref C21)))))
 
-(define C23 (sum (reveal (a2) (ref W7)) (after 30 (ref W3))))
+(define C23 (choice (reveal (a2) (ref W7)) (after 30 (ref W3))))
 
-(define C21 (sum (reveal (a2) (ref W5)) (after 30 (ref W1))))
+(define C21 (choice (reveal (a2) (ref W5)) (after 30 (ref W1))))
 
-(define C10 (sum (reveal (a1) (ref C22)) (after 20 (tau (ref C20)))))
+(define C10 (choice (reveal (a1) (ref C22)) (after 20 (tau (ref C20)))))
 
-(define C22 (sum (reveal (a2) (ref W6)) (after 30 (ref W2))))
+(define C22 (choice (reveal (a2) (ref W6)) (after 30 (ref W2))))
 
-(define C20 (sum (reveal (a2) (ref W4)) (after 30 (ref W0))))
+(define C20 (choice (reveal (a2) (ref W4)) (after 30 (ref W0))))
 
 (define W0 
   (split (1 -> (withdraw "A0"))(1 -> (withdraw "A1"))(1 -> (withdraw "A2"))))

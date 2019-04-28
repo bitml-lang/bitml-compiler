@@ -5,11 +5,11 @@
 
 (debug-mode)
 
-(define C00 (sum (reveal (a0) (ref C11)) (after 10 (tau (ref C10)))))
+(define C00 (choice (reveal (a0) (ref C11)) (after 10 (tau (ref C10)))))
 
-(define C11 (sum (reveal (a1) (ref W3)) (after 20 (ref W1))))
+(define C11 (choice (reveal (a1) (ref W3)) (after 20 (ref W1))))
 
-(define C10 (sum (reveal (a1) (ref W2)) (after 20 (ref W0))))
+(define C10 (choice (reveal (a1) (ref W2)) (after 20 (ref W0))))
 
 (define W0 
   (split (1 -> (withdraw "A0"))(1 -> (withdraw "A1"))))

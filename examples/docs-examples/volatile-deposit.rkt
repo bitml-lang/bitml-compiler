@@ -12,7 +12,7 @@
 (contract
  (pre (deposit "A1" 2 (ref txA1))
       (vol-deposit "A2" x 1 (ref txA2)))
- (sum
+ (choice
   (put (x) (split (2 -> (withdraw "B"))
                   (1 -> (withdraw "A1"))))
   (after 700000 (withdraw "B")))

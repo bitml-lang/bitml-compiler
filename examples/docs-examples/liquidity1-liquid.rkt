@@ -12,7 +12,7 @@
   (deposit "A" 1 "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
   (deposit "A" 1 "txid:625bc69c467b33e2ad70ea2817874067604eb42dd5835403f54fb6028bc70168@0"))
 	 
- (sum
+ (choice
   (auth "A" "B" (withdraw "C"))
   (auth "A" "B" (withdraw "D"))
   (after 700000 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")))))

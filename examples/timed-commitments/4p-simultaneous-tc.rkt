@@ -7,35 +7,35 @@
 
 (debug-mode)
 
-(define C00 (sum (reveal (a0) (ref C11)) (after 10 (tau (ref C10)))))
+(define C00 (choice (reveal (a0) (ref C11)) (after 10 (tau (ref C10)))))
 
-(define C11 (sum (reveal (a1) (ref C23)) (after 20 (tau (ref C21)))))
+(define C11 (choice (reveal (a1) (ref C23)) (after 20 (tau (ref C21)))))
 
-(define C23 (sum (reveal (a2) (ref C37)) (after 30 (tau (ref C33)))))
+(define C23 (choice (reveal (a2) (ref C37)) (after 30 (tau (ref C33)))))
 
-(define C37 (sum (reveal (a3) (ref W15)) (after 40 (ref W7))))
+(define C37 (choice (reveal (a3) (ref W15)) (after 40 (ref W7))))
 
-(define C33 (sum (reveal (a3) (ref W11)) (after 40 (ref W3))))
+(define C33 (choice (reveal (a3) (ref W11)) (after 40 (ref W3))))
 
-(define C21 (sum (reveal (a2) (ref C35)) (after 30 (tau (ref C31)))))
+(define C21 (choice (reveal (a2) (ref C35)) (after 30 (tau (ref C31)))))
 
-(define C35 (sum (reveal (a3) (ref W13)) (after 40 (ref W5))))
+(define C35 (choice (reveal (a3) (ref W13)) (after 40 (ref W5))))
 
-(define C31 (sum (reveal (a3) (ref W9)) (after 40 (ref W1))))
+(define C31 (choice (reveal (a3) (ref W9)) (after 40 (ref W1))))
 
-(define C10 (sum (reveal (a1) (ref C22)) (after 20 (tau (ref C20)))))
+(define C10 (choice (reveal (a1) (ref C22)) (after 20 (tau (ref C20)))))
 
-(define C22 (sum (reveal (a2) (ref C36)) (after 30 (tau (ref C32)))))
+(define C22 (choice (reveal (a2) (ref C36)) (after 30 (tau (ref C32)))))
 
-(define C36 (sum (reveal (a3) (ref W14)) (after 40 (ref W6))))
+(define C36 (choice (reveal (a3) (ref W14)) (after 40 (ref W6))))
 
-(define C32 (sum (reveal (a3) (ref W10)) (after 40 (ref W2))))
+(define C32 (choice (reveal (a3) (ref W10)) (after 40 (ref W2))))
 
-(define C20 (sum (reveal (a2) (ref C34)) (after 30 (tau (ref C30)))))
+(define C20 (choice (reveal (a2) (ref C34)) (after 30 (tau (ref C30)))))
 
-(define C34 (sum (reveal (a3) (ref W12)) (after 40 (ref W4))))
+(define C34 (choice (reveal (a3) (ref W12)) (after 40 (ref W4))))
 
-(define C30 (sum (reveal (a3) (ref W8)) (after 40 (ref W0))))
+(define C30 (choice (reveal (a3) (ref W8)) (after 40 (ref W0))))
 
 (define W0 
   (split (1 -> (withdraw "A0"))(1 -> (withdraw "A1"))(1 -> (withdraw "A2"))(1 -> (withdraw "A3"))))

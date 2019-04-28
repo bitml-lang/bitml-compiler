@@ -10,14 +10,14 @@
 
 (define B0
   (auth "B" (tau
-   (sum
+   (choice
     (revealif (a) (pred (= a 0)) (withdraw "B"))
     (revealif (a) (pred (= a 1)) (withdraw "A"))
     (after 2000 (withdraw "A"))))))
 
 (define B1
   (auth "B" (tau
-   (sum
+   (choice
     (revealif (a) (pred (= a 0)) (withdraw "A"))
     (revealif (a) (pred (= a 1)) (withdraw "B"))
     (after 2000 (withdraw "A"))))))
@@ -26,7 +26,7 @@
  (pre (deposit "A" 1 (ref txA)) (secret "A" a "a-Hash")
       (deposit "B" 1 (ref txB)))
  
- (sum
+ (choice
   ; B guesses "0"
   (ref B0)
   ; B guesses "1"

@@ -10,7 +10,7 @@
 (contract
  (pre (deposit "A" 1 (ref txA)) (secret "A" a "aaa") (secret "A" b "aaa"))
  
- (sum
+ (choice
   (revealif (a b) (pred (not (< a b))) (withdraw "A"))
   (revealif (a b) (pred (< a (- b 1))) (withdraw "A")))
  

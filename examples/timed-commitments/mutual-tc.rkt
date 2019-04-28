@@ -11,8 +11,8 @@
            (secret "A" a "hashofa")
            (deposit "B" 1 "txB@0")
            (secret "B" b "hashofb"))        
-          (sum
-           (reveal (a) (sum
+          (choice
+           (reveal (a) (choice
                         (reveal (b) (split (1 -> (withdraw "A"))
                                            (1 -> (withdraw "B"))))
                         (after 10 (withdraw "A"))))

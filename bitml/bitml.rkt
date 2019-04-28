@@ -112,7 +112,7 @@
 ;return the parameters for the script obtained by get-script
 (define-syntax (get-script-params stx)
   (syntax-parse stx
-    #:literals (putrevealif auth after pred sum split reveal revealif put)
+    #:literals (putrevealif auth after pred choice split reveal revealif put)
     [(_ (reveal (sec:id ...) (contract params ...)))
      #'(get-script-params (putrevealif () (sec ...) (contract params ...)))]
     [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
@@ -120,7 +120,7 @@
     [(_ (put (tx:id ...) (contract params ...)))
      #'(get-script-params (putrevealif (tx ...) () (contract params ...)))]
     
-    [(_ (sum (contract params ...)...))
+    [(_ (choice (contract params ...)...))
      #'(remove-duplicates (append (get-script-params (contract params ...)) ...))]
     
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
@@ -131,7 +131,7 @@
 
 (define-syntax (get-script-params-sym stx)
   (syntax-parse stx
-    #:literals (putrevealif auth after pred sum split reveal revealif put)
+    #:literals (putrevealif auth after pred choice split reveal revealif put)
     [(_ (reveal (sec:id ...) (contract params ...)))
      #'(get-script-params-sym (putrevealif () (sec ...) (contract params ...)))]
     [(_ (revealif (sec:id ...) (pred p) (contract params ...)))
@@ -139,7 +139,7 @@
     [(_ (put (tx:id ...) (contract params ...)))
      #'(get-script-params-sym (putrevealif (tx ...) () (contract params ...)))]
     
-    [(_ (sum (contract params ...)...))
+    [(_ (choice (contract params ...)...))
      #'(remove-duplicates (append (get-script-params-sym (contract params ...)) ...))]
     
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (~optional (contract params ...))))
@@ -182,8 +182,8 @@
 
 (define-syntax (compile stx)
   (syntax-parse stx
-    #:literals(pred sum -> putrevealif split withdraw after auth reveal revealif put tau)
-    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (sum (contract params ...)...))
+    #:literals(pred choice -> putrevealif split withdraw after auth reveal revealif put tau)
+    [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (choice (contract params ...)...))
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #'(begin
          (let* ([tx-name (format "T~a" (new-tx-index))]
@@ -225,16 +225,16 @@
            (add-output (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n" tx-name inputs new-value script-params script))
 
            
-           (compile (contract params ...) '(sum (contract params ...)...)
+           (compile (contract params ...) '(choice (contract params ...)...)
                     tx-name 0 new-value parts 0 (get-script-params (contract params ...)) (get-script-params parent-contract))...))]
 
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...))
         parent-contract parent-tx input-idx value parts timelock  sec-to-reveal all-secrets)
-     #'(compile (putrevealif (tx-id ...) (sec ...) (~? (pred p)) (sum (contract params ...)))
+     #'(compile (putrevealif (tx-id ...) (sec ...) (~? (pred p)) (choice (contract params ...)))
                 parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
     
     
-    [(_ (split (val:number -> (sum (contract params ...)...))...)
+    [(_ (split (val:number -> (choice (contract params ...)...))...)
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #'(begin    
          (let* ([tx-name (format "T~a" (new-tx-index))]
@@ -262,7 +262,7 @@
            (if (not (= (apply + values-list) value))
                (raise-syntax-error 'bitml
                                    (format "split spends ~a BTC but it receives ~a BTC" (+ val ...) value)
-                                   '(split (val (sum (contract params ...)...))...))
+                                   '(split (val (choice (contract params ...)...))...))
 
                (begin
                  ;compile the secrets declarations
@@ -278,34 +278,34 @@
                    (execute-split '(contract params ...)... tx-name count val parts)
                    (set! count (add1 count)))...))))]
 
-    ;allow for split branches with unary sums
-    [(_ (split (val:number -> (~or (sum (contract params ...)...) (scontract sparams ...)))...)
+    ;allow for split branches with unary choices
+    [(_ (split (val:number -> (~or (choice (contract params ...)...) (scontract sparams ...)))...)
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(compile (split (val -> (~? (sum (scontract sparams ...))) (~? (sum (contract params ...)...)) )...)
+     #'(compile (split (val -> (~? (choice (scontract sparams ...))) (~? (choice (contract params ...)...)) )...)
                 parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
 
     ;syntax sugar for putrevealif
-    [(_ (put (tx-id:id ...) (sum (contract params ...)...))
+    [(_ (put (tx-id:id ...) (choice (contract params ...)...))
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(compile (putrevealif (tx-id ...) () (sum (contract params ...)...))
+     #'(compile (putrevealif (tx-id ...) () (choice (contract params ...)...))
                 parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
     [(_ (put (tx-id:id ...) (contract params ...))
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #'(compile (putrevealif (tx-id ...) () (contract params ...))
                 parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
 
-    [(_ (reveal (sec:id ...) (sum (contract params ...)...))
+    [(_ (reveal (sec:id ...) (choice (contract params ...)...))
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(compile (putrevealif () (sec ...) (sum (contract params ...)...))
+     #'(compile (putrevealif () (sec ...) (choice (contract params ...)...))
                 parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
     [(_ (reveal (sec:id ...) (contract params ...))
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
      #'(compile (putrevealif () (sec ...) (contract params ...))
                 parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
 
-    [(_ (revealif (sec:id ...) (pred p) (sum (contract params ...)...))
+    [(_ (revealif (sec:id ...) (pred p) (choice (contract params ...)...))
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
-     #'(compile (putrevealif () (sec ...) (pred p) (sum (contract params ...)...))
+     #'(compile (putrevealif () (sec ...) (pred p) (choice (contract params ...)...))
                 parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)]
     [(_ (revealif (sec:id ...) (pred p) (contract params ...))
         parent-contract parent-tx input-idx value parts timelock sec-to-reveal all-secrets)
@@ -354,12 +354,12 @@
 (define-syntax (execute-split stx)
   (syntax-parse stx
     [(_ '(contract params ...) ... parent-tx input-idx value parts)     
-     #'(let ([sum-secrets (get-script-params (sum (contract params ...)...))])
+     #'(let ([choice-secrets (get-script-params (choice (contract params ...)...))])
          ;(begin
          ;(displayln '(contract params ...))
-         ;(displayln (format "parametri ~a ~a ~a ~a ~a" parent-tx input-idx value parts sum-secrets))
+         ;(displayln (format "parametri ~a ~a ~a ~a ~a" parent-tx input-idx value parts choice-secrets))
          ;(displayln (get-script-params (contract params ...)))
          ;(displayln ""))...
          
          (compile (contract params ...) '(contract params ...) parent-tx input-idx value parts 0
-                  sum-secrets (get-script-params (contract params ...)))...)]))
+                  choice-secrets (get-script-params (contract params ...)))...)]))

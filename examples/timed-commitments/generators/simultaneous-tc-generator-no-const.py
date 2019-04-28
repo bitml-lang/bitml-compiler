@@ -9,9 +9,9 @@ def bitfield(i):
 
 def C(i,p):      
     if i < n-1:  
-        return "(reveal (" + secs[i] + ") (sum \n" + C(i+1, p+pow(2,i)) + "\n (after " + str(10*(i+1)) + " " +C(i+1, p) + ")))"
+        return "(reveal (" + secs[i] + ") (choice \n" + C(i+1, p+pow(2,i)) + "\n (after " + str(10*(i+1)) + " " +C(i+1, p) + ")))"
     else:
-        return "(reveal (" + secs[i] + ") (sum \n" +  W(p+pow(2,i)) + "\n (after " + str(10*(i+1)) + "\n " + W(p) + ")))"
+        return "(reveal (" + secs[i] + ") (choice \n" +  W(p+pow(2,i)) + "\n (after " + str(10*(i+1)) + "\n " + W(p) + ")))"
 
 def W(i):
 
@@ -24,7 +24,7 @@ def W(i):
     else:
         bits = bitfield(i)
         bits.reverse()
-        sec_revealed = sum(bits)
+        sec_revealed = choice(bits)
 
         out = "(split "
 
