@@ -7,9 +7,9 @@
 
 (define (Bet n)
   (choice
-   (auth "B" (withdraw "A"))     ; B says that A wins
+   (auth "B" (withdraw "A"))        ; B says that A wins
    (auth "B" (tau (ref (Check n)))) ; B says that A loses (check)
-   (after 10 (withdraw "A"))))   ; B is late
+   (after 10 (withdraw "A"))))      ; B is late
 
 
 (define (Check n)
