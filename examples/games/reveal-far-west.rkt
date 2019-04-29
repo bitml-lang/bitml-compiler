@@ -5,12 +5,12 @@
 
 (debug-mode)
 
-(define txA "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
-(define txB "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@2")
+(define (txA) "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
+(define (txB) "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@2")
 
 (contract
- (pre (deposit "A" 1 (ref txA)) (secret "A" a "a-Hash")
-      (deposit "B" 1 (ref txB)) (secret "B" b "b-Hash"))
+ (pre (deposit "A" 1 (ref (txA))) (secret "A" a "a-Hash")
+      (deposit "B" 1 (ref (txB))) (secret "B" b "b-Hash"))
  
  (choice
   (reveal (a) (withdraw "A"))

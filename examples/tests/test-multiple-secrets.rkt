@@ -5,10 +5,10 @@
 
 (debug-mode)
 
-(define txA "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
+(define (txA) "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
 
 (contract
- (pre (deposit "A" 1 (ref txA)) (secret "A" a "aaa") (secret "A" b "aaa"))
+ (pre (deposit "A" 1 (ref (txA))) (secret "A" a "aaa") (secret "A" b "bbb"))
  
  (choice
   (revealif (a b) (pred (not (< a b))) (withdraw "A"))

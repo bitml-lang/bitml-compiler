@@ -6,12 +6,12 @@
 
 (debug-mode)
 
-(define txA1 "txid:something@0")
-(define txA2 "txid:somethingelse@0")
+(define (txA1) "txid:something@0")
+(define (txA2) "txid:somethingelse@0")
 
 (contract
- (pre (deposit "A1" 2 (ref txA1))
-      (vol-deposit "A2" x 1 (ref txA2)))
+ (pre (deposit "A1" 2 (ref (txA1)))
+      (vol-deposit "A2" x 1 (ref (txA2))))
  (choice
   (put (x) (split (2 -> (withdraw "B"))
                   (1 -> (withdraw "A1"))))

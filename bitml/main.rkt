@@ -12,12 +12,12 @@
           after auth key secret vol-deposit putrevealif
           put reveal revealif -> tau pre
           pred choice split debug-mode between 
-          (rename-out [btrue true] [band and] [bor or] [bnot not] [bdefine define]
+          (rename-out [btrue true] [band and] [bor or] [bnot not] [define-rewrite-rule define]
                       [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size]
-                      [b-if if] [$expand ref])
-          strategy do-reveal do-auth not-destroy do-destroy not-reveal
-          state check-liquid check has-more-than check-query
-          #%module-begin #%datum #%top-interaction dw)
+                      [b-if if] [$expand ref]) define-syntax-rule
+                                               strategy do-reveal do-auth not-destroy do-destroy not-reveal
+                                               state check-liquid check has-more-than check-query
+                                               #%module-begin #%datum #%top-interaction)
 
 ;expands the constants
 (define-syntax (contract stx)
@@ -28,7 +28,7 @@
         maude-query ...)
      #'(expand-inside (contract-init (pre guard ...) (contr params ...) maude-query ...))]))
    
-;initializes the compilatotion
+;initializes the compilation
 (define-syntax (contract-init stx)
   (syntax-parse stx
     #:literals (pre choice)
@@ -61,25 +61,10 @@
     [(_ (pre guard ...) (contr params ...) maude-query ...)     
      #'(contract (pre guard ...) (choice (contr params ...)) maude-query ...)]))
 
-(define-syntax (bdefine stx)
+(define-syntax (define-rewrite-rule stx)
   (syntax-parse stx
-    [(_ name body)
-     #'(define-syntax (name stx)
-         #'body)]
-
-    ;https://www.greghendershott.com/fear-of-macros/Syntax_parameters.html
-    [(_ name (form-params ...) body)     
-     #'(begin
-         (define-syntax-parameter form-params #f)...
-         (define-syntax (name stx)
-           (syntax-parse stx
-             [(_ act-params ......)
-              (syntax-parametrize ([form-params #'act-params] ...)
-                                  #'body)
-              ])))]))
-
-
-(define-syntax (dw stx)
-  (syntax-parse stx
-    [(_ part)
-     #'(withdraw part)]))
+    [(_ (the-id:id the-exp:expr ...) body:expr)
+     #'(define-syntax (the-id stx)
+         (syntax-parse stx
+           [(_ the-exp ...)
+            #'body]))]))
