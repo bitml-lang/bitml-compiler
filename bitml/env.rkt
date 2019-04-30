@@ -22,6 +22,9 @@
 ;security parameter (minimun secret length)
 (define sec-param 128)
 
+;fee per kb
+(define fee-per-tx 0.0003)
+
 ;function to enumerate tx indexes
 (define tx-index 0)
 
@@ -140,6 +143,54 @@
 
 (define (get-secrets)
   (hash-keys secrets-table))
+
+;helpers to store fee deposits
+(define fee-deps-table
+  (make-hash))
+
+(define use-fee #f)
+
+(define avail-fee 0)
+
+(define (add-fee-dep part val tx)
+  (let ([id? (hash-has-key? fee-deps-table part)]
+        [tx? (member tx (flatten (hash-values fee-deps-table)))])
+    (set! use-fee #t)
+    (match (list id? tx?)
+      [(list #t _)
+       (raise-syntax-error 'bitml (format "Fee deposit for participant ~a already defined" part) #f)]
+      [(list _ (list _))
+       (raise-syntax-error 'bitml (format "tx output ~a already locked by another fee deposit" tx) #f)]
+      [(list #f #f)
+       (begin
+         (set! avail-fee (+ avail-fee val))
+         (hash-set! fee-deps-table part (list val tx)))])))
+
+(define (get-fee-dep part)
+  (hash-ref fee-deps-table part
+            (lambda ()
+              (raise-syntax-error 'bitml (format "Fee deposit for participant ~a not defined" part) #f))))
+
+(define (get-fee-deps-parts)
+  (hash-keys fee-deps-table))
+
+(define (get-remaining-fee fee-v)
+  (if (> (- fee-v fee-per-tx) 0)
+      (- fee-v fee-per-tx)
+      (if use-fee
+          (raise-syntax-error 'bitml "Not enough fee provided" #f)
+          0)))
+
+(define (get-remaining-fee-split fee-v count)
+  (if (> (- fee-v fee-per-tx) 0)
+      (/ (- fee-v fee-per-tx) count)
+      (if use-fee
+          (raise-syntax-error 'bitml "Not enough fee provided" #f)
+          0)))
+
+(define (get-fee-dep-pairs)
+  (for/list ([p (get-fee-deps-parts)])
+    (list p (second (get-fee-dep p)))))
 
 ;clear the state
 (define (reset-state)

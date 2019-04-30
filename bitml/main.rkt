@@ -14,10 +14,11 @@
           pred choice split debug-mode between 
           (rename-out [btrue true] [band and] [bor or] [bnot not] [define-rewrite-rule define]
                       [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size]
-                      [b-if if] [$expand ref]) define-syntax-rule
-                                               strategy do-reveal do-auth not-destroy do-destroy not-reveal
-                                               state check-liquid check has-more-than check-query
-                                               #%module-begin #%datum #%top-interaction)
+                      [b-if if] [$expand ref])
+          define-syntax-rule fee
+          strategy do-reveal do-auth not-destroy do-destroy not-reveal
+          state check-liquid check has-more-than check-query
+          #%module-begin #%datum #%top-interaction)
 
 ;expands the constants
 (define-syntax (contract stx)
@@ -47,10 +48,10 @@
                 [parent '(choice (contr params ...)...)]
                 [script-secrets (get-script-params-sym (choice (contr params ...) ...))])
 
-           (compile-init parts deposit-txout tx-v script script-params script-secrets)
+           (compile-init parts deposit-txout tx-v avail-fee script script-params script-secrets)
 
            ;start the compilation of the continuation contracts
-           (compile (contr params ...) parent "Tinit" 0 tx-v (get-participants) 0
+           (compile (contr params ...) parent "Tinit" 0 tx-v (get-remaining-fee avail-fee) (get-participants) 0
                     (get-script-params (contr params ...)) script-params)...     
            
            ;start the maude code declaration
