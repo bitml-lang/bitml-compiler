@@ -10,7 +10,7 @@
            (deposit "A" 1 "txA@0")
            (secret "A" a "hashofa")
            (vol-deposit "A" x 1 "txA@1"))        
-          (put (x) (withdraw "B"))
+          (withdraw "B")
 
 
           ; This is true since the initial state has the volatile deposit x
