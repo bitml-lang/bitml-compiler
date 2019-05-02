@@ -14,10 +14,12 @@
                   (revealif (b) (pred (between b 0 1)) (withdraw "B"))
                   (after 10 (withdraw "A"))))
            (2 -> (choice
-                  (reveal (a) (withdraw "A"))
+                  (revealif (a) (pred (between a 0 1)) (withdraw "A"))
                   (after 10 (withdraw "B"))))
            (2 -> (choice
                   (revealif (a b) (pred (= a b)) (withdraw "A"))
-                  (revealif (a b) (pred (!= a b)) (withdraw "B")))))
+                  (revealif (a b) (pred (!= a b)) (withdraw "B"))
+                  (split (1 -> (withdraw "A")) (1 -> (withdraw "B"))))))
 
-          (check-liquid))
+          (check-liquid
+           (strategy "A" (do-reveal a))))
