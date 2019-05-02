@@ -12,6 +12,10 @@
 (define-syntax (debug-mode stx)
   #'(set-gen-keys!))
 
+;turns on the constraint solving
+(define-syntax (auto-generate-secrets stx)
+  #'(set-gen-secs!))
+
 ;declaration of a participant
 ;associates a name to a public key
 (define-syntax (participant stx)

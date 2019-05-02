@@ -16,8 +16,8 @@
                       [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size]
                       [b-if if] [$expand ref])
           define-syntax-rule fee
-          strategy do-reveal do-auth not-destroy do-destroy not-reveal
-          state check-liquid check has-more-than check-query
+          strategy do-reveal do-auth not-destroy do-destroy not-reveal secrets
+          state check-liquid check has-more-than check-query auto-generate-secrets 
           #%module-begin #%datum #%top-interaction)
 
 ;expands the constants

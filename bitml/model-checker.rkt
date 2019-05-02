@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require (for-syntax racket/base syntax/parse)
-         racket/list racket/port racket/system racket/match racket/string racket/math
+         racket/list racket/port racket/system racket/match racket/string racket/math racket/set
          "bitml.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "exp.rkt" "constraints.rkt")
 
 (provide (all-defined-out))
@@ -16,11 +16,16 @@
 
 (define-syntax (model-check stx)
   (syntax-parse stx
+    #:literals (secrets)
     [(_ contract (guard ...) query ...)
      #'(begin
          (define start-time (current-inexact-milliseconds))           
          (define flag #f)
-         (define secrets-list (get-secrets-lengths contract (guard ...)))
+
+         (define secrets-list null)
+
+         (when (gen-secs?)
+           (set! secrets-list (get-secrets-lengths contract (guard ...))))
 
          ;for each query
          (begin
@@ -28,6 +33,9 @@
            (displayln 'query)
            (displayln "")
            (set! flag #f)
+
+           (unless (gen-secs?)
+             (set! secrets-list (get-secrets-from-query query (guard ...))))
 
            ;model check the query for each solution of the constraints
            (for ([secrets-map secrets-list])
@@ -47,9 +55,10 @@
            
            (unless flag
              (displayln "Result: true")))...
-           (unless (= 0 (length (list 'query ...)))
-             (displayln (format "Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))
-             (displayln "=============================================================================*/\n")))]))
+                                         
+                                         (unless (= 0 (length (list 'query ...)))
+                                           (displayln (format "Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))
+                                           (displayln "=============================================================================*/\n")))]))
 
 ;writes the opening declarations for maude
 (define (maude-opening)
@@ -85,11 +94,31 @@
                    "endm\n"
                    "smod LIQUIDITY_CHECK is\nprotecting BITML-CHECK .\nincluding BITML-CONTRACT .\nendsm\n")))
 
+(define-syntax (get-secrets-from-query stx)
+  (syntax-parse stx
+    #:literals (secrets)
+    [(_ (before ...
+         (secrets (a:id n:integer) ...)
+         after ...)
+        ((~or (secret part:string ident:id h:string) (deposit p ...)) ...))
+
+     #'(begin
+         (when (not (equal? (set 'ident ...) (set 'a ...)))
+           (raise-syntax-error 'bitml (format "Wrong secrets values in ~a" '(secrets (a n) ...)) #f))
+             
+         (let ([ht (make-hash)])
+           (hash-set! ht 'a n)...
+           (list ht)))]
+
+    [(_ query ((~or (secret part:string ident:id h:string) (deposit p ...)) ...))
+     #'(let ([ht (make-hash)])
+         (hash-set! ht 'ident 1)...
+         (list ht))]))
 
 
 (define-syntax (execute-maude-query stx)
   (syntax-parse stx
-    #:literals (check-liquid check has-more-than check-query)
+    #:literals (check-liquid check has-more-than check-query secrets)
     [(_ secret-map (check-liquid strategy ...))
      #'(begin
          (let ([maude-str 
@@ -129,7 +158,9 @@
     [(_ (strategy part:string action))
      #'(compile-maude-action part action)]
     [(_ (strategy part:string action b-if pred))
-     #'(compile-maude-action part action b-if pred)]))
+     #'(compile-maude-action part action b-if pred)]
+    [(_ (secrets p ...))
+     #'""]))
 
 (define-syntax (compile-maude-action stx)
   (syntax-parse stx

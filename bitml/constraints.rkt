@@ -16,31 +16,30 @@
     #:literals (withdraw after auth split putrevealif pred choice -> secret )
     [(_ (choice (contract params ...) ...)
         ((~or (secret part:string ident:id hash:string)
-              (deposit p1 ...)
-              (vol-deposit p2 ...)) ...))
+              (deposit p1 ...)) ...))
      
      (if (constr-tree-required? #''(choice (contract params ...)...))      
 
          #'(begin
-             (displayln "constr required")
+             ;(displayln "constr required")
              (get-constr-tree (choice (contract params ...)...) ((secret part ident hash) ...))
 
              (let* ([secret-list-with-f 
-                    (remove-duplicates
-                     (for/list ([constr constraints])
-                       (begin
-                         (define prob (make-csp))
-                         (add-var! prob 'ident (range 0 100))...
+                     (remove-duplicates
+                      (for/list ([constr constraints])
+                        (begin
+                          (define prob (make-csp))
+                          (add-var! prob 'ident (range 0 100))...
 
-                         (add-constraint! prob constr '(ident ...))
-                         (solve prob))))]
-                   [secret-list (filter (lambda (x) x) secret-list-with-f)])
+                          (add-constraint! prob constr '(ident ...))
+                          (solve prob))))]
+                    [secret-list (filter (lambda (x) x) secret-list-with-f)])
 
                ;if no constraints were imposed, add default values
                (when (= 0 (length secret-list))
                  (set! secret-list (list (list (cons 'ident 1)...))))
 
-               (displayln secret-list)
+               (displayln (format "\\*\nModel checking with the following secrets\n~a\n\\*"secret-list))
 
                ;convert each list in a map
                ;output will be a list of maps
@@ -48,7 +47,7 @@
                  (foldr (lambda (x m) (hash-set m (car x) (cdr x))) (make-immutable-hash) secrets))))
 
          #'(begin
-             (displayln "constr not required")
+             ;(displayln "constr not required")
              ;if no constraints were imposed, add default values
              (let ([secret-list (list (list (cons 'ident 1)...))])
                (displayln secret-list)
@@ -72,8 +71,7 @@
     ;entry point with secrets
     [(_ (choice (contract params ...)...)
         ((~or (secret part:string ident:id hash:string)
-              (deposit p1 ...)
-              (vol-deposit p2 ...)) ...)
+              (deposit p1 ...)) ...)
         (~optional parent))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
      
@@ -90,8 +88,7 @@
 
     ;entry point without secrets
     [(_ (choice (contract params ...)...)
-        ((~or (deposit p1 ...)
-              (vol-deposit p2 ...)) ...)
+        ((~or (deposit p1 ...)) ...)
         (~optional parent))
      #'(get-constr-tree (choice (contract params ...)...) (secret "A" a "a") (~? parent))]
     
@@ -106,7 +103,7 @@
      #'(get-constr-tree (contract params ...) ((secret part ident hash)...) (~? parent))]
     
     [(_ (auth part:string ... (contract params ...)) ((secret spart:string ident:id hash:string) ...) (~optional parent))
-     #'(get-constr-tree (contract params ...) ((secret part ident hash)...) (~? parent))]
+     #'(get-constr-tree (contract params ...) ((secret spart ident hash)...) (~? parent))]
 
             
     [(_ (split (val:number -> (choice (contract params ...)...)) ...)
@@ -173,7 +170,7 @@
      #'(get-constr (contract params ...) ((secret part ident hash)...))]
     
     [(_ (auth part:string ... (contract params ...)) ((secret spart:string ident:id hash:string) ...))
-     #'(get-constr (contract params ...) ((secret part ident hash)...))]
+     #'(get-constr (contract params ...) ((secret spart ident hash)...))]
     
     #;[(_ (split (val:number -> (scontract sparams ...))...)
           ((secret part:string ident:id hash:string) ...))

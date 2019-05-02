@@ -38,6 +38,7 @@
 (define-syntax (do-destroy stx) (raise-syntax-error #f "wrong usage of do-destroy" stx))
 (define-syntax (state stx) (raise-syntax-error #f "wrong usage of state" stx))
 (define-syntax (not-reveal stx) (raise-syntax-error #f "wrong usage of not-reveal" stx))
+(define-syntax (secrets stx) (raise-syntax-error #f "wrong usage of secrets" stx))
 
 (define-syntax (check-liquid stx) (raise-syntax-error #f "wrong usage of check-liquid" stx))
 (define-syntax (check stx) (raise-syntax-error #f "wrong usage of check" stx))
