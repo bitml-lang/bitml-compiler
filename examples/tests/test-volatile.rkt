@@ -8,11 +8,14 @@
 
 (contract (pre
            (deposit "A" 1 "txA@0")
-           (secret "A" a "hashofa")
+           (deposit "B" 1 "txB@0")
            (vol-deposit "A" x 1 "txA@1"))        
           (put (x) (withdraw "B"))
 
-          (check-liquid)
+          (check-liquid) ; should return false (put blocks if deposit x is destroyed)
 
-          (check-query "[] (a revealed => <> A has-deposit>= 100000000 satoshi)")
+          (check-query "(A has-deposit>= 100000000 satoshi)") ; should return true
+                    
+          (check-query "[] (<> A has-deposit>= 100000000 satoshi)") ; should return false
+
           )
