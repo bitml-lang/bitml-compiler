@@ -18,11 +18,11 @@
   (choice
    (auth "A" (withdraw "A"))
    (put (x) (withdraw "B"))
-   (reveal (a) (withdraw "A"))
+   (revealif (a) (pred (= a 1)) (withdraw "A"))
    (after 100 (withdraw "B"))))
 
 (contract
- (pre (deposit "A" 5 (ref (txA))) (secret "A" a "ha") (vol-deposit "A" x 1 "t1@0"))
+ (pre (deposit "A" 5 (ref (txA))) (secret "A" a "ha") (secret "B" b "hb") (vol-deposit "A" x 1 "t1@0"))
  
  (choice
   (after 10 (tau (ref (C))))
