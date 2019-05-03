@@ -24,11 +24,11 @@
          (revealif (a b) (pred (!= a b)) (withdraw "B"))
          (split (1 -> (withdraw "A")) (1 -> (withdraw "B"))))))
 
- (check "A" has-more-than 2
+ (check "A" has-at-least 2
         (secrets ((a 1) (b 0)) ((a 1) (b 1)) ((a 1) (b 2)))
         (strategy "A" (do-reveal a)))
 
- (check "B" has-more-than 2
+ (check "B" has-at-least 2
         (secrets ((b 1) (a 0)) ((b 1) (a 1)) ((b 1) (a 2)))
         (strategy "B" (do-reveal b)))
         

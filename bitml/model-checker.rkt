@@ -132,7 +132,7 @@
 
 (define-syntax (execute-maude-query stx)
   (syntax-parse stx
-    #:literals (check-liquid check has-more-than check-query secrets)
+    #:literals (check-liquid check has-at-least check-query secrets)
     [(_ secret-map (check-liquid strategy ...))
      #'(begin
          (let ([maude-str 
@@ -144,7 +144,7 @@
            (write-maude-file maude-str)
            (format-maude-out (execute-maude))))]
     
-    [(_ secret-map (check part:string has-more-than val:number strategy ...))
+    [(_ secret-map (check part:string has-at-least val:number strategy ...))
      #'(begin
          (let ([maude-str 
                 (string-append maude-output

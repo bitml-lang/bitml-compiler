@@ -42,7 +42,7 @@
 
 (define-syntax (check-liquid stx) (raise-syntax-error #f "wrong usage of check-liquid" stx))
 (define-syntax (check stx) (raise-syntax-error #f "wrong usage of check" stx))
-(define-syntax (has-more-than stx) (raise-syntax-error #f "wrong usage of has-more-than" stx))
+(define-syntax (has-at-least stx) (raise-syntax-error #f "wrong usage of has-at-least" stx))
 (define-syntax (check-query stx) (raise-syntax-error #f "wrong usage of check-query" stx))
 
 (define-syntax (strip-auth stx) (raise-syntax-error #f "wrong usage of strip-auth" stx))

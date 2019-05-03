@@ -32,5 +32,5 @@
  
  (check-query "[]<> ~(a0 revealed) /\\ a1 revealed -> (A1 has-deposit>= 200000000 satoshi /\\ A0 has-deposit<= 0 satoshi)")
  
- (check "A0" has-more-than 1
+ (check "A0" has-at-least 1
         (strategy "A0" (do-reveal a0))))

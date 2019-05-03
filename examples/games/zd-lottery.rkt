@@ -20,5 +20,5 @@
 
          (check-liquid)
 
-         #;(check "A" has-more-than 1
+         #;(check "A" has-at-least 1
                 (strategy "A" (do-reveal a))))

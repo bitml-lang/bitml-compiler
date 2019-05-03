@@ -16,5 +16,5 @@
   (1 -> (reveal (a) (withdraw "A")))
   (1 -> (reveal (b) (withdraw "B"))))
 
- (check "A" has-more-than 1
+ (check "A" has-at-least 1
         (strategy "A" (do-reveal a))))
