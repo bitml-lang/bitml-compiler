@@ -30,7 +30,8 @@
     [(_ (b!= a b)) #'(string-append (compile-pred-exp a) "!=" (compile-pred-exp b))]
     [(_ (b< a b)) #'(string-append (compile-pred-exp a) "<" (compile-pred-exp b))]
     [(_ (b<= a b)) #'(string-append (compile-pred-exp a) "<=" (compile-pred-exp b))]
-    [(_ (between a b c)) #'(string-append "between(" (compile-pred-exp a) "," (compile-pred-exp b) "," (compile-pred-exp c) ")")]))
+    [(_ (between a b c)) #'(let ([sup (number->string (+ 1 (string->number (compile-pred-exp c))))])
+                             (string-append "between(" (compile-pred-exp a) "," (compile-pred-exp b) "," sup ")"))]))
 
 (define-syntax (compile-pred-exp stx)
   (syntax-parse stx

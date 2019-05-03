@@ -195,7 +195,7 @@
                                               (first x) (second x)))) (get-fee-dep-pairs))
   
     (add-output (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a\n (~a) \n}\n"
-                        inputs (+ (get-remaining-fee fee-v) tx-v) script-params
+                        inputs (btc+ (get-remaining-fee fee-v) tx-v) script-params
                         (get-secrets-check-script script-secrets) script))))
 
 
