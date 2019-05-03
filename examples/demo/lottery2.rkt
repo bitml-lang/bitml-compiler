@@ -2,6 +2,8 @@
 
 (debug-mode)
 
+(verification-only)
+
 (participant "A" "029c5f6f5ef0095f547799cb7861488b9f4282140d59a6289fbc90c70209c1cced")
 (participant "B" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
 
@@ -22,12 +24,10 @@
          (revealif (a b) (pred (!= a b)) (withdraw "B")))))
 
  (check "A" has-more-than 2
-        (secrets ((a 1) (b 1)))
-        (strategy "A" (do-reveal a))
-        (strategy "B" (not-reveal a)))
+        (secrets ((a 1) (b 0)) ((a 1) (b 1)) ((a 1) (b 2)))
+        (strategy "A" (do-reveal a)))
 
  (check "B" has-more-than 2
-        (secrets ((a 1) (b 1)))
-        (strategy "B" (do-reveal b))
-        (strategy "A" (not-reveal b)))
+        (secrets ((b 1) (a 0)) ((b 1) (a 1)) ((b 1) (a 2)))
+        (strategy "B" (do-reveal b)))
  )
