@@ -22,13 +22,12 @@
          (revealif (a b) (pred (!= a b)) (withdraw "B")))))
 
  (check "A" has-more-than 2
-        (secrets (a 1) (b 1))
+        (secrets ((a 1) (b 1)))
         (strategy "A" (do-reveal a))
-        (strategy "B" (not-reveal a))
-        )
+        (strategy "B" (not-reveal a)))
 
  (check "B" has-more-than 2
-        (secrets (a 1) (b 1))
+        (secrets ((a 1) (b 1)))
         (strategy "B" (do-reveal b))
         (strategy "A" (not-reveal b)))
  )

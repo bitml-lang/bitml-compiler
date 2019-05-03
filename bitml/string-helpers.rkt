@@ -63,4 +63,7 @@
 (define (format-cex str)
   (string-append "counterexample:\n" (cex-add-newlines (string-replace str ", " " "))))
 
+(define (format-hash-list hl)
+  (map (lambda (x) (hash->list x)) hl))
+
 (provide (all-defined-out))

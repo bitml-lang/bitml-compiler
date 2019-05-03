@@ -98,22 +98,36 @@
   (syntax-parse stx
     #:literals (secrets)
     [(_ (before ...
-         (secrets (a:id n:integer) ...)
+         (secrets ((a:id n:integer) ...) ...)
          after ...)
         ((~or (secret part:string ident:id h:string) (deposit p ...)) ...))
 
      #'(begin
-         (when (not (equal? (set 'ident ...) (set 'a ...)))
-           (raise-syntax-error 'bitml (format "Wrong secrets values in ~a" '(secrets (a n) ...)) #f))
+         (when (or (not (equal? (set 'ident ...) (set 'a ...)))...)
+           (raise-syntax-error 'bitml (format "Wrong secrets values supplied in ~" '(secrets ((a n) ...)...)) #f))
              
-         (let ([ht (make-hash)])
-           (hash-set! ht 'a n)...
-           (list ht)))]
+         (let ([hash-list
+                (list
+                 (let ([ht (make-hash)])
+                   (hash-set! ht 'a n)...
+                   ht)...)])
+         
+           (displayln (format "Using user-defined secrets secrets\n~a\n" (format-hash-list hash-list)))
+
+           hash-list))]
 
     [(_ query ((~or (secret part:string ident:id h:string) (deposit p ...)) ...))
-     #'(let ([ht (make-hash)])
-         (hash-set! ht 'ident 1)...
-         (list ht))]))
+     
+     #'(begin
+         
+         (let ([hash-list
+                (list
+                 (let ([ht (make-hash)])
+                   (hash-set! ht 'ident 1)...
+                   ht))])
+                                    
+           (displayln (format "WARNING: Using default secrets \n~a\n" (format-hash-list hash-list)))
+           hash-list))]))
 
 
 (define-syntax (execute-maude-query stx)

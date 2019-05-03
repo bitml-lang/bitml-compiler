@@ -39,7 +39,7 @@
                (when (= 0 (length secret-list))
                  (set! secret-list (list (list (cons 'ident 1)...))))
 
-               (displayln (format "\\*\nModel checking with the following secrets\n~a\n\\*"secret-list))
+               (displayln (format "\\*\nAuto-generated secrets \n~a\n\\*" secret-list))
 
                ;convert each list in a map
                ;output will be a list of maps
@@ -186,7 +186,8 @@
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...))
         ((secret part:string ident:id hash:string) ...))
      #:with y (datum->syntax #'f (syntax->list #'(ident ...)))
-     #'(~? (compile-pred-constraint p ((secret part ident hash)...)) (lambda y #t))]
+     #'(~? (compile-pred-constraint p ((secret part ident hash)...))
+           (lambda y #t))]
 
     [(_ (reveal (sec:id ...) (contract params ...))
         ((secret part:string ident:id hash:string) ...))

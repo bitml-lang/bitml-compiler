@@ -23,15 +23,13 @@
          (split (1 -> (withdraw "A")) (1 -> (withdraw "B"))))))
 
  (check "A" has-more-than 2
-        (secrets (a 1) (b 1))
+        (secrets ((a 1) (b 1)) ((a 2) (b 2)))
         (strategy "A" (do-reveal a))
-        (strategy "B" (not-reveal a))
-        )
+        (strategy "B" (not-reveal a)))
 
  (check "B" has-more-than 2
         (secrets (a 1) (b 1))
         (strategy "B" (do-reveal b))
         (strategy "A" (not-reveal b)))
         
-
  (check-liquid))
