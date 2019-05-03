@@ -47,5 +47,4 @@
 
 (define-syntax (strip-auth stx) (raise-syntax-error #f "wrong usage of strip-auth" stx))
 
-
 (provide (all-defined-out))

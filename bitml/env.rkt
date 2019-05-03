@@ -11,6 +11,14 @@
       (set! output (string-append str "\n" output))
       (set! output (string-append output "\n" str))))
 
+;don't compile transactions (only verification)
+(define hide-tx #f)
+
+(define (set-hide-tx!)
+  (set! hide-tx #t))
+
+(define (hide-tx?) hide-tx)
+
 ;generate keys for debug purposes
 (define gen-keys #f)
 

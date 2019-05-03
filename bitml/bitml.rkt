@@ -16,6 +16,10 @@
 (define-syntax (auto-generate-secrets stx)
   #'(set-gen-secs!))
 
+;turns on the constraint solving
+(define-syntax (verification-only stx)
+  #'(set-hide-tx!))
+
 ;declaration of a participant
 ;associates a name to a public key
 (define-syntax (participant stx)
@@ -75,8 +79,9 @@
          (add-output (format "const ~a = pubkey:~a" (second key-name) (first key-name)) #t)))
      (hash-keys pk-terms-table))
     (add-output "" #t))
-           
-  (displayln output))
+
+  (unless (hide-tx?)
+    (displayln output)))
 
 ;compiles the output-script for a Di branch. Corresponds to Bout(D) in formal def
 (define-syntax (get-script stx)

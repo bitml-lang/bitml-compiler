@@ -112,7 +112,7 @@
                    (hash-set! ht 'a n)...
                    ht)...)])
          
-           (displayln (format "Using user-defined secrets secrets\n~a\n" (format-hash-list hash-list)))
+           (displayln (format "Using user-defined secrets\n~a\n" (format-hash-list hash-list)))
 
            hash-list))]
 
