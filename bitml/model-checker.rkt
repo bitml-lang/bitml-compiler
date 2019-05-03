@@ -2,7 +2,7 @@
 
 (require (for-syntax racket/base syntax/parse)
          racket/list racket/port racket/system racket/match racket/string racket/math racket/set
-         "bitml.rkt" "string-helpers.rkt" "env.rkt" "terminals.rkt" "exp.rkt" "constraints.rkt")
+         "bitml.rkt" "helpers.rkt" "env.rkt" "terminals.rkt" "exp.rkt" "constraints.rkt")
 
 (provide (all-defined-out))
 

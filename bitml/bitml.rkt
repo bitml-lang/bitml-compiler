@@ -2,7 +2,7 @@
 
 (require (for-syntax racket/base syntax/parse)
          racket/list racket/string
-         "string-helpers.rkt" "env.rkt" "exp.rkt" "terminals.rkt")
+         "helpers.rkt" "env.rkt" "exp.rkt" "terminals.rkt")
 
 (provide (all-defined-out))
 
@@ -242,7 +242,7 @@
 
          
            (add-output (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n"
-                               tx-name inputs (+ (get-remaining-fee fee-v) new-value) script-params script))
+                               tx-name inputs (btc+ (get-remaining-fee fee-v) new-value) script-params script))
 
            
            (compile (contract params ...) '(choice (contract params ...)...)
@@ -275,14 +275,14 @@
                                    [script script-list]
                                    [script-params script-params-list]
                                    [secrets script-secrets-list])
-                           (format "~a BTC : fun(~a) . ~a (~a)" (+ v (get-remaining-fee-split fee-v splits-count))
+                           (format "~a BTC : fun(~a) . ~a (~a)" (btc+ v (get-remaining-fee-split fee-v splits-count))
                                    script-params (get-secrets-check-script secrets) script))]
                 [output (string-append "output = [ " (list+sep->string outputs ";\n\t") " ]")]
                 [count 0])                
 
            (add-output (participants->sigs-declar parts tx-name parent-contract))
-
-           (if (not (= (apply + values-list) value))
+           
+           (if (not (bitcoin-equal (apply + values-list) value)) 
                (raise-syntax-error 'bitml
                                    (format "split spends ~a BTC but it receives ~a BTC" (+ val ...) value)
                                    '(split (val (choice (contract params ...)...))...))
@@ -357,7 +357,7 @@
          
            (add-output (string-append
                         (format "transaction ~a { \n ~a \n output = ~a BTC : fun(x) . versig(pubkey~a; x) \n "
-                                tx-name inputs (+ (get-remaining-fee fee-v) value) part)
+                                tx-name inputs (btc+ (get-remaining-fee fee-v) value) part)
                         (if (> timelock 0)
                             (format "absLock = block ~a \n}\n" timelock)
                             "\n}\n")))))]

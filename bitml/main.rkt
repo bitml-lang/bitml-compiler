@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require (for-syntax racket/base syntax/parse syntax/parse/define)
-         "bitml.rkt" "model-checker.rkt" "string-helpers.rkt"
+         "bitml.rkt" "model-checker.rkt" "helpers.rkt"
          "env.rkt" "terminals.rkt" "expand-inside.rkt")
 
 ;provides the default reader for an s-exp lang
