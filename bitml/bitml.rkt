@@ -378,7 +378,7 @@
      #'(compile (contract params ...)
                 orig-contract parent-tx input-idx value fee-v parts timelock sec-to-reveal all-secrets)]
     
-    [(_ contract rest ...) (raise-syntax-error 'bitml "Invalid syntax" #f)]))
+    [(_ contract rest ...) #'(raise-syntax-error 'bitml (format "Invalid syntax in ~a" 'contract) #f)]))
 
 
 (define-syntax (execute-split stx)
