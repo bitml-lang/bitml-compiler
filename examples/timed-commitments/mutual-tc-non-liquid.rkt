@@ -15,7 +15,7 @@
                         (reveal (b) (split (1 -> (withdraw "A"))
                                            (1 -> (withdraw "B"))))
                         (after 20 (withdraw "A"))))
-           ; What happends if we do not include this branch?
+           ; What happens if we do not include this branch?
            ; (after 10 (withdraw "B"))  
            )
 
