@@ -49,11 +49,16 @@
                 [script-secrets (get-script-params-sym (choice (contr params ...) ...))])
 
            (unless (hide-tx?)
+
+             (define start-time (current-inexact-milliseconds))           
+
              (compile-init parts deposit-txout tx-v avail-fee script script-params script-secrets)
 
              ;start the compilation of the continuation contracts
              (compile (contr params ...) parent "Tinit" 0 tx-v (get-remaining-fee avail-fee) (get-participants) 0
-                      (get-script-params (contr params ...)) script-params)... )
+                      (get-script-params (contr params ...)) script-params)... 
+
+             (displayln (format "Compilation time: ~a ms" (round (- (current-inexact-milliseconds) start-time)))))
            
            ;start the maude code declaration
            (model-check (choice (contr params ...)...) (guard ...) maude-query ...)
