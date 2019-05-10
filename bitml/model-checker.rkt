@@ -19,7 +19,7 @@
     #:literals (secrets)
     [(_ contract (guard ...) query ...)
      #'(begin
-         (define start-time (current-inexact-milliseconds))           
+                    
          (define flag #f)
 
          (define secrets-list null)
@@ -36,6 +36,8 @@
 
            (unless (gen-secs?)
              (set! secrets-list (get-secrets-from-query query (guard ...))))
+
+           (define start-time (current-inexact-milliseconds))
 
            ;model check the query for each solution of the constraints
            (for ([secrets-map secrets-list])

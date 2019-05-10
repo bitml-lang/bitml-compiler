@@ -15,23 +15,21 @@
  (split
   (2 -> (choice
          (revealif (b) (pred (between b 0 1)) (withdraw "B"))
-         (after 700000 (withdraw "A"))))
+         (after 1000 (withdraw "A"))))
   (2 -> (choice
          (revealif (a) (pred (between a 0 1)) (withdraw "A"))
-         (after 700000 (withdraw "B"))))
+         (after 1000 (withdraw "B"))))
   (2 -> (choice
          (revealif (a b) (pred (= a b)) (withdraw "A"))
-         (revealif (a b) (pred (!= a b)) (withdraw "B")))))
+         (revealif (a b) (pred (!= a b)) (withdraw "B"))
+         (after 700000 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")))))))
+
+ (check-liquid  (strategy "A" (do-reveal a)))
 
  (check "A" has-at-least 2
         (secrets ((a 1) (b 0))
                  ((a 1) (b 1))
                  ((a 1) (b 2)))
         (strategy "A" (do-reveal a)))
-
- (check "B" has-at-least 2
-        (secrets ((b 1) (a 0))
-                 ((b 1) (a 1))
-                 ((b 1) (a 2)))
-        (strategy "B" (do-reveal b)))
+ 
  )
