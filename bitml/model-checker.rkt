@@ -19,7 +19,7 @@
     #:literals (secrets)
     [(_ contract (guard ...) query ...)
      #'(begin
-                    
+         (define start-time (current-inexact-milliseconds))           
          (define flag #f)
 
          (define secrets-list null)
