@@ -2,6 +2,8 @@
 
 (debug-mode)
 
+(auto-generate-secrets)
+
 (participant "A" "029c5f6f5ef0095f547799cb7861488b9f4282140d59a6289fbc90c70209c1cced") ; player
 (participant "B" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30") ; dealer
 
@@ -28,4 +30,4 @@
            (after 10 (withdraw "B"))   ; A is late
            )
 
-          (check-query "[] (b revealed-size 3 => <> A has-deposit>= 200000000 satoshi)"))
+          (check-liquid))
