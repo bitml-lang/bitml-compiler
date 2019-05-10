@@ -140,7 +140,7 @@
     (match (list id? hash?)
       [(list #t _)
        (raise-syntax-error 'bitml (format "Secret ~a already defined" id) #f)]
-      [(list _ (list _))
+      [(list _ (list _ ...))
        (raise-syntax-error 'bitml (format "Hash ~a already committed by another secret" hash) #f)]
       [(list #f #f)
        (hash-set! secrets-table id (list part hash))])))
