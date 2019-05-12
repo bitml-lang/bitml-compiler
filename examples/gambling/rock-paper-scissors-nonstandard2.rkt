@@ -15,31 +15,39 @@
 ;   2 | B | A | -
 
 (contract (pre
-          (deposit "A" 3 "txA@0")(secret "A" a "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b")
-          (deposit "B" 3 "txB@0")(secret "B" b "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"))
-         (split
-          (2 -> (choice
-                 (revealif (b) (pred (between b 0 2)) (withdraw "B"))
-                 (after 10 (withdraw " A"))))
-          (2 -> (choice
-                 (reveal (a) (withdraw "A"))
-                 (after 10 (withdraw "B"))))
-          (2 -> (choice
-                 (revealif (a b) (pred (= a b))
-                           (split (1 -> (withdraw "A")) (1 -> (choice (withdraw "B"))))) ; tie
+           (deposit "A" 3 "txA@0")(secret "A" a "c51b66bced5e4491001bd702669770dccf440982")
+           (deposit "B" 3 "txB@0")(secret "B" b "a6bb94c8792c395785787280dc188d114e1f339b"))
+          (split
+           (2 -> (choice
+                  (revealif (b) (pred (between b 0 2)) (withdraw "B"))
+                  (after 10 (withdraw " A"))))
+           (2 -> (choice
+                  (reveal (a) (withdraw "A"))
+                  (after 10 (withdraw "B"))))
+           (2 -> (choice
+                  (revealif (a b) (pred (= a b))
+                            (split (1 -> (withdraw "A")) (1 -> (choice (withdraw "B"))))) ; tie
                  
-                 (revealif (a b) (pred (and (= a 0) (= b 2))) (withdraw "A")) ; A=rock, B=scissors
-                 (revealif (a b) (pred (and (= a 1) (= b 0))) (withdraw "A")) ; A=paper, B=rock
-                 (revealif (a b) (pred (and (= a 2) (= b 1))) (withdraw "A")) ; A=scissors, B=paper
+                  (revealif (a b) (pred (and (= a 0) (= b 2))) (withdraw "A")) ; A=rock, B=scissors
+                  (revealif (a b) (pred (and (= a 1) (= b 0))) (withdraw "A")) ; A=paper, B=rock
+                  (revealif (a b) (pred (and (= a 2) (= b 1))) (withdraw "A")) ; A=scissors, B=paper
 
-                 (revealif (a b) (pred (and (= a 2) (= b 0))) (withdraw "B")) ; A=scissors, B=rock
-                 (revealif (a b) (pred (and (= a 0) (= b 1))) (withdraw "B")) ; A=rock, B=paper
-                 (revealif (a b) (pred (and (= a 1) (= b 2))) (withdraw "B")) ; A=paper, B=scissors
+                  (revealif (a b) (pred (and (= a 2) (= b 0))) (withdraw "B")) ; A=scissors, B=rock
+                  (revealif (a b) (pred (and (= a 0) (= b 1))) (withdraw "B")) ; A=rock, B=paper
+                  (revealif (a b) (pred (and (= a 1) (= b 2))) (withdraw "B")) ; A=paper, B=scissors
 
-                 (after 1000 (split (1 -> (withdraw "A")) (1 -> (choice (withdraw "B"))))) ; timeout
-                 )))
+                  (after 1000 (split (1 -> (withdraw "A")) (1 -> (choice (withdraw "B"))))) ; timeout
+                  )))
 
-         (check-query "[] (a revealed-size 0 /\\ b revealed-size 2 => <> A has-deposit>= 400000000 satoshi)")
-         (check-query "[] (a revealed-size 1 /\\ b revealed-size 0 => <> A has-deposit>= 400000000 satoshi)")
-         (check-query "[] (a revealed-size 2 /\\ b revealed-size 1 => <> A has-deposit>= 400000000 satoshi)")
-         (check-query "[] (a revealed /\\ ~ (b revealed) => <> A has-deposit>= 400000000 satoshi)"))
+          (check-liquid)
+
+          (check "A" has-at-least 2
+                 (strategy "A" (do-reveal a))
+                 (strategy "B" (do-reveal b))
+                 (secrets ((a 0) (b 2))
+                          ((a 1) (b 0))
+                          ((a 2) (b 1))))
+
+          (check "A" has-at-least 4
+                 (strategy "A" (do-reveal a))
+                 (strategy "B" (not-reveal b))))

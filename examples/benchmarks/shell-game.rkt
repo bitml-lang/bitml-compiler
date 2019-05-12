@@ -22,7 +22,7 @@
 (contract (pre
            (deposit "A" 1 "txA@0")
            (deposit "B" 1 "txB@0")
-           (secret "B" b "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"))
+           (secret "B" b "f9292914bfd27c426a23465fc122322abbdb63b7"))
           (choice
            (auth "A" (tau (ref (Bet 0)))) ; A chooses 0
            (auth "A" (tau (ref (Bet 1)))) ; A chooses 1

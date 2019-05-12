@@ -35,10 +35,10 @@
 
 (contract (pre
            (deposit "A" 7 "txA@0")(deposit "B" 7 "txB@0")(deposit "C" 7 "txC@0")(deposit "D" 7 "txD@0")
-           (secret "A" a1 "f55ff16f66f43360266b95db6f8fec01d76031054306ae4a4b380598f6cfd114") (secret "A" a2 "2c3a4249d77070058649dbd822dcaf7957586fce428cfb2ca88b94741eda8b07")
-           (secret "B" b1 "7dc96f776c8423e57a2785489a3f9c43fb6e756876d6ad9a9cac4aa4e72ec193") (secret "B" b2 "4814d92093ac8a0f4a2163ab87dee509ba306a58f5888be0edcb2fcd0712028b")
-           (secret "C" c1 "d0f631ca1ddba8db3bcfcb9e057cdc98d0379f1bee00e75a545147a27dadd982") (secret "C" c2 "9c0abe51c6e6655d81de2d044d4fb194931f058c0426c67c7285d8f5657ed64a")
-           (secret "D" d1 "8b53639f152c8fc6ef30802fde462ba0be9cf085f7580dc69efd72e002abbb35") (secret "D" d2 "e788103ee15318fcd2af9b73b4ebbb33a903b020de7b307d71f5fed0f433e548"))
+           (secret "A" a1 "c51b66bced5e4491001bd702669770dccf440982") (secret "A" a2 "f9292914bfd27c426a23465fc122322abbdb63b7")
+           (secret "B" b1 "9804ebb0fc4a8329981dd33aaff32b6cb579580a") (secret "B" b2 "18ed15665ab53ba8f4c965748e8a657cf40ee3f2")
+           (secret "C" c1 "183c86e0a286ac99ad8cf5c4cde36511181ffbd5") (secret "C" c2 "ded836a730cdeca5223f2609747074585f933aa8")
+           (secret "D" d1 "14f06dde2fa12bd359ea0847de296f7b66a0f93f") (secret "D" d2 "7249ab836ec75abf7756aec7528812a86a9f23df"))
          
           (split
            (3 -> (ref (TC "A" a1 "B" "C" "D")))
@@ -52,4 +52,4 @@
            
            (4 -> (ref (Round1))))
 
-          #;(check-liquid))
+          (check-liquid))

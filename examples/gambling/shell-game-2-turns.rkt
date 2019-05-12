@@ -34,7 +34,7 @@
            (vol-deposit "A" y 1 "txA@1")
            (deposit "B" 1 "txB@0")
            (vol-deposit "B" w 1 "txB@1")
-           (secret "B" b "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"))
+           (secret "B" b "de81500d472e6356185374ac8dc9a60b528b4a67"))
           
           (choice
            (auth "A" (tau (ref (Bet 0)))) ; A chooses 0

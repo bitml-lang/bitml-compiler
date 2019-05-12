@@ -121,7 +121,7 @@
 
 (define (get-secrets-check-script secrets)
   (foldr (lambda (x res)
-           (string-append "sha256(" (symbol->string x) ") == hash:" (get-secret-hash x)
+           (string-append "hash160(" (symbol->string x) ") == hash:" (get-secret-hash x)
                           " && size(" (symbol->string x) ") >= " (number->string sec-param) " && " res))
          "" secrets))
 

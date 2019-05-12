@@ -8,8 +8,8 @@
 (participant "B" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
 
 (contract (pre
-           (deposit "A" 3 "txA@0")(secret "A" a "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b")
-           (deposit "B" 3 "txB@0")(secret "B" b "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35"))
+           (deposit "A" 3 "txA@0")(secret "A" a "ded836a730cdeca5223f2609747074585f933aa8")
+           (deposit "B" 3 "txB@0")(secret "B" b "7249ab836ec75abf7756aec7528812a86a9f23df"))
          
           (split
            (2 -> (choice

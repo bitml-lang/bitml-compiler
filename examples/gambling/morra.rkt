@@ -40,10 +40,10 @@
 
 (contract (pre
            (deposit "A" 1 "txA@0") (deposit "B" 1 "txB@0")
-           (secret "B" b "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35")
-           (secret "A" a "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b")
-           (secret "B" b1 "e4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35")
-           (secret "A" a1 "fb86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"))        
+           (secret "B" b "f9292914bfd27c426a23465fc122322abbdb63b7")
+           (secret "A" a "9804ebb0fc4a8329981dd33aaff32b6cb579580a")
+           (secret "B" b1 "183c86e0a286ac99ad8cf5c4cde36511181ffbd5")
+           (secret "A" a1 "14f06dde2fa12bd359ea0847de296f7b66a0f93f"))        
 
           (ref (C))
                    

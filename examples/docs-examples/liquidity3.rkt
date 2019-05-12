@@ -9,8 +9,8 @@
  (pre 
   (deposit "A" 1 "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
   (deposit "B" 1 "txid:0f795bda36ac661f2b9a626d46049bc14b95b2d0e69f5fb7ccc4c3d767db9f34@1")
-  (secret "A" a "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb")
-  (secret "B" b "3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d"))
+  (secret "A" a "f9292914bfd27c426a23465fc122322abbdb63b7")
+  (secret "B" b "9804ebb0fc4a8329981dd33aaff32b6cb579580a"))
 		 
  (split
   (1 -> (reveal (a) (withdraw "A")))
