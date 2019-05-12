@@ -19,13 +19,15 @@
     #:literals (secrets)
     [(_ contract (guard ...) query ...)
      #'(begin
-         (define start-time (current-inexact-milliseconds))           
+         ;(define start-time (current-inexact-milliseconds))           
          (define flag #f)
 
          (define secrets-list null)
 
          (when (gen-secs?)
            (set! secrets-list (get-secrets-lengths contract (guard ...))))
+
+         (define start-time (current-inexact-milliseconds))           
 
          ;for each query
          (begin
