@@ -39,8 +39,6 @@
            (unless (gen-secs?)
              (set! secrets-list (get-secrets-from-query query (guard ...))))
 
-           (set! start-time (current-inexact-milliseconds))
-
            ;model check the query for each solution of the constraints
            (for ([secrets-map secrets-list])
              #:break flag        
