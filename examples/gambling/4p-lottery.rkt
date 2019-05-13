@@ -9,11 +9,11 @@
 (participant "C" "03e969a9e8080b7515d4bbeaf253978b33226dd3c4fbc987d9b67fb2e5380cca9f")
 (participant "D" "033ed7a4e8386a38333d6b7db03f532edece48ef3160688d73091644ecf0754910")
 
-; C = committer, x = secret, Ai = other players
-(define (TC C x A1 A2 A3)
+; C = committer, x = secret, Pi = other players
+(define (TC C x P1 P2 P3)
   (choice
    (revealif (x) (pred (between x 0 1)) (withdraw C))
-   (after 10 (split (1 -> (withdraw A1)) (1 -> (withdraw A2)) (1 -> (withdraw A3)))))
+   (after 10 (split (1 -> (withdraw P1)) (1 -> (withdraw P2)) (1 -> (withdraw P3)))))
   )
 
 (define (Round1)
@@ -21,16 +21,21 @@
    (revealif (a1 b1) (pred (= a1 b1))
              (choice
               (revealif (c1 d1) (pred (= c1 d1)) (ref (Round2 "A" a2 "C" c2)))
-              (revealif (c1 d1) (pred (!= c1 b1)) (ref (Round2 "A" a2 "D" d2)))))
+              (revealif (c1 d1) (pred (!= c1 b1)) (ref (Round2 "A" a2 "D" d2)))
+              (after 10 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")) (1 -> (withdraw "C")) (1 -> (withdraw "D"))))))
    (revealif (a1 b1) (pred (!= a1 b1))
              (choice
               (revealif (c1 d1) (pred (= c1 d1)) (ref (Round2 "B" b2 "C" c2)))
-              (revealif (c1 d1) (pred (!= c1 b1)) (ref (Round2 "B" b2 "D" d2)))))))
+              (revealif (c1 d1) (pred (!= c1 b1)) (ref (Round2 "B" b2 "D" d2)))
+              (after 10 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")) (1 -> (withdraw "C")) (1 -> (withdraw "D"))))))
+   (after 10 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")) (1 -> (withdraw "C")) (1 -> (withdraw "D"))))))
 
 (define (Round2 P1 x1 P2 x2)
   (choice
    (revealif (x1 x2) (pred (= x1 x2)) (withdraw P1))
-   (revealif (x1 x2) (pred (!= x1 x2)) (withdraw P2)))
+   (revealif (x1 x2) (pred (!= x1 x2)) (withdraw P2))
+   (after 10 (split (1 -> (withdraw P1)) (1 -> (withdraw P2))))
+   )
   )
 
 (contract (pre
@@ -54,4 +59,10 @@
 
           (check-liquid
            (strategy "A" (do-reveal a1))
-           (strategy "A" (do-reveal a2))))
+           (strategy "A" (do-reveal a2))
+           (strategy "B" (do-reveal b1))
+           (strategy "B" (do-reveal b2))
+           (strategy "C" (do-reveal c1))
+           (strategy "C" (do-reveal c2))
+           (strategy "D" (do-reveal d1))
+           (strategy "D" (do-reveal d2))))

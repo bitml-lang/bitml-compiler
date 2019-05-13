@@ -2,8 +2,8 @@
 
 (participant "A0" "029c5f6f5ef0095f547799cb7861488b9f4282140d59a6289fbc90c70209c1cced")
 (participant "A1" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
-(participant "A2" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
-(participant "A3" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
+(participant "A2" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af31")
+(participant "A3" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af33")
 
 (debug-mode)
 
@@ -89,8 +89,8 @@
  (pre (deposit "A0" 1 "txA@0")(secret "A0" a0 "000a")
       (deposit "A1" 1 "txB@0")(secret "A1" a1 "000b")
       (deposit "A2" 1 "txC@0")(secret "A2" a2 "000c")
-      (deposit "A3" 1 "txC@0")(secret "A3" a3 "000d"))
+      (deposit "A3" 1 "txD@0")(secret "A3" a3 "000d"))
  
  (ref (C00))
 
- (check-liquid))
+ #;(check-liquid))

@@ -18,7 +18,7 @@
   (split
    (v -> (withdraw "O"))
    (w -> (choice (auth "O" (withdraw "A")) (auth "O" (withdraw "B"))))
-  )
+   )
   )
 
 (contract
@@ -27,13 +27,9 @@
   (ref (PayOrRefund))
   (auth "A" (ref (Resolve 0.1 0.9)))
   (auth "B" (ref (Resolve 0.1 0.9)))
-  ; (after 10000 (withdraw "A"))
+  (after 10000 (withdraw "A"))
   )          
-
- (check-liquid (strategy "A" (do-auth (auth "A" (ref (Resolve 0.1 0.9)))))) ; false
-               
- (check-liquid (strategy "O" (do-auth (auth "O" (withdraw "A")))))          ; false
  
  (check-liquid (strategy "A" (do-auth (auth "A" (ref (Resolve 0.1 0.9)))))
-               (strategy "O" (do-auth (auth "O" (withdraw "A")))))          ; true
+               (strategy "O" (do-auth (auth "O" (withdraw "A")))))         
  )
