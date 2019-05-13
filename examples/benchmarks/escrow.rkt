@@ -8,10 +8,10 @@
 (verification-only)
 
 (define (PayOrRefund)
-  (choice
-   (auth "A" (withdraw "B"))
-   (auth "B" (withdraw "A"))
-   )
+  (tau (choice
+        (auth "A" (withdraw "B"))
+        (auth "B" (withdraw "A"))
+        ))
   )
 
 (define (Resolve v w)
@@ -31,5 +31,5 @@
   )          
  
  (check-liquid (strategy "A" (do-auth (auth "A" (ref (Resolve 0.1 0.9)))))
-               (strategy "O" (do-auth (auth "O" (withdraw "A")))))         
+                 (strategy "O" (do-auth (auth "O" (withdraw "A")))))         
  )

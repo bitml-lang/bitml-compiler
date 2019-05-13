@@ -20,12 +20,21 @@
 
 (define (C1) (choice
               (reveal (a1) (choice
-                            (revealif (a b a1) (pred (= a1 (+ a b))) (withdraw "A"))
-                            (after 501000 (withdraw "B"))))
-              (reveal (b1) (choice
-                            (revealif (a b b1) (pred (= b1 (+ a b))) (withdraw "B"))
+                            (reveal (b1) (ref (W)))
                             (after 501000 (withdraw "A"))))
+              (reveal (b1) (choice
+                            (reveal (a1) (ref (W)))
+                            (after 501000 (withdraw "B"))))
               (after 501000 (split (1 -> (withdraw "A")) (1 -> (withdraw "B"))))))
+
+(define (W) (choice
+             (revealif (a1 b1) (pred (!= a1 b1)) (choice
+                                                      (revealif (a b a1) (pred (= a1 (+ a b))) (withdraw "A"))
+                                                      (revealif (a b b1) (pred (= b1 (+ a b))) (withdraw "B"))
+                                                      (after 500000 (split (1 -> (withdraw "A")) (1 -> (withdraw "B"))))))
+             (revealif (a1 b1) (pred (= a1 b1))
+                       (split (1 -> (withdraw "A")) (1 -> (withdraw "B"))))
+             (after 500000 (split (1 -> (withdraw "A")) (1 -> (withdraw "B"))))))
 
 (contract (pre
            (deposit "A" 1 "txA@0") (deposit "B" 1 "txB@0")
@@ -38,9 +47,9 @@
                    
 
           #;(check-liquid
-             (strategy "A" (do-reveal a))
-             (strategy "A" (do-reveal a1))
-             (secrets ((b  44) (a  44) (b1  44) (a1  44))
-                      ((b  44) (a  44) (b1  44) (a1  48))
-                      ((b  44) (a  44) (b1  88) (a1  44))
-                      ((b  44) (a  44) (b1  44) (a1  88)))))
+           (strategy "A" (do-reveal a))
+           (strategy "A" (do-reveal a1))
+           (secrets ((b  44) (a  44) (b1  44) (a1  44))
+                    ((b  44) (a  44) (b1  44) (a1  48))
+                    ((b  44) (a  44) (b1  88) (a1  44))
+                    ((b  44) (a  44) (b1  44) (a1  88)))))
