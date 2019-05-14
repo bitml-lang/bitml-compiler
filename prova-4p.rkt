@@ -17,49 +17,50 @@
            (secret "C" c1 "183c86e0a286ac99ad8cf5c4cde36511181ffbd5") (secret "C" c2 "ded836a730cdeca5223f2609747074585f933aa8")
            (secret "D" d1 "14f06dde2fa12bd359ea0847de296f7b66a0f93f") (secret "D" d2 "7249ab836ec75abf7756aec7528812a86a9f23df"))
 
-          	(choice
+
+  (choice
    (revealif (b1) (pred (= b1 0)) 
-	(choice
+  (choice
    (revealif (b1) (pred (= b1 0)) 
-	(choice
+  (choice
    (revealif (c1) (pred (= c1 0)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 0)) 
-	(choice
+  (choice
    (revealif (a2) (pred (= a2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (a2) (pred (= a2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 0)) 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "A"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "A"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
@@ -67,57 +68,57 @@
    ))
    (after 10 (tau (choice
                    (revealif (c1) (pred (= c1 1)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 1)) 
-	(choice
+  (choice
    (revealif (a2) (pred (= a2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (a2) (pred (= a2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 1)) 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "A"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "A"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ) )))))
    ))
                    (after 10 (tau 
-	(choice
+  (choice
    (revealif (a2) (pred (= a2 1)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "A"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
                    (revealif (a2) (pred (= a2 0)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "A"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
@@ -125,45 +126,45 @@
    ))
    (after 10 (tau (choice
                    (revealif (b1) (pred (!= b1 0)) 
-	(choice
+  (choice
    (revealif (c1) (pred (= c1 0)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 0)) 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 0)) 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
@@ -171,102 +172,102 @@
    ))
    (after 10 (tau (choice
                    (revealif (c1) (pred (= c1 1)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 1)) 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 1)) 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ) )))))
    ))
                    (after 10 (tau 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))))))
    ))
                    (after 10 (tau 
-	(choice
+  (choice
    (revealif (c1) (pred (= c1 0)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 0)) 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 0)) 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
@@ -274,107 +275,107 @@
    ))
    (after 10 (tau (choice
                    (revealif (c1) (pred (= c1 1)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 1)) 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 1)) 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ) )))))
    ))
                    (after 10 (tau 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))))))
    ))))))
    )
-	)
+  )
    (after 10 (tau (choice
                    (revealif (b1) (pred (= b1 1)) 
-	(choice
+  (choice
    (revealif (b1) (pred (= b1 1)) 
-	(choice
+  (choice
    (revealif (c1) (pred (= c1 0)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 0)) 
-	(choice
+  (choice
    (revealif (a2) (pred (= a2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (a2) (pred (= a2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 0)) 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "A"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "A"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
@@ -382,57 +383,57 @@
    ))
    (after 10 (tau (choice
                    (revealif (c1) (pred (= c1 1)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 1)) 
-	(choice
+  (choice
    (revealif (a2) (pred (= a2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (a2) (pred (= a2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 1)) 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "A"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "A"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ) )))))
    ))
                    (after 10 (tau 
-	(choice
+  (choice
    (revealif (a2) (pred (= a2 1)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "A"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
                    (revealif (a2) (pred (= a2 0)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "A"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
@@ -440,45 +441,45 @@
    ))
    (after 10 (tau (choice
                    (revealif (b1) (pred (!= b1 1)) 
-	(choice
+  (choice
    (revealif (c1) (pred (= c1 0)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 0)) 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 0)) 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
@@ -486,102 +487,102 @@
    ))
    (after 10 (tau (choice
                    (revealif (c1) (pred (= c1 1)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 1)) 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 1)) 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ) )))))
    ))
                    (after 10 (tau 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))))))
    ))
                    (after 10 (tau 
-	(choice
+  (choice
    (revealif (c1) (pred (= c1 0)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 0)) 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 0)) 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
@@ -589,104 +590,104 @@
    ))
    (after 10 (tau (choice
                    (revealif (c1) (pred (= c1 1)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 1)) 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 1)) 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (b2) (pred (= b2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "B"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (b2) (pred (= b2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "B"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ) )))))
    ))
                    (after 10 (tau 
-	(choice
+  (choice
    (revealif (b2) (pred (= b2 1)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "B"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
                    (revealif (b2) (pred (= b2 0)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "B"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))))))
    ))))))
    )
-	)
+  )
                    (after 10 (tau 
-	(choice
+  (choice
    (revealif (c1) (pred (= c1 0)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 0)) 
-	(choice
+  (choice
    (revealif (a2) (pred (= a2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (a2) (pred (= a2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 0)) 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "A"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "A"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (0) (pred (= 0 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (0) (pred (= 0 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
@@ -694,63 +695,64 @@
    ))
    (after 10 (tau (choice
                    (revealif (c1) (pred (= c1 1)) 
-	(choice
+  (choice
    (revealif (d1) (pred (= d1 1)) 
-	(choice
+  (choice
    (revealif (a2) (pred (= a2 1)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
                    (revealif (a2) (pred (= a2 0)) 
-	(choice
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ))
    (after 10 (tau (choice
                    (revealif (d1) (pred (!= d1 1)) 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "A"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "A"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))
                    (after 10 (tau 
-	(choice
-   (revealif (1) (pred (= 1 1)) 
-	(choice
+  (choice
+   (revealif (a2) (pred (= a2 1)) 
+  (choice
    (revealif (c2) (pred (= c2 1)) (withdraw "A"))
    (after 10 (withdraw "C"))))
    (after 10 (tau (choice
-                   (revealif (1) (pred (= 1 0)) 
-	(choice
+                   (revealif (a2) (pred (= a2 0)) 
+  (choice
    (revealif (c2) (pred (= c2 0)) (withdraw "A"))
    (after 10 (withdraw "C"))))
                    (after 10 (withdraw "C")))))
    ) )))))
    ))
                    (after 10 (tau 
-	(choice
+  (choice
    (revealif (a2) (pred (= a2 1)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 1)) (withdraw "A"))
    (after 10 (withdraw "D"))))
    (after 10 (tau (choice
                    (revealif (a2) (pred (= a2 0)) 
-	(choice
+  (choice
    (revealif (d2) (pred (= d2 0)) (withdraw "A"))
    (after 10 (withdraw "D"))))
                    (after 10 (withdraw "D")))))
    ))))))
    ))))))
    )
+  
                    
 
           ;(check-liquid
