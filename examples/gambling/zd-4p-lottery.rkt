@@ -45,7 +45,7 @@
   (choice
    (revealif (x1) (pred (= x1 1)) (ref (FinalRound 1 P1 x1 P2 x2)))
    (after 10 (tau (choice
-                   (revealif (d1) (pred (= d1 0)) (ref (FinalRound 0 P1 x1 P2 x2)))
+                   (revealif (x1) (pred (= x1 0)) (ref (FinalRound 0 P1 x1 P2 x2)))
                    (after 10 (withdraw P2)))))
    ))
 
