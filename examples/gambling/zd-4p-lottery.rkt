@@ -11,8 +11,8 @@
 
 (define (Round1A)
   (choice
-   (revealif (b1) (pred (= b1 0)) (ref Round1AB 0)
-   (revealif (b1) (pred (= b1 1)) (ref Round1AB 1)             
+   (revealif (b1) (pred (= b1 0)) (ref (Round1AB 0))
+   (revealif (b1) (pred (= b1 1)) (ref (Round1AB 1))
    (after 10 (tau (ref (Round1CD "A" a2))))))))
 
 (define (Round1AB x)
@@ -23,8 +23,8 @@
 
 (define (Round1C P x)
   (choice
-   (revealif (c1) (pred (= c1 0)) (ref Round1CD P x 0))
-   (revealif (c1) (pred (= c1 1)) (ref Round1CD P x 1))
+   (revealif (c1) (pred (= c1 0)) (ref (Round1CD P x 0)))
+   (revealif (c1) (pred (= c1 1)) (ref (Round1CD P x 1)))
    (after 10 (tau (ref (Round2 P x "D" d2))))))
 
 (define (Round1CD P y x)
