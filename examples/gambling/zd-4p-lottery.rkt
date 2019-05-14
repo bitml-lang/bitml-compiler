@@ -11,37 +11,48 @@
 
 (define (Round1A)
   (choice
-   (revealif (b1) (pred (= b1 0)) (ref (Round1AB 0))
-   (revealif (b1) (pred (= b1 1)) (ref (Round1AB 1))
-   (after 10 (tau (ref (Round1C "A" a2))))))))
+   (revealif (b1) (pred (= b1 0)) (ref (Round1AB 0)))
+   (after 10 (tau (choice
+                   (revealif (b1) (pred (= b1 1)) (ref (Round1AB 1)))
+                   (after 10 (tau (ref (Round1C "A" a2)))))))
+   ))
 
 (define (Round1AB x)
   (choice
    (revealif (b1) (pred (= b1 x)) (ref (Round1C "A" a2)))
-   (revealif (b1) (pred (!= b1 x)) (ref (Round1C "B" b2)))
-   (after 10 (tau (ref (Round1C "B" b2))))))
+   (after 10 (tau (choice
+                   (revealif (b1) (pred (!= b1 x)) (ref (Round1C "B" b2)))
+                   (after 10 (tau (ref (Round1C "B" b2)))))))
+   ))
 
 (define (Round1C P x)
   (choice
    (revealif (c1) (pred (= c1 0)) (ref (Round1CD P x 0)))
-   (revealif (c1) (pred (= c1 1)) (ref (Round1CD P x 1)))
-   (after 10 (tau (ref (Round2 P x "D" d2))))))
+   (after 10 (tau (choice
+                   (revealif (c1) (pred (= c1 1)) (ref (Round1CD P x 1)))
+                   (after 10 (tau (ref (Round2 P x "D" d2)))))))
+   ))
 
 (define (Round1CD P y x)
   (choice
    (revealif (d1) (pred (= d1 x)) (ref (Round2 P y "C" c2)))
-   (revealif (d1) (pred (!= d1 x)) (ref (Round2 P y "D" d2)))
-   (after 10 (tau (ref (Round2 P y "C" c2))))))
+   (after 10 (tau (choice
+                   (revealif (d1) (pred (!= d1 x)) (ref (Round2 P y "D" d2)))
+                   (after 10 (tau (ref (Round2 P y "C" c2)))))))
+   ))
 
 (define (Round2 P1 x1 P2 x2)
   (choice
-   (revealif (x1) (pred (between x1 0 1))
-             (choice
-              (revealif (x1 x2) (pred (= x1 x2)) (withdraw P1))
-              (revealif (x1 x2) (pred (!= x1 x2)) (withdraw P2))
-              (after 10 (withdraw P1))))
-   (after 10 (withdraw P2)))
-  )
+   (revealif (x1) (pred (= x1 1)) (ref (FinalRound 1 P1 x1 P2 x2)))
+   (after 10 (tau (choice
+                   (revealif (d1) (pred (= d1 0)) (ref (FinalRound 0 P1 x1 P2 x2)))
+                   (after 10 (withdraw P2)))))
+   ))
+
+(define (FinalRound y P1 x1 P2 x2)
+  (choice
+   (revealif (x2) (pred (= x2 y)) (withdraw P2))
+   (after 10 (withdraw P1))))
 
 (contract (pre
            (deposit "A" 7 "txA@0")(deposit "B" 7 "txB@0")(deposit "C" 7 "txC@0")(deposit "D" 7 "txD@0")

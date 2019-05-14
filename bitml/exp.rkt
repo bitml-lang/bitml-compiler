@@ -20,6 +20,16 @@
     [(_ (b= a:id b:number))
      #:with b1 #'(+ sec-param b)
      #'(string-append "size(" (symbol->string 'a) ") == " (number->string b1) )]
+    [(_ (b!= a:id b:number))
+     #:with b1 #'(+ sec-param b)
+     #'(string-append "size(" (symbol->string 'a) ") != " (number->string b1) )]
+    [(_ (b< a:id b:number))
+     #:with b1 #'(+ sec-param b)
+     #'(string-append "size(" (symbol->string 'a) ") < " (number->string b1) )]
+    [(_ (b<= a:id b:number))
+     #:with b1 #'(+ sec-param b)
+     #'(string-append "size(" (symbol->string 'a) ") <= " (number->string b1) )]
+    
     [(_ (b= a:id b:id)) #'(string-append "size(" (symbol->string 'a) ") == size(" (symbol->string 'b) ")" )]
     [(_ (b!= a:id b:id)) #'(string-append "size(" (symbol->string 'a) ") != size(" (symbol->string 'b) ")" )]
     [(_ (b< a:id b:id)) #'(string-append "size(" (symbol->string 'a) ") < size(" (symbol->string 'b) ")" )]
