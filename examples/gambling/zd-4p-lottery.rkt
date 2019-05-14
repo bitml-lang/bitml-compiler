@@ -13,7 +13,7 @@
   (choice
    (revealif (b1) (pred (= b1 0)) (ref (Round1AB 0))
    (revealif (b1) (pred (= b1 1)) (ref (Round1AB 1))
-   (after 10 (tau (ref (Round1CD "A" a2))))))))
+   (after 10 (tau (ref (Round1C "A" a2))))))))
 
 (define (Round1AB x)
   (choice
