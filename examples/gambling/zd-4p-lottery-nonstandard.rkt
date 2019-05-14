@@ -9,29 +9,23 @@
 (participant "C" "03e969a9e8080b7515d4bbeaf253978b33226dd3c4fbc987d9b67fb2e5380cca9f")
 (participant "D" "033ed7a4e8386a38333d6b7db03f532edece48ef3160688d73091644ecf0754910")
 
-(define (Round1A)
+(define (Round1AB)
   (choice
-   (revealif (b1) (pred (= b1 0)) (ref Round1AB 0)
-   (revealif (b1) (pred (= b1 1)) (ref Round1AB 1)             
-   (after 10 (tau (ref (Round1CD "A" a2))))))))
+   (revealif (b1) (pred (between b1 0 1))
+             (choice
+              (revealif (a1 b1) (pred (= a1 b1)) (ref (Round1CD "A" a2)))
+              (revealif (a1 b1) (pred (!= a1 b1)) (ref (Round1CD "B" b2)))
+              (after 10 (tau (ref (Round1CD "B" b2))))))
+   (after 10 (tau (ref (Round1CD "A" a2))))))
 
-(define (Round1AB x)
+(define (Round1CD P x)
   (choice
-   (revealif (b1) (pred (= b1 x)) (ref (Round1C "A" a2)))
-   (revealif (b1) (pred (!= b1 x)) (ref (Round1C "B" b2)))
-   (after 10 (tau (ref (Round1C "B" b2))))))
-
-(define (Round1C P x)
-  (choice
-   (revealif (c1) (pred (= c1 0)) (ref Round1CD P x 0))
-   (revealif (c1) (pred (= c1 1)) (ref Round1CD P x 1))
+   (revealif (c1) (pred (between c1 0 1))
+             (choice
+              (revealif (c1 d1) (pred (= c1 d1)) (ref (Round2 P x "C" c2)))
+              (revealif (c1 d1) (pred (!= c1 d1)) (ref (Round2 P x "D" d2)))
+              (after 10 (tau (ref (Round2 P x "C" c2))))))
    (after 10 (tau (ref (Round2 P x "D" d2))))))
-
-(define (Round1CD P y x)
-  (choice
-   (revealif (d1) (pred (= d1 x)) (ref (Round2 P y "C" c2)))
-   (revealif (d1) (pred (!= d1 x)) (ref (Round2 P y "D" d2)))
-   (after 10 (tau (ref (Round2 P y "C" c2))))))
 
 (define (Round2 P1 x1 P2 x2)
   (choice
@@ -50,7 +44,7 @@
            (secret "C" c1 "183c86e0a286ac99ad8cf5c4cde36511181ffbd5") (secret "C" c2 "ded836a730cdeca5223f2609747074585f933aa8")
            (secret "D" d1 "14f06dde2fa12bd359ea0847de296f7b66a0f93f") (secret "D" d2 "7249ab836ec75abf7756aec7528812a86a9f23df"))
 
-          (ref (Round1A))
+          (ref (Round1AB))
                    
 
           ;(check-liquid
