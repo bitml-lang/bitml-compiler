@@ -21,12 +21,12 @@
    (revealif (a1 b1) (pred (= a1 b1))
              (choice
               (revealif (c1 d1) (pred (= c1 d1)) (ref (Round2 "A" a2 "C" c2)))
-              (revealif (c1 d1) (pred (!= c1 b1)) (ref (Round2 "A" a2 "D" d2)))
+              (revealif (c1 d1) (pred (!= c1 d1)) (ref (Round2 "A" a2 "D" d2)))
               (after 20 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")) (1 -> (withdraw "C")) (1 -> (withdraw "D"))))))
    (revealif (a1 b1) (pred (!= a1 b1))
              (choice
               (revealif (c1 d1) (pred (= c1 d1)) (ref (Round2 "B" b2 "C" c2)))
-              (revealif (c1 d1) (pred (!= c1 b1)) (ref (Round2 "B" b2 "D" d2)))
+              (revealif (c1 d1) (pred (!= c1 d1)) (ref (Round2 "B" b2 "D" d2)))
               (after 20 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")) (1 -> (withdraw "C")) (1 -> (withdraw "D"))))))
    (after 15 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")) (1 -> (withdraw "C")) (1 -> (withdraw "D"))))))
 
