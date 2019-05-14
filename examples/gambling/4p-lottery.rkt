@@ -12,7 +12,7 @@
 ; C = committer, x = secret, Pi = other players
 (define (TC C x y P1 P2 P3)
   (choice
-   (revealif (x) (pred (and (between x 0 1) (between y 0 1))) (withdraw C))
+   (revealif (x y) (pred (and (between x 0 1) (between y 0 1))) (withdraw C))
    (after 10 (split (4 -> (withdraw P1)) (4 -> (withdraw P2)) (4 -> (withdraw P3)))))
   )
 
@@ -28,7 +28,7 @@
               (revealif (c1 d1) (pred (= c1 d1)) (ref (Round2 "B" b2 "C" c2)))
               (revealif (c1 d1) (pred (!= c1 b1)) (ref (Round2 "B" b2 "D" d2)))
               (after 20 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")) (1 -> (withdraw "C")) (1 -> (withdraw "D"))))))
-   (after 10 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")) (1 -> (withdraw "C")) (1 -> (withdraw "D"))))))
+   (after 15 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")) (1 -> (withdraw "C")) (1 -> (withdraw "D"))))))
 
 (define (Round2 P1 x1 P2 x2)
   (choice
@@ -60,4 +60,5 @@
            (strategy "C" (do-reveal c1))
            (strategy "C" (do-reveal c2))
            (strategy "D" (do-reveal d1))
-           (strategy "D" (do-reveal d2))))
+           (strategy "D" (do-reveal d2)))
+          )
