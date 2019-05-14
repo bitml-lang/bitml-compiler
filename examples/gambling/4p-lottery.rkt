@@ -10,9 +10,9 @@
 (participant "D" "033ed7a4e8386a38333d6b7db03f532edece48ef3160688d73091644ecf0754910")
 
 ; C = committer, x = secret, Pi = other players
-(define (TC C x P1 P2 P3)
+(define (TC C x y P1 P2 P3)
   (choice
-   (revealif (x) (pred (between x 0 1)) (withdraw C))
+   (revealif (x) (pred (and (between x 0 1) (between y 0 1))) (withdraw C))
    (after 10 (split (4 -> (withdraw P1)) (4 -> (withdraw P2)) (4 -> (withdraw P3)))))
   )
 
@@ -46,10 +46,10 @@
            (secret "D" d1 "14f06dde2fa12bd359ea0847de296f7b66a0f93f") (secret "D" d2 "7249ab836ec75abf7756aec7528812a86a9f23df"))
          
           (split
-           (12 -> (ref (TC "A" a1 "B" "C" "D")))
-           (12 -> (ref (TC "B" b1 "A" "C" "D")))
-           (12 -> (ref (TC "C" c1 "A" "B" "D")))
-           (12 -> (ref (TC "D" d1 "A" "B" "C")))
+           (12 -> (ref (TC "A" a1 a2 "B" "C" "D")))
+           (12 -> (ref (TC "B" b1 b2 "A" "C" "D")))
+           (12 -> (ref (TC "C" c1 c2 "A" "B" "D")))
+           (12 -> (ref (TC "D" d1 d2 "A" "B" "C")))
            (4 -> (ref (Round1))))
 
           (check-liquid
