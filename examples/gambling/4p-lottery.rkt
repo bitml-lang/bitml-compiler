@@ -13,7 +13,7 @@
 (define (TC C x P1 P2 P3)
   (choice
    (revealif (x) (pred (between x 0 1)) (withdraw C))
-   (after 10 (split (1 -> (withdraw P1)) (1 -> (withdraw P2)) (1 -> (withdraw P3)))))
+   (after 10 (split (4 -> (withdraw P1)) (4 -> (withdraw P2)) (4 -> (withdraw P3)))))
   )
 
 (define (Round1)
