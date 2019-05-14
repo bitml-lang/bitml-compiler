@@ -13,37 +13,29 @@
   (choice
    (revealif (b1) (pred (between b1 0 1))
              (choice
-              (revealif (a1 b1) (pred (= a1 b1)) (ref (Round1ACD)))
-              (revealif (a1 b1) (pred (!= a1 1)) (ref (Round1BCD)))
-              (after 10 (tau (ref (Round1BCD))))))
-   (after 10 (tau (ref (Round1ACD))))))
+              (revealif (a1 b1) (pred (= a1 b1)) (ref (Round1CD "A" a2)))
+              (revealif (a1 b1) (pred (!= a1 b1)) (ref (Round1CD "B" b2)))
+              (after 10 (tau (ref (Round1CD "B" b2))))))
+   (after 10 (tau (ref (Round1CD "A" a2))))))
 
-(define (Round1ACD)
+(define (Round1CD P x)
   (choice
    (revealif (c1) (pred (between c1 0 1))
              (choice
-              (revealif (c1 d1) (pred (= c1 d1)) (ref (Round2 "A" a2 "C" c2)))
-              (revealif (c1 d1) (pred (!= c1 d1)) (ref (Round2 "A" a2 "D" d2)))
-              (after 10 (tau (ref (Round2 "A" a2 "C" c2))))))
-   (after 10 (tau (ref (Round2 "A" a2 "D" d2))))))
-
-(define (Round1BCD)
-  (choice
-   (revealif (c1) (pred (between c1 0 1))
-             (choice
-              (revealif (c1 d1) (pred (= c1 d1)) (ref (Round2 "B" b2 "C" c2)))
-              (revealif (c1 d1) (pred (!= c1 d1)) (ref (Round2 "B" b2 "C" d2)))
-              (after 10 (tau (ref (Round2 "B" a2 "C" c2))))))
-   (after 10 (tau (ref (Round2 "B" a2 "D" d2))))))
+              (revealif (c1 d1) (pred (= c1 d1)) (ref (Round2 P x "C" c2)))
+              (revealif (c1 d1) (pred (!= c1 d1)) (ref (Round2 P x "D" d2)))
+              (after 10 (tau (ref (Round2 P x "C" c2))))))
+   (after 10 (tau (ref (Round2 P x "D" d2))))))
 
 (define (Round2 P1 x1 P2 x2)
   (choice
-   (revealif (x1 x2) (pred (= x1 x2)) (withdraw P1))
-   (revealif (x1 x2) (pred (!= x1 x2)) (withdraw P2))
-   (after 10 (split (1 -> (withdraw P1)) (1 -> (withdraw P2))))
-   )
+   (revealif (x1) (pred (between x1 0 1))
+             (choice
+              (revealif (x1 x2) (pred (= x1 x2)) (withdraw P1))
+              (revealif (x1 x2) (pred (!= x1 x2)) (withdraw P2))
+              (after 10 (withdraw P1))))
+   (after 10 (withdraw P2)))
   )
-
 
 (contract (pre
            (deposit "A" 7 "txA@0")(deposit "B" 7 "txB@0")(deposit "C" 7 "txC@0")(deposit "D" 7 "txD@0")
@@ -55,14 +47,14 @@
           (ref (Round1AB))
                    
 
-          (check-liquid
-           (strategy "A" (do-reveal a1))
-           (strategy "A" (do-reveal a2))
-           (strategy "B" (do-reveal b1))
-           (strategy "B" (do-reveal b2))
-           (strategy "C" (do-reveal c1))
-           (strategy "C" (do-reveal c2))
-           (strategy "D" (do-reveal d1))
-           (strategy "D" (do-reveal d2)))
+          ;(check-liquid
+          ; (strategy "A" (do-reveal a1))
+          ; (strategy "A" (do-reveal a2))
+          ; (strategy "B" (do-reveal b1))
+          ; (strategy "B" (do-reveal b2))
+          ; (strategy "C" (do-reveal c1))
+          ; (strategy "C" (do-reveal c2))
+          ; (strategy "D" (do-reveal d1))
+          ; (strategy "D" (do-reveal d2)))
 
           )
