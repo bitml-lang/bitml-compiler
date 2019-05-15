@@ -7,13 +7,6 @@
 (debug-mode)
 (verification-only)
 
-(define (PayOrRefund)
-  (tau (choice
-        (auth "A" (withdraw "B"))
-        (auth "B" (withdraw "A"))
-        ))
-  )
-
 (define (Resolve v w)
   (split
    (v -> (withdraw "O"))
@@ -24,10 +17,10 @@
 (contract
  (pre (deposit "A" 1 "txA@0"))
  (choice
-  (ref (PayOrRefund))
+  (auth "A" (withdraw "B"))
+  (auth "B" (withdraw "A"))
   (auth "A" (ref (Resolve 0.1 0.9)))
   (auth "B" (ref (Resolve 0.1 0.9)))
-  (after 10000 (withdraw "A"))
   )          
  
  (check-liquid (strategy "A" (do-auth (auth "A" (ref (Resolve 0.1 0.9)))))
