@@ -6,26 +6,26 @@
 
 (debug-mode)
 
-(define txA1 "txid:something@0")
-(define txA2 "txid:somethingelse@0")
-(define txB "txid:somethingmore@0")
+(define (txA1) "txid:something@0")
+(define (txA2) "txid:somethingelse@0")
+(define (txB) "txid:somethingmore@0")
 
-(define Resolve (split
+(define (Resolve) (split
                  (0.1 -> (withdraw "M"))
-                 (1 -> (sum
+                 (1 -> (choice
                         (auth "M" (withdraw "B"))
                         (auth "M" (withdraw "A"))))))
 
 (contract
- (pre (deposit "A" 1 (ref txA1))
-      (vol-deposit "A" x 0.05 (ref txA2))
-      (vol-deposit "B" y 0.05 (ref txB)))
- (sum
+ (pre (deposit "A" 1 (ref (txA1)))
+      (vol-deposit "A" x 0.05 (ref (txA2)))
+      (vol-deposit "B" y 0.05 (ref (txB))))
+ (choice
   (auth "A" (withdraw "B"))
   (auth "B" (withdraw "A"))
   (after 500000 (withdraw "B"))
-  (put (x) (sum
-            (put (y) (ref Resolve))
+  (put (x) (choice
+            (put (y) (ref (Resolve)))
             (after 501000 (withdraw "A")))))
 
  (check-liquid

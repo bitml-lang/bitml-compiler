@@ -1,6 +1,7 @@
 #lang bitml
 
 (debug-mode)
+(verification-only)
 
 (participant "A" "029c5f6f5ef0095f547799cb7861488b9f4282140d59a6289fbc90c70209c1cced")
 (participant "B" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
@@ -19,7 +20,7 @@
   (choice
    (revealif (a1) (pred (= a1 x)) (ref (Round1C "A" a2)))
    (after 10 (tau (choice
-                   (revealif (a1) (pred (!= a1 x)) (ref (Round1C "B" b2)))
+                   (revealif (b1) (pred (!= b1 x)) (ref (Round1C "B" b2)))
                    (after 10 (tau (ref (Round1C "B" b2)))))))
    ))
 
@@ -62,14 +63,8 @@
           (ref (Round1A))
                    
 
-          ;(check-liquid
-          ; (strategy "A" (do-reveal a1))
-          ; (strategy "A" (do-reveal a2))
-          ; (strategy "B" (do-reveal b1))
-          ; (strategy "B" (do-reveal b2))
-          ; (strategy "C" (do-reveal c1))
-          ; (strategy "C" (do-reveal c2))
-          ; (strategy "D" (do-reveal d1))
-          ; (strategy "D" (do-reveal d2)))
+          (check-liquid
+           (strategy "A" (do-reveal a1))
+           (strategy "A" (do-reveal a2)))
 
           )

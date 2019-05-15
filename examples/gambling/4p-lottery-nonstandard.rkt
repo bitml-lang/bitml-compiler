@@ -2,8 +2,6 @@
 
 (debug-mode)
 
-;(auto-generate-secrets)
-
 (participant "A" "029c5f6f5ef0095f547799cb7861488b9f4282140d59a6289fbc90c70209c1cced")
 (participant "B" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
 (participant "C" "03e969a9e8080b7515d4bbeaf253978b33226dd3c4fbc987d9b67fb2e5380cca9f")
@@ -52,13 +50,7 @@
            (12 -> (ref (TC "D" d1 d2 "A" "B" "C")))
            (4 -> (ref (Round1))))
 
-          (check-liquid
+          #;(check-liquid
            (strategy "A" (do-reveal a1))
-           (strategy "A" (do-reveal a2))
-           (strategy "B" (not-reveal b1))
-           (strategy "B" (not-reveal b2))
-           (strategy "C" (not-reveal c1))
-           (strategy "C" (not-reveal c2))
-           (strategy "D" (not-reveal d1))
-           (strategy "D" (not-reveal d2)))
+           (strategy "A" (do-reveal a2)))
           )

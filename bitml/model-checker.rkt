@@ -24,8 +24,8 @@
 
          (define secrets-list null)
 
-         (when (gen-secs?)
-           (set! secrets-list (get-secrets-lengths contract (guard ...))))
+         ;(when (gen-secs?)
+         ; (set! secrets-list (get-secrets-lengths contract (guard ...))))
 
          (define start-time (current-inexact-milliseconds))           
 
