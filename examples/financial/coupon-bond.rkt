@@ -20,9 +20,9 @@
 (define (txI3) "txid:somethingels3e@0")
 (define (txG) "txid:somethingmore@0")
 
-(define (CB firstInterval firstExpiration
-            secondInterval secondExpiration
-            maturity maturityExpiration)
+(define (CB firstInterval firstExpiration x
+            secondInterval secondExpiration y
+            maturity maturityExpiration z)
   (split
    (1 -> (withdraw "I"))
    (0.1 -> (choice
@@ -48,6 +48,8 @@
       (vol-deposit "I" x 0.1 (ref (txI1))) (vol-deposit "I" y 0.1 (ref (txI2))) (vol-deposit "I" z 1 (ref (txI3)))
       (deposit "G" 1.2 (ref (txG))))
  
- (ref (CB 1000 1100 1200 1300 1400 1500))
+ (ref (CB 1000 1100 x
+          1200 1300 y
+          1400 1500 z))
  
  (check-liquid))

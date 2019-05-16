@@ -5,13 +5,13 @@
 (participant "G" "034a7192e922118173906555a39f28fa1e0b65657fc7f403094da4f85701a5f809")
 
 (debug-mode)
-;(verification-only)
+(verification-only)
 
 (define (txA) "txid:something@0")
 (define (txI) "txid:somethingelse@0")
 (define (txG) "txid:somethingmore@0")
 
-(define (ZCB maturity expiration)
+(define (ZCB maturity expiration x)
   (split
    (0.9 -> (withdraw "I"))
    (1 -> (choice
@@ -25,6 +25,6 @@
       (vol-deposit "I" x 1 (ref (txI)))
       (deposit "G" 1 (ref (txG))))
  
- (ref (ZCB 1000 1100))
+ (ref (ZCB 1000 1100 x))
  
  (check-liquid))
