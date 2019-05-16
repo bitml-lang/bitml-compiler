@@ -5,6 +5,7 @@
 (participant "M" "034a7192e922118173906555a39f28fa1e0b65657fc7f403094da4f85701a5f809")
 
 (debug-mode)
+(verification-only)
 
 (define (txA1) "txid:something@0")
 (define (txA2) "txid:somethingelse@0")
