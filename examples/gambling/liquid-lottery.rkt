@@ -4,23 +4,28 @@
 
 (auto-generate-secrets)
 
-(participant "A" "029c5f6f5ef0095f547799cb7861488b9f4282140d59a6289fbc90c70209c1cced")
-(participant "B" "022c3afb0b654d3c2b0e2ffdcf941eaf9b6c2f6fcf14672f86f7647fa7b817af30")
+(define (txA) "tx:0200000000010191a7f4a73aa5fdebb4cc9fe96ec2a0e390674b9fa106fd0d9ece4af9c99c0e71010000001716001439a5abf7ab08b415c578e38356ad79ea1c3afc8cfeffffff02e7d816000000000017a914e9ce238665f09c3d8ac0e7bfa995c64c3722405787e0930400000000001976a914ded135b86a7ff97aece531c8b97dc8a3cb3ddc7488ac0247304402204d97c78a96890586fb8de0d7357e76a2ac36934c90bfdd28d478758820cb3a430220634701e4d2722527f5c3d2d96e850643927e1f6fed91f38dfe5c6bc5d1a4ef90012102ffa6f666d618e371737cc5d2c1443d7c89c1b68e764a2601973676e2d64b9fe841241700@1")
+(define (txB) "tx:020000000001013798d4b82e0e97c29bba04a3c12cb66ab01961b6a6fb36dc38a50afca915cc9701000000171600146f59f2c1c3830564a2582c4f9782cddd81715276feffffff02e0930400000000001976a914ce07ee1448bbb80b38ae0c03b6cdeff40ff326ba88acebd816000000000017a914615a97ecc0a1656e57d5d250cc5f3cfedcf3e9da87024730440220732d81a6b88e65c9cc53b61a686b3cc461aeb5e3991351845aa3978b13895d4202203cc2e70236ca77bad1e4cb3e396b29f04c854935393744fe7d75d22b49a2a831012102e5712f5d5743019d4daae6df14ca027fb72fd4dbcf8ad0dba315fc1b77bb4afb42241700@0")
+(define (txFee) "tx:0200000001a6ebe7f6d440c1c5fec95964ebacc3b3043b46961ae6e16d8dc9b4c8c8585f1500000000e5483045022100ad948808d7adc6eb210c465773887fbfeefc50bb037c77fa6702560980a9dc8402205a1a57b2209c4c95a87ca56be6101162ef4a30165c922f6bcd0af6d5db3bdf1701483045022100aaa0961dd1529955ad02ce8751500fd95d0bbd1fd360fb291443cc246f26f28d02205b80e606edb4dcc34e22e0989192d71cbd81fe7a4f2604628cca5f980e6744c4014c516b6b006c766c766b7c6b5221034a7192e922118173906555a39f28fa1e0b65657fc7f403094da4f85701a5f809210339bd7fade9167e09681d68c5fc80b72166fe55bbb84211fd12bde1d57247fbe152aeffffffff0180de0f00000000001976a914ce07ee1448bbb80b38ae0c03b6cdeff40ff326ba88ac00000000@0")
+
+(participant "A" "0339bd7fade9167e09681d68c5fc80b72166fe55bbb84211fd12bde1d57247fbe1")
+(participant "B" "034a7192e922118173906555a39f28fa1e0b65657fc7f403094da4f85701a5f809")
 
 (contract (pre
-           (deposit "A" 3 "txA@0")(secret "A" a "ded836a730cdeca5223f2609747074585f933aa8")
-           (deposit "B" 3 "txB@0")(secret "B" b "7249ab836ec75abf7756aec7528812a86a9f23df"))
+           (deposit "A" 0.003 (ref (txA)))(secret "A" a "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb")
+           (deposit "B" 0.003 (ref (txB)))(secret "B" b "c51b66bced5e4491001bd702669770dccf440982")
+           (fee "B" 0.0104 (ref (txFee))))
          
           (split
-           (2 -> (choice
+           (0.002 -> (choice
                   (revealif (b) (pred (between b 0 1)) (withdraw "B"))
-                  (after 10 (withdraw "A"))))
-           (2 -> (choice
+                  (after 1500000 (withdraw "A"))))
+           (0.002 -> (choice
                   (reveal (a) (withdraw "A"))
-                  (after 10 (withdraw "B"))))
-           (2 -> (choice
+                  (after 1500000 (withdraw "B"))))
+           (0.002 -> (choice
                   (revealif (a b) (pred (= a b)) (withdraw "A"))
                   (revealif (a b) (pred (!= a b)) (withdraw "B"))
-                  (after 10 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")))))))
+                  (after 1500000 (split (0.001 -> (withdraw "A")) (0.001 -> (withdraw "B")))))))
 
           (check-liquid))

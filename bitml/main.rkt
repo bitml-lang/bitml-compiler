@@ -52,7 +52,7 @@
 
              (define start-time (current-inexact-milliseconds))           
 
-             (compile-init parts deposit-txout tx-v avail-fee script script-params script-secrets)
+             (compile-init parts deposit-txout tx-v avail-fee script script-params)
 
              ;start the compilation of the continuation contracts
              (compile (contr params ...) parent "Tinit" 0 tx-v (get-remaining-fee avail-fee) (get-participants) 0

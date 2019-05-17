@@ -109,8 +109,13 @@
 
      #'(let ([pred-comp (~? (string-append (compile-pred p) " && ") "")]
              [secrets (list 'sec ...)]
-             [compiled-continuation (~? (get-script* parent p) (get-script* parent ()))])
-         (string-append pred-comp compiled-continuation))]
+             [compiled-continuation (get-script* parent (~? p ()))])
+         (string-append "(" pred-comp
+          (foldr (lambda (x res)
+                   (string-append "hash160(" (symbol->string x) ") == hash:" (get-secret-hash x)
+                                  " && size(" (symbol->string x) ") >= " (number->string sec-param) " && " res))
+                 "" secrets)
+          compiled-continuation ")"))]
     [(_ parent '(auth part ... cont)) #'(get-script* parent cont)]
     [(_ parent '(after t cont)) #'(get-script* parent cont)]
     [(_ parent x)
@@ -118,12 +123,6 @@
                       (second (pk-for-term part parent)))]
               [keys-string (list+sep->string keys)])
          (string-append "versig(" keys-string "; " (parts->sigs-params (get-participants))  ")"))]))
-
-(define (get-secrets-check-script secrets)
-  (foldr (lambda (x res)
-           (string-append "hash160(" (symbol->string x) ") == hash:" (get-secret-hash x)
-                          " && size(" (symbol->string x) ") >= " (number->string sec-param) " && " res))
-         "" secrets))
 
 ;return the parameters for the script obtained by get-script
 (define-syntax (get-script-params stx)
@@ -166,7 +165,7 @@
          
 
 ;compiles the Tinit transaction
-(define (compile-init parts deposit-txout tx-v fee-v script script-params-list script-secrets)
+(define (compile-init parts deposit-txout tx-v fee-v script script-params-list)
   (let* ([tx-sigs-list (for/list ([p parts]
                                   [i (in-naturals)])
                          (format "sig~a~a" p i))]                  
@@ -199,9 +198,9 @@
     (for-each (lambda (x) (add-output (format "const sig~aFee : signature = _ //add signature for output ~a"
                                               (first x) (second x)))) (get-fee-dep-pairs))
   
-    (add-output (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . ~a\n (~a) \n}\n"
+    (add-output (format "\ntransaction Tinit { \n ~a \n output = ~a BTC : fun(~a) . (~a) \n}\n"
                         inputs (btc+ (get-remaining-fee fee-v) tx-v) script-params
-                        (get-secrets-check-script script-secrets) script))))
+                        script))))
 
 
 (define-syntax (compile stx)
@@ -222,10 +221,7 @@
                                     (string-append "; " (list+sep->string (map (lambda (x) (format-input x)) vol-inputs)))
                                     "")]
                 [scripts-list (list (get-script (contract params ...)) ...)]
-                [script-secrets (remove-duplicates (append (get-script-params-sym (contract params ...)) ...))]
-                [script (string-append (get-secrets-check-script script-secrets)
-                                       "\n(" (list+sep->string scripts-list " ||\n ") ")")]
-
+                [script (list+sep->string scripts-list " || ")]              
                 [script-params (list+sep->string (append
                                                   (remove-duplicates (append (get-script-params (contract params ...)) ...))
                                                   (parts->sigs-param-list (get-participants))))]
@@ -280,8 +276,8 @@
                                    [script script-list]
                                    [script-params script-params-list]
                                    [secrets script-secrets-list])
-                           (format "~a BTC : fun(~a) . ~a (~a)" (btc+ v (get-remaining-fee-split fee-v splits-count))
-                                   script-params (get-secrets-check-script secrets) script))]
+                           (format "~a BTC : fun(~a) . (~a)" (btc+ v (get-remaining-fee-split fee-v splits-count))
+                                   script-params script))]
                 [output (string-append "output = [ " (list+sep->string outputs ";\n\t") " ]")]
                 [count 0])                
 
