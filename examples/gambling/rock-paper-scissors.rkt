@@ -48,12 +48,12 @@
           
           (check-liquid)
 
-          (check "A" has-at-least 2
+          (check "A" has-at-least 4
                  (strategy "A" (do-reveal a))
                  (strategy "B" (do-reveal b))
-                 (secrets ((a 0) (b 2))
-                          ((a 1) (b 0))
-                          ((a 2) (b 1))))
+                 (secrets ((a 0) (b 2))   ; A=rock, B=scissors
+                          ((a 1) (b 0))   ; A=paper, B=rock
+                          ((a 2) (b 1)))) ; A=scissors, B=paper
 
           (check "A" has-at-least 4
                  (strategy "A" (do-reveal a))
