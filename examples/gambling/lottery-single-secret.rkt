@@ -5,8 +5,6 @@
 
 (debug-mode)
 
-(auto-generate-secrets)
-
 (define (txA) "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
 (define (txB) "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@2")
 
@@ -27,6 +25,8 @@
   ; B guesses "1"
   (ref (B 1 0))
   (after 1000 (withdraw "A")))
+
+ (auto-generate-secrets)
   
  (check-liquid (strategy "B" (do-auth (ref (B 0 1)))))
 

@@ -25,6 +25,6 @@
                       (revealif (a b) (pred (= a b)) (withdraw "A"))
                       (revealif (a b) (pred (!= a b)) (withdraw "B"))
                       (after 1500000 (split (0.001 -> (withdraw "A")) (0.001 -> (withdraw "B")))))))
-
-          (check-liquid
-           (auto-generate-secrets)))
+          
+          (auto-generate-secrets)
+          (check-liquid))

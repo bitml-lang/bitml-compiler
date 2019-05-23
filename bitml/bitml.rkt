@@ -13,10 +13,6 @@
   #'(set-gen-keys!))
 
 ;turns on the constraint solving
-(define-syntax (auto-generate-secrets stx)
-  #'(set-gen-secs!))
-
-;turns on the constraint solving
 (define-syntax (verification-only stx)
   #'(set-hide-tx!))
 
