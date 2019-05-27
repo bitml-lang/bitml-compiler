@@ -346,7 +346,7 @@
      #'(begin
          (let* ([tx-name (new-tx-name)]
                 [tx-sigs (participants->tx-sigs parts tx-name)]
-                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "0")) all-secrets) " ")]
+                [sec-wit (list+sep->string (map (lambda (x) (if (member x sec-to-reveal) (format-secret x) "\"0\"")) all-secrets) " ")]
                 [inputs (string-append "input = [ " parent-tx "@" (number->string input-idx) ": " sec-wit " " tx-sigs "]")])
 
 
