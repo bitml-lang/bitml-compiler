@@ -18,8 +18,9 @@
 
  (check-liquid)
 
- ;(check-query "[] (a revealed => <> A has-deposit>= 100000000 satoshi)")
+ (check "A" has-at-least 0.00453333
+        (strategy "A" (do-reveal a)))
 
- (check-query "[]<> (a revealed \\/ B has-deposit>= 100000000 satoshi)")
+ (check-query "[]<> (a revealed \\/ B has-deposit>= 453333 satoshi)")
  )
 
