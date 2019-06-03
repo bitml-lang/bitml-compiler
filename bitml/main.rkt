@@ -17,7 +17,7 @@
                       [b-if if] [$expand ref])
           define-syntax-rule fee verification-only
           strategy do-reveal do-auth not-destroy do-destroy not-reveal secrets
-          state check-liquid check has-at-least check-query auto-generate-secrets 
+          state check-liquid check has-at-least check-query auto-generate-secrets
           #%module-begin #%datum #%top-interaction)
 
 ;expands the constants
