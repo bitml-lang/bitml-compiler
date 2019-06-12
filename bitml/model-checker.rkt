@@ -16,16 +16,54 @@
 
 (define-syntax (model-check stx)
   (syntax-parse stx
-    #:literals (secrets)
+    #:literals (secrets auto-generate-secrets)
+    [(_ contract (guard ...) (~optional (auto-generate-secrets)))
+     #'(values)]
+    [(_ contract (guard ...) (auto-generate-secrets) (query params ...)...)
+     #'(begin
+         (define flag #f)
+
+         (define secrets-list (get-secrets-lengths contract (guard ...)))
+
+         (define start-time (current-inexact-milliseconds))           
+
+         ;for each query
+         (begin
+           (display "\n/*=============================================================================\nModel checking result for ")
+           (displayln '(query params ...))
+           (displayln "")
+           (set! flag #f)
+
+           ;model check the query for each solution of the constraints
+           (for ([secrets-map secrets-list])
+             #:break flag        
+             (reset-maude-out)
+             (maude-opening)
+             (add-maude-output (string-append "eq MContr = " (compile-maude-contract contract) " . \n"))
+             (let ([result (execute-maude-query secrets-map (query params ...))])
+
+               ;if the model checking returns false display the cex
+               (unless (car result)
+                 (displayln "Result: false")
+                 (unless (hash-empty? secrets-map)
+                   (secrets-pretty-print secrets-map))
+                 (displayln (cdr result))
+                 (set! flag #t))))
+           
+           (unless flag
+             (displayln "Result: true")))...
+                                         
+                                         (unless (= 0 (length (list '(query params ...) ...)))
+                                           (displayln (format "Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))
+                                           (displayln "=============================================================================*/\n")))]
+    
+    [(_ contract (guard ...) query (auto-generate-secrets) (squery sparams ...)...)
+     #'(model-check contract (guard ...) (auto-generate-secrets) query (squery sparams ...)...)]
+
     [(_ contract (guard ...) query ...)
      #'(begin
          ;(define start-time (current-inexact-milliseconds))           
          (define flag #f)
-
-         (define secrets-list null)
-
-         ;(when (gen-secs?)
-         ; (set! secrets-list (get-secrets-lengths contract (guard ...))))
 
          (define start-time (current-inexact-milliseconds))           
 
@@ -36,11 +74,8 @@
            (displayln "")
            (set! flag #f)
 
-           (unless (gen-secs?)
-             (set! secrets-list (get-secrets-from-query query (guard ...))))
-
            ;model check the query for each solution of the constraints
-           (for ([secrets-map secrets-list])
+           (for ([secrets-map (get-secrets-from-query query (guard ...))])
              #:break flag        
              (reset-maude-out)
              (maude-opening)
@@ -135,6 +170,8 @@
 (define-syntax (execute-maude-query stx)
   (syntax-parse stx
     #:literals (check-liquid check has-at-least check-query secrets)
+    #;[(_ secret-map (check-liquid strategy ...))
+       #'(raise-syntax-error 'bitml "(auto-generate-secrets) has to be specified before other queries" #f)]
     [(_ secret-map (check-liquid strategy ...))
      #'(begin
          (let ([maude-str 

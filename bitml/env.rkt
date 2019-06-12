@@ -27,14 +27,6 @@
 
 (define (gen-keys?) gen-keys)
 
-;automatic generation of the secrets
-(define generate-secrets #f)
-
-(define (set-gen-secs!)
-  (set! generate-secrets #t))
-
-(define (gen-secs?) generate-secrets)
-
 ;security parameter (minimun secret length)
 (define sec-param 128)
 

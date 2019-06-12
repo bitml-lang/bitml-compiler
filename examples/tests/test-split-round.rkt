@@ -5,7 +5,6 @@
 
 (debug-mode)
 
-(auto-generate-secrets)
 
 (define (txA) "txid:2e647d8566f00a08d276488db4f4e2d9f82dd82ef161c2078963d8deb2965e35@1")
 
@@ -24,4 +23,5 @@
   (0.1 -> (revealif (a) (pred (= a 9)) (withdraw "A")))
   (0.1 -> (revealif (a) (pred (!= a 1)) (withdraw "A"))))
 
+ (auto-generate-secrets)
  (check-liquid (strategy "A" (do-reveal a))))

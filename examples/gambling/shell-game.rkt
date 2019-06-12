@@ -28,4 +28,10 @@
            (after 10 (withdraw "B"))   ; A is late
            )
 
-          (check-query "[] (b revealed-size 3 => <> A has-deposit>= 200000000 satoshi)"))
+          ;check that if A authorizes any branch
+          ;and if B reveals b, it has size 3,
+          ;then A has 2 BTC
+          (check "A" has-at-least 2
+                 (strategy "A" (do-auth))
+                 (secrets ((b 3))))
+          )
