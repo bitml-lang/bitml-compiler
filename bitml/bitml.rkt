@@ -107,11 +107,11 @@
              [secrets (list 'sec ...)]
              [compiled-continuation (get-script* parent (~? p ()))])
          (string-append "(" pred-comp
-          (foldr (lambda (x res)
-                   (string-append "hash160(" (symbol->string x) ") == hash:" (get-secret-hash x)
-                                  " && size(" (symbol->string x) ") >= " (number->string sec-param) " && " res))
-                 "" secrets)
-          compiled-continuation ")"))]
+                        (foldr (lambda (x res)
+                                 (string-append "hash160(" (symbol->string x) ") == hash:" (get-secret-hash x)
+                                                " && size(" (symbol->string x) ") >= " (number->string sec-param) " && " res))
+                               "" secrets)
+                        compiled-continuation ")"))]
     [(_ parent '(auth part ... cont)) #'(get-script* parent cont)]
     [(_ parent '(after t cont)) #'(get-script* parent cont)]
     [(_ parent x)
@@ -362,13 +362,19 @@
     [(_ (after t (contract params ...))
         parent-contract parent-tx input-idx value fee-v parts timelock sec-to-reveal all-secrets)
      #'(compile (contract params ...)
-                parent-contract parent-tx input-idx value fee-v parts (max t timelock) sec-to-reveal all-secrets)]
+                parent-contract parent-tx input-idx value fee-v parts (max t timelock) sec-to-reveal all-secrets)]   
 
     [(_ (auth part:string ... (contract params ...))
         orig-contract parent-tx input-idx value fee-v parts timelock sec-to-reveal all-secrets)
      ;#'(contract params ... parent-tx input-idx value (remove part parts) timelock)]
      #'(compile (contract params ...)
                 orig-contract parent-tx input-idx value fee-v parts timelock sec-to-reveal all-secrets)]
+
+    [(_ (choice cn ...)
+        orig-contract parent-tx input-idx value fee-v parts timelock sec-to-reveal all-secrets)
+     
+     #'(raise-syntax-error 'bitml (format "Invalid syntax in ~a\nMaybe you can fix it with (tau ~a)"
+                                          '(choice cn ...)  '(choice cn ...)) #f)]
     
     [(_ contract rest ...) #'(raise-syntax-error 'bitml (format "Invalid syntax in ~a" 'contract) #f)]))
 
