@@ -217,7 +217,7 @@
 
 (define-syntax (compile-maude-action stx)
   (syntax-parse stx
-    #:literals (b-if do-reveal do-auth not-destroy do-destroy not-reveal)
+    #:literals (b-if do-reveal do-auth not-auth not-destroy do-destroy not-reveal)
 
     [(_ part:string (do-reveal secret:id) b-if pred)
      #'(string-append "eq strategy(ctx:Context S:Configuration" (compile-maude-pred pred)
@@ -232,6 +232,10 @@
 
     [(_ part:string (do-auth contract))
      #'(string-append "eq strategy(S:SemConfiguration, " part " lock " (compile-maude-contract contract strip-auth) " in x:Name) = false . \n")]
+    
+    [(_ part:string (not-auth contract))
+     #'(string-append "eq strategy(S:SemConfiguration, " part " authorize " (compile-maude-contract contract strip-auth) " in x:Name) = false . \n")]
+    
     [(_ part:string (do-auth contract) b-if pred)
      #'(string-append "eq strategy(S:SemConfiguration, " part " lock " (compile-maude-contract contract strip-auth) " in x:Name) = false . \n"
                       "eq strategy(ctx:Context S:Configuration " (compile-maude-pred pred)
