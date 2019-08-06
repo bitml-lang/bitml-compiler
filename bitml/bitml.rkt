@@ -58,7 +58,9 @@
 (define-syntax (secret stx)
   (syntax-parse stx
     [(_ part:string ident:id hash:string)     
-     #'(add-secret part 'ident hash)]
+     #'(begin
+         (add-secret part 'ident hash)
+         (add-output (string-append "const sec_" (symbol->string 'ident) " = _ //add value of secret " (symbol->string 'ident))))]
     [(_)
      (raise-syntax-error 'deposit "wrong usage of secret" stx)]))
 
@@ -231,12 +233,6 @@
             (list 'tx-id ...))
 
            (add-output (participants->sigs-declar parts tx-name parent-contract))
-
-           ;compile the secrets declarations
-           (for-each
-            (lambda (x) (add-output (string-append "const sec_" x " = _ //add value of secret " (string-replace x ":string" ""))))
-            sec-to-reveal)
-
          
            (add-output (format "\ntransaction ~a { \n ~a \n output = ~a BTC : fun(~a) . ~a \n}\n"
                                tx-name inputs (btc+ (get-remaining-fee fee-v) new-value) script-params script))
@@ -285,11 +281,6 @@
                                    '(split (val (choice (contract params ...)...))...))
 
                (begin
-                 ;compile the secrets declarations
-                 (for-each
-                  (lambda (x) (add-output (string-append "const sec_" x " : string = _ //add value of secret " (string-replace x ":string" ""))))
-                  sec-to-reveal)
-
                  (add-output (format "\ntransaction ~a { \n ~a \n ~a \n~a}\n" tx-name inputs output (format-timelock timelock)))
            
                  ;compile the continuations
