@@ -162,8 +162,9 @@
                  (let ([ht (make-hash)])
                    (hash-set! ht 'ident 1)...
                    ht))])
-                                    
-           (displayln (format "WARNING: Using default secrets \n~a\n" (format-hash-list hash-list)))
+
+           (unless (= 0 (length (list 'ident ...)))
+             (displayln (format "WARNING: Using default secrets \n~a\n" (format-hash-list hash-list))))
            hash-list))]))
 
 
