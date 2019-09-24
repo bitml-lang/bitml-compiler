@@ -28,14 +28,15 @@
   (tau (split (2 -> (withdraw "S")) (2 -> (withdraw lB)))))
 
 
-(contract (pre
-           (deposit "A" 2 "txA@0")
-           (deposit "B" 2 "txB@0"))
-          (choice
-           (auth "A" (ref (RunningAuction1 "A" "B")))  ; A bids first
-           (auth "B" (ref (RunningAuction1 "B" "A")))  ; B bids first
-           (after 10 (split (2 -> (withdraw "A")) (2 -> (withdraw "B"))))
-           )
+(contract
+ (pre
+  (deposit "A" 2 "txA@0")
+  (deposit "B" 2 "txB@0"))
+ (choice
+  (auth "A" (ref (RunningAuction1 "A" "B")))  ; A bids first
+  (auth "B" (ref (RunningAuction1 "B" "A")))  ; B bids first
+  (after 10 (split (2 -> (withdraw "A")) (2 -> (withdraw "B"))))
+  )
 
-          (check-liquid)
-          )
+ (check-liquid)
+ )
