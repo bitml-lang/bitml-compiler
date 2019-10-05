@@ -14,7 +14,8 @@
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" rel="stylesheet">
     <link href="style.css" rel="stylesheet" type="text/css"/>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="loading.css"/>
+    <link rel="stylesheet" type="text/css" href="loading-btn.css"/>
 
 
 </head>
@@ -141,10 +142,12 @@
                 <script>
                     function compile() {
                         const editor = ace.edit("editor");
-                        var code = editor.getValue();
+                        const code = editor.getValue();
+                        const button = document.getElementById("compile");
+
 
                         // 1. create a new XMLHttpRequest object -- an object like any other!
-                        var myRequest = new XMLHttpRequest();
+                        const myRequest = new XMLHttpRequest();
                         // 2. open the request and pass the HTTP method name and the resource as parameters
                         myRequest.open('POST', 'compile.php', true);
                         // 3. write a function that runs anytime the state of the AJAX request changes
@@ -153,8 +156,7 @@
                             // 4. check if the request has a readyState of 4, which indicates the server has responded (complete)
                             if (myRequest.readyState === 4) {
                                 // 5. insert the text sent by the server into the HTML of the 'ajax-content'
-                                console.log(myRequest.readyState);
-                                console.log(myRequest.responseText);
+                                button.classList.remove("running");
                                 document.getElementById('result').innerHTML = myRequest.responseText;
                             }
                         };
@@ -163,6 +165,7 @@
                         data.append('code', code);
 
                         myRequest.send(data);
+                        button.classList.add("running");
 
                     }
                 </script>
