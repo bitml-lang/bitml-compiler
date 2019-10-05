@@ -14,6 +14,6 @@ $path = stream_get_meta_data($temp)['uri'];
 
 //echo($path . $code);
 
-exec("racket $path", $result);
+exec("racket $path 2>&1", $result);
 fclose($temp);
 echo "".implode("\n",$result);
