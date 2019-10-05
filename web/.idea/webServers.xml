@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="eb4619a9-3c66-422c-bbc9-8c61e5b3decc" name="local" url="http://localhost">
+        <fileTransfer port="0" mountedRoot="C:\xampp\htdocs\bitml" accessType="MOUNT" />
+      </webServer>
+    </option>
+  </component>
+</project>

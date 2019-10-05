@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+    <meta content="en-us" http-equiv="Content-Language">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+
+    <title>BitML online editor</title>
+
+
+    <!-- Bootstrap CSS -->
+    <link crossorigin="anonymous" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" rel="stylesheet">
+    <link href="style.css" rel="stylesheet" type="text/css"/>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+
+</head>
+<body>
+<div class="pt-2" id="page-content-wrapper">
+    <div class="container mb-3">
+
+        <div class="card">
+            <div class="card-header text-center">
+                <h3 class="card-title">BitML Online Editor</h3>
+                <p class="small mb-0">beta version - USE ON THE MAINNET AT YOUR OWN RISK</p>
+
+                <div class="mt-3">
+                    <a class="header-icon" href="http://github.com/bitml-lang/bitml-compiler" target="_blank"
+                       title="Github repository"><i class="fab fa-github"></i></a>
+                    <a class="header-icon" href="http://blockchain.unica.it/bitml/docs" target="_blank"
+                       title="Documentation"><i class="fas fa-book"></i></a>
+                </div>
+            </div>
+            <div class="card-body">
+
+                <div class="border border-dark mb-3">
+                        <pre id="editor">
+#lang bitml
+
+(participant "A" "0339bd7fade9167e09681d68c5fc80b72166fe55bbb84211fd12bde1d57247fbe1")
+(participant "B" "034a7192e922118173906555a39f28fa1e0b65657fc7f403094da4f85701a5f809")
+
+(define (txA) "tx:0200000001c75e1b501f7a1691b16d06398b4235ab35e11ccda3c3f9160d68739c84d435ed00000000e4483045022100ad5f0022e6ae8e789a97ca9497b8d307690b96ddbfcdf822711b1983b328d26702204f276374584292322c1ad33dc7b67600673ace464e9c60990de7a0123933803c014730440220055c42ae93321b4061055c782be11d3392c84ff34b1d4fbbe3a9e208f63518170220231d7712a4d36e5397264bfc8db89fd1d13d64937ee886fb9872f260bf979760014c516b6b006c766c766b7c6b5221034a7192e922118173906555a39f28fa1e0b65657fc7f403094da4f85701a5f809210339bd7fade9167e09681d68c5fc80b72166fe55bbb84211fd12bde1d57247fbe152aeffffffff01d5ea0600000000001976a914ded135b86a7ff97aece531c8b97dc8a3cb3ddc7488ac00000000@0")
+(define (txFee) "tx:02000000013ea7dd4d036b9a3048992e9c7e4b8c054e7949d08d233005aa79c50ee92ff0a800000000e3483045022100f956e4b07562a209662b42ab0b6d26784de59470d992a542c207e74bf03776d5022071a5089744aa25316d29cb9d1e9bd28f5f50eba6c2c5b57177bf0a17c35308a601463043021f26ce5a6c343fcb5edf3a06dbb95006cbf063393ec7b5beebd16e2c8120c059022015c4afec46a1c04d1dcfbf8e414d9f83d0a008c91b1a96f6b499edec2b8d1d48014c516b6b006c766c766b7c6b5221034a7192e922118173906555a39f28fa1e0b65657fc7f403094da4f85701a5f809210339bd7fade9167e09681d68c5fc80b72166fe55bbb84211fd12bde1d57247fbe152aeffffffff01d5ea0600000000001976a914ded135b86a7ff97aece531c8b97dc8a3cb3ddc7488ac00000000@0")
+
+(debug-mode)
+
+(contract
+ (pre (deposit "A" 0.00453333 (ref (txA)))
+      (fee "A" 0.00453333 (ref (txFee)))
+      (secret "A" a "9f3df038eeadc0c240fb7f82e31fdfe46804fc7c"))
+
+ (choice (reveal (a) (withdraw "A"))
+      (after 1550000 (withdraw "B")))
+
+ (check-liquid)
+
+ (check "A" has-at-least 0.00453333
+        (strategy "A" (do-reveal a)))
+
+ (check-query "[]<> (a revealed \\/ B has-deposit>= 453333 satoshi)")
+ )</pre>
+
+
+                    <!-- load ace -->
+                    <script src="ace/ace.js"></script>
+                    <!-- load ace themelist extension -->
+                    <script src="ace/ext-themelist.js"></script>
+                    <!-- load ace language_tools extension -->
+                    <script src="ace/ext-language_tools.js"></script>
+                    <script>
+
+                        var $ = document.getElementById.bind(document);
+                        var dom = require("ace/lib/dom");
+
+                        ace.config.set("enableBasicAutocompletion", true);
+
+                        //add command to all new editor instances
+                        require("ace/commands/default_commands").commands.push({
+                            name: "Toggle Fullscreen",
+                            bindKey: "F11",
+                            exec: function (editor) {
+                                var fullScreen = dom.toggleCssClass(document.body, "fullScreen")
+                                dom.setCssClass(editor.container, "fullScreen", fullScreen)
+                                editor.setAutoScrollEditorIntoView(!fullScreen)
+                                editor.resize()
+                            }
+                        })
+
+                        // create first editor
+                        var editor = ace.edit("editor");
+                        editor.setTheme("ace/theme/eclipse");
+                        editor.session.setMode("ace/mode/bitml");
+                        editor.renderer.setScrollMargin(10, 10);
+                        editor.setOptions({
+                            // "scrollPastEnd": 0.8,
+                            autoScrollEditorIntoView: true
+                        });
+
+                        var count = 1;
+
+                        function add() {
+                            var oldEl = editor.container
+                            var pad = document.createElement("div")
+                            pad.style.padding = "40px"
+                            oldEl.parentNode.insertBefore(pad, oldEl.nextSibling)
+
+                            var el = document.createElement("div")
+                            oldEl.parentNode.insertBefore(el, pad.nextSibling)
+
+                            count++
+                            var theme = themes[Math.floor(themes.length * Math.random() - 1e-5)]
+                            editor = ace.edit(el)
+                            editor.setOptions({
+                                mode: "ace/mode/javascript",
+                                theme: theme,
+                                autoScrollEditorIntoView: true
+                            })
+
+                            editor.setValue([
+                                "this is editor number: ", count, "\n",
+                                "using theme \"", theme, "\"\n",
+                                ":)"
+                            ].join(""), -1)
+
+                            scroll()
+                        }
+
+                        var themes = require("ace/ext/themelist").themes.map(function (t) {
+                            return t.theme
+                        });
+
+                        window.add = add;
+                    </script>
+                    </pre>
+                </div>
+
+                <script>
+                    function compile() {
+                        const editor = ace.edit("editor");
+                        var code = editor.getValue();
+
+                        // 1. create a new XMLHttpRequest object -- an object like any other!
+                        var myRequest = new XMLHttpRequest();
+                        // 2. open the request and pass the HTTP method name and the resource as parameters
+                        myRequest.open('POST', 'compile.php', true);
+                        // 3. write a function that runs anytime the state of the AJAX request changes
+                        myRequest.onreadystatechange = function () {
+
+                            // 4. check if the request has a readyState of 4, which indicates the server has responded (complete)
+                            if (myRequest.readyState === 4) {
+                                // 5. insert the text sent by the server into the HTML of the 'ajax-content'
+                                console.log(myRequest.readyState);
+                                console.log(myRequest.responseText);
+                                document.getElementById('result').innerHTML = myRequest.responseText;
+                            }
+                        };
+
+                        var data = new FormData();
+                        data.append('code', code);
+
+                        myRequest.send(data);
+
+                    }
+                </script>
+                <div class="text-center">
+                    <div class="btn btn-primary ld-ext-right" id="compile" onclick="compile()" type="button">Evaluate
+                        <div class="loader ld ld-ring ld-spin"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                        <pre class="mt-2 bg-white border border-dark resizable" id="result">
+                        </pre>
+            </div>
+        </div>
+        <div class="row text-center small mt-5">
+            <div class="col">
+                Copyright © 2019 - Stefano Lande
+            </div>
+        </div>
+        <div class="row text-center small mt-1">
+            <div class="col">
+                <a href="http://blockchain.unica.it" target="_blank">Blockchain@Unica</a>, <a href="http://unica.it"
+                                                                                              target="_blank">University
+                of Cagliari</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

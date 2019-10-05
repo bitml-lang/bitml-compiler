@@ -1,0 +1,181 @@
+
+#result {
+	height: 250px;
+	font-size: small;
+}
+
+#xtext-editor {
+	height: 400px
+}
+.resizable {
+	resize: vertical;
+	overflow: auto
+}
+
+.btn {
+	cursor: pointer;
+}
+
+.btn.focus, .btn:focus, .btn.active, .btn:active {
+	box-shadow: inherit !important;
+}
+
+#sidebar-close {
+	background-color: transparent;
+}
+
+#wrapper {
+    padding-left: 0;
+    -webkit-transition: all 0.5s ease;
+    -moz-transition: all 0.5s ease;
+    -o-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+}
+
+#wrapper.toggled {
+    padding-left: 400px;
+}
+
+#sidebar-wrapper {
+    z-index: 1000;
+    position: fixed;
+    left: 400px;
+    width: 0;
+    height: 100%;
+    margin-left: -400px;
+    overflow-y: auto;
+    background: #fafafa;
+
+    -webkit-transition: all 0.5s ease;
+    -moz-transition: all 0.5s ease;
+    -o-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+
+    border-right: 1px solid rgba(0,0,0,.125);
+    box-sizing: content-box;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+    width: 400px;
+}
+
+#page-content-wrapper {
+    width: 100%;
+    position: absolute;
+}
+
+#wrapper.toggled #page-content-wrapper {
+    position: absolute;
+    margin-right: -400px;
+}
+
+@media(min-width:576px) {
+    #wrapper {
+        padding-left: 400px;
+    }
+
+    #wrapper.toggled {
+        padding-left: 0;
+    }
+
+    #sidebar-wrapper {
+        width: 400px;
+    }
+
+    #wrapper.toggled #sidebar-wrapper {
+        width: 0;
+    }
+
+    #page-content-wrapper {
+        position: relative;
+    }
+
+    #wrapper.toggled #page-content-wrapper {
+        position: relative;
+        margin-right: 0;
+    }
+}
+
+@media(max-width:576px) {
+    #wrapper {
+        padding-left: 100%;
+    }
+
+    #wrapper.toggled {
+        padding-left: 0;
+    }
+
+    #sidebar-wrapper {
+        width: 100%;
+    }
+
+    #wrapper.toggled #sidebar-wrapper {
+        width: 0;
+    }
+
+    #page-content-wrapper {
+    }
+
+    #wrapper.toggled #page-content-wrapper {
+        margin-right: 0;
+    }
+}
+
+#sidebar-content {
+	width: 100%;
+}
+
+/* FIX */
+.toggle-handle {
+	background-color: #fff;
+}
+
+/* FIX */
+.toggle-off {
+	left: auto !important;
+}
+
+#menu-toggle {
+        background-color: transparent;
+}
+
+.header-icon {
+    font-size: 1.5em;
+    color: #6c757d;
+    padding: 0 10px
+}
+
+.loader:after {
+	border-width: 0.15px;
+}
+
+/*
+ * Highlight the output area
+ */
+.highlight-result {
+	border-color: #007bff !important;
+	box-shadow: 0 0 10px -5px #007bff;
+    -webkit-transition: all 0.5s ease;
+    -moz-transition: all 0.5s ease;
+    -o-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+}
+
+/*
+ * Readonly fields were too much grey
+ */
+.form-control:disabled, .form-control[readonly] {
+    background-color: #f4f4f4;
+}
+
+/* new stuff */
+
+.ace_editor {
+    position: relative !important;
+    border: 1px solid lightgray;
+    margin: auto;
+    height: 400px;
+    width: 100%;
+    font-size: 15px;
+
+}
