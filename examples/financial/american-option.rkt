@@ -24,7 +24,7 @@
 
 ;; A chooses not to proceed with the investment,
 ;; and gets back her deposit minus a cancellation fee.
-;; I gets back his deposit, plus the fee from A.
+;; I gets gets the fee from A.
 (define (Retract)
   (split
    (0.95 -> (withdraw "A"))
@@ -34,26 +34,25 @@
 ;; The funds are locked up to a certain time,
 ;; then she can withdraw the whole balance
 (define (Invest)
-  (after 1600000 (withdraw "A")))
-
-(define (Invest2)
   (split
    (1 -> (withdraw "I"))
    (0 -> (after 160000000 (put (x) (withdraw "A"))))))
 
 ;; A failed to choose whether to invest or retract.
-;; I can withdraw the whole balance.
+;; SHe gets back her deposit minus a penalty.
+;; I gets gets the penalty from A.
 (define (Default)
-  (withdraw "I"))
+  (split
+   (0.9 -> (withdraw "A"))
+   (0.1 -> (withdraw "I"))))
 ;--------------------------------------------------------------
 
 (contract
  (pre (deposit "A" 1 (ref (txA)))
-      (vol-deposit "I" x 0.002 (ref (txI)))
+      (vol-deposit "I" x 1.1 (ref (txI)))
 
       (fee "A" 0.01 (ref (txFee))))
  
- (ref (AmericanOption "A" 1550000 Retract Invest2 Default))
+ (ref (AmericanOption "A" 1550000 Retract Invest Default))
  
- (check-liquid
-    (strategy "A" (do-auth (auth "A" (tau (ref (Retract))))))))
+ (check-liquid))
