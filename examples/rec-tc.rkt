@@ -8,6 +8,7 @@
 (define (X n)
   (tau (choice
    (reveal (a) (withdraw "A"))
+   (after 10 (withdraw "A"))
    (rec (X "n"))
    )))
 
