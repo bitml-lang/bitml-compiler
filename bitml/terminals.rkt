@@ -49,4 +49,6 @@
 
 (define-syntax (strip-auth stx) (raise-syntax-error 'bitml "wrong usage of strip-auth" stx))
 
+(define-syntax (rec stx) (raise-syntax-error 'bitml "wrong usage of rec" stx))
+
 (provide (all-defined-out))

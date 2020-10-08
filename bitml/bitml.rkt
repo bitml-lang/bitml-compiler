@@ -1,8 +1,8 @@
 #lang racket/base
 
-(require (for-syntax racket/base syntax/parse)
+(require (for-syntax racket/base syntax/parse "env.rkt")
          racket/list racket/string
-         "helpers.rkt" "env.rkt" "exp.rkt" "terminals.rkt")
+         "helpers.rkt" "env.rkt" "exp.rkt" "terminals.rkt" "expand-inside.rkt")
 
 (provide (all-defined-out))
 
@@ -21,6 +21,7 @@
 (define-syntax (participant stx)
   (syntax-parse stx
     [(_ ident:string pubkey:string)
+     (add-participant #'ident #'pubkey)
      #'(add-participant 'ident pubkey)]))
 
 ;declaration of a participant
@@ -203,7 +204,7 @@
 
 (define-syntax (compile stx)
   (syntax-parse stx
-    #:literals(pred choice -> putrevealif split withdraw after auth reveal revealif put tau)
+    #:literals(pred choice -> putrevealif split withdraw after auth reveal revealif put tau rec)
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (choice (contract params ...)...))
         parent-contract parent-tx input-idx value fee-v parts timelock sec-to-reveal all-secrets)
      #'(begin
@@ -366,6 +367,10 @@
      
      #'(raise-syntax-error 'bitml (format "Invalid syntax in ~a\nMaybe you can fix it with (tau ~a)"
                                           '(choice cn ...)  '(choice cn ...)) #f)]
+    [(_ (rec something ...)
+        params ...)
+     ;rewrites to nothing
+     #'(+ 1 1)]
     
     [(_ contract rest ...) #'(raise-syntax-error 'bitml (format "Invalid syntax in ~a" 'contract) #f)]))
 

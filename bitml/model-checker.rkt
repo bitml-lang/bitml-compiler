@@ -347,7 +347,12 @@
      #'(compile-maude-contract (putrevealif (tx ...) () (contract params ...)))]
 
     [(_ (tau (contract params ...)))
-     #'(string-append "tau . ( " (compile-maude-contract (contract params ...)) " )")]))
+     #'(string-append "tau . ( " (compile-maude-contract (contract params ...)) " )")]
+
+        [(_ (rec something ...)
+        params ...)
+     ;rewrites to nothing
+     #'(string-append "0" "")]))
 
 (define (format-num n)
   (number->string (exact-floor (* n (expt 10 8)))))
