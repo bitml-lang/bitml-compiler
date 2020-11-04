@@ -29,6 +29,4 @@
            (after 10 (withdraw "B"))   ; A is late
            )
 
-          (check-liquid
-           (secrets ((b 0))
-                    ((b 2)))))
+          (check-liquid))

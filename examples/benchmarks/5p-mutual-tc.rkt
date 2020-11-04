@@ -175,4 +175,4 @@
  
  (ref (C00))
 
- #;(check-liquid))
+ (check-liquid))

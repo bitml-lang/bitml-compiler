@@ -45,7 +45,7 @@
              (displayln "Result: true")))...
                                          
                                          (unless (= 0 (length (list 'query ...)))
-                                           (displayln (format "Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))
+                                           (displayln (format "Total time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))
                                            (displayln "=============================================================================*/\n")))]))
 
 ;writes the opening declarations for maude
@@ -78,7 +78,7 @@
          ;[sem-vdeps (list+sep->string sem-vdeps "")]
          [test ""])
     
-    (string-append "\neq Cconf = < MContr > | unlock \n"
+    (string-append "\neq Cconf = < MContr > | unlock .\n"
                    "endm\n"
                    "smod LIQUIDITY_CHECK is\nprotecting BITML_CHECK .\nincluding BITML-CONTRACT .\nendsm\n")))
 
@@ -108,7 +108,7 @@
         (bitml-maude-path (environment-variables-ref (current-environment-variables) #"BITML_MAUDE_PATH")))
     
     (with-output-to-string (lambda ()
-                             (system (format "~a/maude ~a/model-checker.maude ~a/bitml.maude test.maude"
+                             (system (format "~a/maude -no-advise ~a/model-checker.maude ~a/recursion/bitml.maude test.maude"
                                              maude-path maude-mc-path bitml-maude-path) #:set-pwd? #t)))))
 
 (define (format-maude-out str)
@@ -118,33 +118,29 @@
      ;(displayln "Result: false\n")
      ;(displayln cex)
      (cons #f (format-cex cex))]
-    [(regexp #px"rewrites:.* \\((.*) real\\).*(result Bool: true.*)Bye" (list _ time res))
-     ;(displayln (string-append "Computation time: " time))
-     ;(displayln "Result: true")
+    [(regexp #px"rewrites:.* \\((.*) real\\).*(result Bool: true).*Bye" (list _ time res))
+     (displayln (string-append "Model-checking time: " time))
+     (displayln "Result: true")
      (cons #t "")]
     [x ;(displayln (string-append "Error: " x))
      (cons #f (string-append "Error: " x))]))
 
 (define-syntax (compile-maude-contract stx)
   (syntax-parse stx
-    #:literals (withdraw after auth split putrevealif pred choice strip-auth tau put reveal revealif)
+    #:literals (withdraw after auth split putrevealif pred choice tau put reveal revealif)
     [(_ (withdraw part:string))
-     #'(string-append "withdraw " part)]
+     #'(string-append "(wd " part")")]
     [(_ (after t (contract params ...)))
-     #'(format "after ~a : ~a" t (compile-maude-contract (contract params ...)))]
-    [(_ (auth part:string ... (contract params ...)))
-     #'(string-append "(" (list+sep->string (list part ...) " , ") ") : " (compile-maude-contract (contract params ...)))]
-    [(_ (auth part:string ... (contract params ...)) strip-auth)
      #'(compile-maude-contract (contract params ...))]
+    [(_ (auth part:string ... (contract params ...)))
+     #'(if (equal? (list "A") (list part ...))
+           (string-append " (tau. " (compile-maude-contract (contract params ...))" ) ")
+           (string-append " (*: " (compile-maude-contract (contract params ...))" ) "))]
 
     [(_ (split (val:number -> (contract params ...))... ))
      #'(let* ([vals (list (format-num val) ...)]
               [g-contracts (list (compile-maude-contract (contract params ...)) ...)]
-              [decl-parts (map
-                           (lambda (v gc) (string-append v " satoshi ~> ( " gc " )"))
-                           vals
-                           g-contracts)]
-              [decl (list+sep->string decl-parts "\n")])
+              [decl (list+sep->string g-contracts "\n")])
            
          (string-append "split( " decl " )" ))]
 
@@ -153,20 +149,12 @@
          (string-append "( " (list+sep->string g-contracts " + ") " )"))]
 
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (contract params ...)))
-     #'(let* ([txs (list (symbol->string 'tx-id) ...)]
-              [secs (list (symbol->string 'sec) ...)]
-              [txs-len (length txs)]
-              [secs-len (length secs)]
-              [compiled-pred (~? (string-append " if " (compile-pred-maude p)) "")]
+     #'(let* ([secs (list (get-secret-part 'sec) ...)]
               [compiled-cont (compile-maude-contract (contract params ...))])
-         
-         (if (and (= 0 secs-len) (> txs-len 0))
-             (string-append "( put (" (list+sep->string txs) ") . " compiled-cont " )")
-             (if (and (> secs-len 0) (= txs-len 0))
-                 (string-append "( reveal (" (list+sep->string secs) ")" compiled-pred " . " compiled-cont " )")
-                 (if (and (> secs-len 0) (> txs-len 0))
-                     (string-append "( put (" (list+sep->string txs) ") reveal (" (list+sep->string secs) ")" compiled-pred " . " compiled-cont " )")
-                     ""))))]
+
+         (if (equal? (list "A") secs)
+               (string-append " (tau. " compiled-cont" ) ")
+               (string-append " (*: " compiled-cont" ) ")))]
 
     [(_ (reveal (sec:id ...) (contract params ...)))
      #'(compile-maude-contract (putrevealif () (sec ...) (contract params ...)))]
@@ -178,7 +166,7 @@
      #'(compile-maude-contract (putrevealif (tx ...) () (contract params ...)))]
 
     [(_ (tau (contract params ...)))
-     #'(string-append "tau . ( " (compile-maude-contract (contract params ...)) " )")]))
+     #'(string-append "(tau. ( " (compile-maude-contract (contract params ...)) " ))")]))
 
 (define (format-num n)
   (number->string (exact-floor (* n (expt 10 8)))))
