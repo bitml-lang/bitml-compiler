@@ -14,6 +14,7 @@
 (define-syntax (after stx) (raise-syntax-error 'bitml "wrong usage of after" stx))
 (define-syntax (auth stx) (raise-syntax-error 'bitml "wrong usage of auth" stx))
 (define-syntax (tau stx) (raise-syntax-error 'bitml "wrong usage of tau" stx))
+(define-syntax (rngt stx) (raise-syntax-error 'bitml "wrong usage of rngt" stx))
 
 ;operators for predicate in putrevealif
 (define-syntax (btrue stx) (raise-syntax-error 'bitml "wrong usage of true" stx))

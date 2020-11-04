@@ -127,11 +127,15 @@
 
 (define-syntax (compile-maude-contract stx)
   (syntax-parse stx
-    #:literals (withdraw after auth split putrevealif pred choice tau put reveal revealif)
+    #:literals (withdraw after auth split putrevealif pred choice tau put reveal revealif rngt)
     [(_ (withdraw part:string))
      #'(string-append "(wd " part")")]
     [(_ (after t (contract params ...)))
      #'(compile-maude-contract (contract params ...))]
+
+    [(_ (rngt contract-name))
+     #'(string-append "(rngt " contract-name ")")]
+    
     [(_ (auth part:string ... (contract params ...)))
      #'(if (equal? (list "A") (list part ...))
            (string-append " (tau. " (compile-maude-contract (contract params ...))" ) ")
@@ -153,8 +157,8 @@
               [compiled-cont (compile-maude-contract (contract params ...))])
 
          (if (equal? (list "A") secs)
-               (string-append " (tau. " compiled-cont" ) ")
-               (string-append " (*: " compiled-cont" ) ")))]
+             (string-append " (tau. " compiled-cont" ) ")
+             (string-append " (*: " compiled-cont" ) ")))]
 
     [(_ (reveal (sec:id ...) (contract params ...)))
      #'(compile-maude-contract (putrevealif () (sec ...) (contract params ...)))]

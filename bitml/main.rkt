@@ -10,7 +10,7 @@
 
 (provide  participant contract withdraw deposit
           after auth key secret vol-deposit putrevealif
-          put reveal revealif -> tau pre
+          put reveal revealif -> tau pre rngt
           pred choice split debug-mode between 
           (rename-out [btrue true] [band and] [bor or] [bnot not] [define-rewrite-rule define]
                       [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size]
