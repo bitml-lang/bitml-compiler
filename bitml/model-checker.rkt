@@ -2,7 +2,7 @@
 
 (require (for-syntax racket/base syntax/parse)
          racket/list racket/port racket/system racket/match racket/string racket/math racket/set
-         "bitml.rkt" "helpers.rkt" "env.rkt" "terminals.rkt" "exp.rkt" "constraints.rkt")
+         "bitml.rkt" "helpers.rkt" "env.rkt" "terminals.rkt" "exp.rkt" )
 
 (provide (all-defined-out))
 
@@ -16,50 +16,6 @@
 
 (define-syntax (model-check stx)
   (syntax-parse stx
-    #:literals (secrets auto-generate-secrets)
-    [(_ contract (guard ...) (~optional (auto-generate-secrets)))
-     #'(values)]
-    [(_ contract (guard ...) (auto-generate-secrets) (query params ...)...)
-     #'(begin
-         (define flag #f)
-
-         (define secrets-list (get-secrets-lengths contract (guard ...)))
-
-         (define start-time (current-inexact-milliseconds))           
-
-         ;for each query
-         (begin
-           (display "\n/*=============================================================================\nModel checking result for ")
-           (displayln '(query params ...))
-           (displayln "")
-           (set! flag #f)
-
-           ;model check the query for each solution of the constraints
-           (for ([secrets-map secrets-list])
-             #:break flag        
-             (reset-maude-out)
-             (maude-opening)
-             (add-maude-output (string-append "eq MContr = " (compile-maude-contract contract) " . \n"))
-             (let ([result (execute-maude-query secrets-map (query params ...))])
-
-               ;if the model checking returns false display the cex
-               (unless (car result)
-                 (displayln "Result: false")
-                 (unless (hash-empty? secrets-map)
-                   (secrets-pretty-print secrets-map))
-                 (displayln (cdr result))
-                 (set! flag #t))))
-           
-           (unless flag
-             (displayln "Result: true")))...
-                                         
-                                         (unless (= 0 (length (list '(query params ...) ...)))
-                                           (displayln (format "Model checking time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))
-                                           (displayln "=============================================================================*/\n")))]
-    
-    [(_ contract (guard ...) query (auto-generate-secrets) (squery sparams ...)...)
-     #'(model-check contract (guard ...) (auto-generate-secrets) query (squery sparams ...)...)]
-
     [(_ contract (guard ...) query ...)
      #'(begin
          ;(define start-time (current-inexact-milliseconds))           
@@ -74,23 +30,18 @@
            (displayln "")
            (set! flag #f)
 
-           ;model check the query for each solution of the constraints
-           (for ([secrets-map (get-secrets-from-query query (guard ...))])
-             #:break flag        
-             (reset-maude-out)
-             (maude-opening)
-             (add-maude-output (string-append "eq MContr = " (compile-maude-contract contract) " . \n"))
-             (let ([result (execute-maude-query secrets-map query)])
+           (reset-maude-out)
+           (maude-opening)
+           (add-maude-output (string-append "eq MContr = " (compile-maude-contract contract) " . \n"))
+           (let ([result (execute-maude-query query)])
 
-               ;if the model checking returns false display the cex
-               (unless (car result)
-                 (displayln "Result: false")
-                 (unless (hash-empty? secrets-map)
-                   (secrets-pretty-print secrets-map))
-                 (displayln (cdr result))
-                 (set! flag #t))))
+             ;if the model checking returns false display the cex
+             (unless (car result)
+               (displayln "Result: false")
+                 
+               (displayln (cdr result))))
            
-           (unless flag
+           (when flag
              (displayln "Result: true")))...
                                          
                                          (unless (= 0 (length (list 'query ...)))
@@ -113,18 +64,19 @@
          [sem-conf "op Cconf : -> Configuration .\n"])
     (add-maude-output parts-dec contract sem-conf)))
 
-(define (get-maude-closing secrets-map)
+(define (get-maude-closing)
   (let* (;aggiungere i ContractName trovati alla configurazione
-         [sem-secrets (map
-                       (lambda (s) (string-append " | { " (get-secret-part s) " : "
-                                                  (symbol->string s) " # " (number->string (hash-ref secrets-map s)) " }"))
-                       (get-secrets))]
-         [sem-secret-dec (list+sep->string sem-secrets "")]
-         [sem-vdeps (map (lambda (d) (let* ([vdep (get-volatile-dep d)]
-                                            [part (first vdep)]
-                                            [val (format-num (second vdep))])
-                                       (string-append " | < " part ", " val " satoshi > " (symbol->string d) " "))) (get-volatile-deps))]
-         [sem-vdeps (list+sep->string sem-vdeps "")])
+         ;[sem-secrets (map
+         ;              (lambda (s) (string-append " | { " (get-secret-part s) " : "
+         ;                                         (symbol->string s) " # " (number->string (hash-ref secrets-map s)) " }"))
+         ;              (get-secrets))]
+         ;[sem-secret-dec (list+sep->string sem-secrets "")]
+         ;[sem-vdeps (map (lambda (d) (let* ([vdep (get-volatile-dep d)]
+         ;                                   [part (first vdep)]
+         ;                                   [val (format-num (second vdep))])
+         ;                              (string-append " | < " part ", " val " satoshi > " (symbol->string d) " "))) (get-volatile-deps))]
+         ;[sem-vdeps (list+sep->string sem-vdeps "")]
+         [test ""])
     
     (string-append "\neq Cconf = < MContr > | unlock \n"
                    "endm\n"
@@ -134,36 +86,16 @@
 (define-syntax (execute-maude-query stx)
   (syntax-parse stx
     #:literals (check-liquid)
-    [(_ secret-map (check-liquid strategy ...))
+    [(_ (check-liquid))
      #'(begin
          (let ([maude-str 
                 (string-append maude-output
-                               (compile-maude-strat strategy)...
-                               (get-maude-closing secret-map)
+                               (get-maude-closing)
                                "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, <> contract-free) .\n"
                                "quit .\n")])
            (write-maude-file maude-str)
            (format-maude-out (execute-maude))))]))
 
-(define-syntax (compile-maude-strat stx)
-  (syntax-parse stx
-    #:literals (strategy b-if)
-    [(_ (strategy part:string action))
-     #'(compile-maude-action part action)]
-    [(_ (strategy part:string action b-if pred))
-     #'(compile-maude-action part action b-if pred)]
-    [(_ (secrets p ...))
-     #'""]))
-
-
-;eq strategy(ctx:Context S:Configuration | B : b # 1, A authorize-destroy-of x) = false .
-(define-syntax (compile-maude-pred stx)
-  (syntax-parse stx
-    #:literals (do-reveal do-auth not-destroy do-destroy state)
-    [(_ (part:string (do-reveal secret:id)))
-     #'(string-append " | " part " : " (symbol->string 'secret) " # 1 ")]
-    [(_ (part:string (do-auth contract)))
-     #'(string-append " | " part " [ x:Name |> " (compile-maude-contract contract) " ] ")]))
 
 (define (write-maude-file str)
   (define out (open-output-file "test.maude" #:exists 'replace))
