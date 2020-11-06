@@ -34,7 +34,9 @@
            (reset-maude-out)
            (maude-opening)
            (unless (equal? null (list name ...))
-             (add-maude-output (string-append "ops " name ... " : -> ContractName .\n"))
+             (add-maude-output (string-append "ops "
+                                              (list+sep->string (list name ...) " ")
+                                              " : -> ContractName .\n"))
              (rngt-env (list name ...) (list (compile-maude-contract contract1) ...)))
 
            
@@ -62,7 +64,7 @@
     (let* ([res-list (map
                       (lambda (ctx name) (string-append "(" name " := " ctx " )"))
                       compiled-contracts names)]
-           [res (list+sep->string res-list)])
+           [res (list+sep->string res-list ",\n")])
 
       (add-maude-output res " .\n"))))
 

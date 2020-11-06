@@ -14,7 +14,14 @@
       (secret "A" a "9f3df038eeadc0c240fb7f82e31fdfe46804fc7c"))
  
  (choice (reveal (a) (withdraw "A"))
-         (after 1550000 (withdraw "B")))
+         (after 1550000 (withdraw "B"))
+         (rngt "Xa")
+         (rngt "Xb")
+         )
+
+ (define-rec "Xa" (withdraw "A"))
+ (define-rec "Xb" (withdraw "B"))
+
 
  (check-liquid)
 

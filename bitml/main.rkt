@@ -35,7 +35,7 @@
     #:literals (pre choice define-rec)
     [(_ (pre guard ...)
         (choice (contr params ...) ...)
-        (define-rec name:string (contr1 params1 ...)) ...
+        (define-rec name:string contr1) ...
         maude-query ...)
 
      
@@ -60,13 +60,13 @@
                       (get-script-params (contr params ...)) script-params)...
 
              ;compile the renegotiation contracts
-             (compile (contr1 params1 ...) '(cont1r params1 ...) "" 0 0 (get-remaining-fee avail-fee) (get-participants) 0
-                      (get-script-params (contr1 params1 ...)) (get-script-params (contr1 params1 ...)))...
+             (compile contr1 'cont1r "" 0 0 (get-remaining-fee avail-fee) (get-participants) 0
+                      (get-script-params contr1) (get-script-params contr1))...
 
              (displayln (format "\\\\Compilation time: ~a ms" (round (- (current-inexact-milliseconds) start-time)))))
            
            ;compute the model-checking result for each query
-           (model-check (choice (contr params ...)...) (define-rec name (contr1 params1 ...)) ... (pre guard ...) maude-query ...)
+           (model-check (choice (contr params ...)...) (define-rec name contr1) ... (pre guard ...) maude-query ...)
            
            (show-compiled)))]
     
