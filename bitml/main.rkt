@@ -60,8 +60,10 @@
                       (get-script-params (contr params ...)) script-params)...
 
              ;compile the renegotiation contracts
-             (compile contr1 'cont1r "" 0 0 (get-remaining-fee avail-fee) (get-participants) 0
-                      (get-script-params contr1) (get-script-params contr1))...
+             (begin
+               (add-output (string-append "// Transactions for contract " 'name))
+               (compile contr1 'cont1r "" 0 0 (get-remaining-fee avail-fee) (get-participants) 0
+                        (get-script-params contr1) (get-script-params contr1)))...
 
              (displayln (format "\\\\Compilation time: ~a ms" (round (- (current-inexact-milliseconds) start-time)))))
            
