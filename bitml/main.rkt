@@ -15,7 +15,7 @@
           (rename-out [btrue true] [band and] [bor or] [bnot not] [define-rewrite-rule define]
                       [b= =] [b!= !=] [b< <] [b+ +] [b- -] [b<= <=] [bsize size]
                       [b-if if] [$expand ref])
-          define-syntax-rule fee verification-only
+          define-syntax-rule fee verification-only define-rec
           strategy do-reveal do-auth not-destroy do-destroy not-reveal secrets
           state check-liquid check has-at-least check-query auto-generate-secrets
           #%module-begin #%datum #%top-interaction)
@@ -32,9 +32,10 @@
 ;initializes the compilation
 (define-syntax (contract-init stx)
   (syntax-parse stx
-    #:literals (pre choice)
+    #:literals (pre choice define-rec)
     [(_ (pre guard ...)
         (choice (contr params ...) ...)
+        (define-rec name:string (contr1 params1 ...)) ...
         maude-query ...)
 
      
@@ -56,7 +57,11 @@
 
              ;start the compilation of the continuation contracts
              (compile (contr params ...) parent "Tinit" 0 tx-v (get-remaining-fee avail-fee) (get-participants) 0
-                      (get-script-params (contr params ...)) script-params)... 
+                      (get-script-params (contr params ...)) script-params)...
+
+             ;compile the renegotiation contracts
+             (compile (contr1 params1 ...) '(cont1r params1 ...) "" 0 0 (get-remaining-fee avail-fee) (get-participants) 0
+                      (get-script-params (contr1 params1 ...)) (get-script-params (contr1 params1 ...)))...
 
              (displayln (format "\\\\Compilation time: ~a ms" (round (- (current-inexact-milliseconds) start-time)))))
            

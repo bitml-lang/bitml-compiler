@@ -16,6 +16,8 @@
  (choice (reveal (a) (withdraw "A"))
       (after 1550000 (withdraw "B")))
 
+ (define-rec "X" (withdraw "B"))
+
  (check-liquid)
 
  )
