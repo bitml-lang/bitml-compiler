@@ -16,7 +16,8 @@
 
 (define-syntax (model-check stx)
   (syntax-parse stx
-    [(_ contract (guard ...) query ...)
+    #:literals (define-rec pre)
+    [(_ contract (define-rec name:string contract1) ... (pre guard ...) query ...)
      #'(begin
          ;(define start-time (current-inexact-milliseconds))           
          (define flag #f)
@@ -32,7 +33,13 @@
 
            (reset-maude-out)
            (maude-opening)
+           (unless (equal? null (list name ...))
+             (add-maude-output (string-append "ops " name ... " : -> ContractName .\n"))
+             (rngt-env (list name ...) (list (compile-maude-contract contract1) ...)))
+
+           
            (add-maude-output (string-append "eq MContr = " (compile-maude-contract contract) " . \n"))
+           (add-maude-output (get-maude-closing (list name ...)))
            (let ([result (execute-maude-query query)])
 
              ;if the model checking returns false display the cex
@@ -47,6 +54,17 @@
                                          (unless (= 0 (length (list 'query ...)))
                                            (displayln (format "Total time: ~a ms" (round (- (current-inexact-milliseconds) start-time))))
                                            (displayln "=============================================================================*/\n")))]))
+
+(define (rngt-env names compiled-contracts)
+  (unless (equal? null names)
+    (add-maude-output "eq dec = ")
+
+    (let* ([res-list (map
+                      (lambda (ctx name) (string-append "(" name " := " ctx " )"))
+                      compiled-contracts names)]
+           [res (list+sep->string res-list)])
+
+      (add-maude-output res " .\n"))))
 
 ;writes the opening declarations for maude
 (define (maude-opening)
@@ -64,7 +82,7 @@
          [sem-conf "op Cconf : -> Configuration .\n"])
     (add-maude-output parts-dec contract sem-conf)))
 
-(define (get-maude-closing)
+(define (get-maude-closing rngt-names)
   (let* (;aggiungere i ContractName trovati alla configurazione
          ;[sem-secrets (map
          ;              (lambda (s) (string-append " | { " (get-secret-part s) " : "
@@ -78,7 +96,9 @@
          ;[sem-vdeps (list+sep->string sem-vdeps "")]
          [test ""])
     
-    (string-append "\neq Cconf = < MContr > | unlock .\n"
+    (string-append "\neq Cconf = < MContr > | unlock "
+                   (if (equal? null rngt-names) "" (string-append " | " (list+sep->string rngt-names " | ")))
+                   " .\n"
                    "endm\n"
                    "smod LIQUIDITY_CHECK is\nprotecting BITML_CHECK .\nincluding BITML-CONTRACT .\nendsm\n")))
 
@@ -90,7 +110,6 @@
      #'(begin
          (let ([maude-str 
                 (string-append maude-output
-                               (get-maude-closing)
                                "reduce in LIQUIDITY_CHECK : modelCheck(Cconf, <> contract-free) .\n"
                                "quit .\n")])
            (write-maude-file maude-str)

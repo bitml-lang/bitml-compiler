@@ -66,7 +66,7 @@
              (displayln (format "\\\\Compilation time: ~a ms" (round (- (current-inexact-milliseconds) start-time)))))
            
            ;compute the model-checking result for each query
-           (model-check (choice (contr params ...)...) (guard ...) maude-query ...)
+           (model-check (choice (contr params ...)...) (define-rec name (contr1 params1 ...)) ... (pre guard ...) maude-query ...)
            
            (show-compiled)))]
     
