@@ -203,7 +203,7 @@
 
 (define-syntax (compile stx)
   (syntax-parse stx
-    #:literals(pred choice -> putrevealif split withdraw after auth reveal revealif put tau)
+    #:literals(pred choice -> putrevealif split withdraw after auth reveal revealif put tau rngt)
     [(_ (putrevealif (tx-id:id ...) (sec:id ...) (~optional (pred p)) (choice (contract params ...)...))
         parent-contract parent-tx input-idx value fee-v parts timelock sec-to-reveal all-secrets)
      #'(begin
@@ -329,6 +329,10 @@
         parent-contract parent-tx input-idx value fee-v parts timelock sec-to-reveal all-secrets)
      #'(compile (putrevealif () () (contract params ...))
                 parent-contract parent-tx input-idx value fee-v parts timelock sec-to-reveal all-secrets)]
+
+    [(_ (rngt contract-name:string)
+        parent-contract parent-tx input-idx value fee-v parts timelock sec-to-reveal all-secrets)
+     #'(+ 1 1)]
 
 
     ;compiles withdraw to transaction  

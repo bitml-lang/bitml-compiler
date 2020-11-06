@@ -14,7 +14,7 @@
       (secret "A" a "9f3df038eeadc0c240fb7f82e31fdfe46804fc7c"))
  
  (choice (reveal (a) (withdraw "A"))
-      (after 1550000 (withdraw "B")))
+         (after 1550000 (withdraw "B")))
 
  (define-rec "X" (withdraw "B"))
 
