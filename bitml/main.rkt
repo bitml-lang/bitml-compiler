@@ -62,7 +62,7 @@
              ;compile the renegotiation contracts
              (begin
                (add-output (string-append "// Transactions for contract " 'name))
-               (compile contr1 'cont1r "" 0 0 (get-remaining-fee avail-fee) (get-participants) 0
+               (compile (tau contr1) 'cont1r "" 0 tx-v (get-remaining-fee avail-fee) (get-participants) 0
                         (get-script-params contr1) (get-script-params contr1)))...
 
              (displayln (format "\\\\Compilation time: ~a ms" (round (- (current-inexact-milliseconds) start-time)))))

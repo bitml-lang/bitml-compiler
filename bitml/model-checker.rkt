@@ -139,8 +139,9 @@
      ;(displayln "Result: false\n")
      ;(displayln cex)
      (cons #f (format-cex cex))]
-    [(regexp #px"rewrites:.* \\((.*) real\\).*(result Bool: true).*Bye" (list _ time res))
+    [(regexp #px"rewrites: ([0-9]*).* \\((.*) real\\).*(result Bool: true).*Bye" (list _ rew time res))
      (displayln (string-append "Model-checking time: " time))
+     (displayln (string-append "Rewrites: " rew))
      (displayln "Result: true")
      (cons #t "")]
     [x ;(displayln (string-append "Error: " x))
