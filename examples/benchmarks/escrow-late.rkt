@@ -29,5 +29,4 @@
             (put (y) (ref (Resolve)))
             (after 501000 (withdraw "A")))))
 
- (check-liquid
-  (strategy "M" (do-auth (auth "M" (withdraw "B"))))))
+ (check-liquid))

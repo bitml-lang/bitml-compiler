@@ -63,8 +63,6 @@
           (ref (Round1A))
                    
 
-          (check-liquid
-           (strategy "A" (do-reveal a1))
-           (strategy "A" (do-reveal a2)))
+          (check-liquid)
 
           )

@@ -18,9 +18,4 @@
            (after 10 (withdraw "A")))
                    
 
-          (check-liquid
-           (secrets ((a 0) (b 0))
-                    ((a 0) (b 1))
-                    ((a 1) (b 0))
-                    ((a 3) (b 0))
-                    ((a 0) (b 3)))))
+          (check-liquid))

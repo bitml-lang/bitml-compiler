@@ -37,10 +37,4 @@
           (ref (C))
                    
 
-          (check-liquid
-           (strategy "A" (do-reveal a))
-           (strategy "A" (do-reveal a1))
-           (secrets ((b  44) (a  44) (b1  44) (a1  44))
-                    ((b  44) (a  44) (b1  44) (a1  48))
-                    ((b  44) (a  44) (b1  88) (a1  44))
-                    ((b  44) (a  44) (b1  44) (a1  88)))))
+          (check-liquid))

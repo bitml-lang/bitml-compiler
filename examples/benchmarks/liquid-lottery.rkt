@@ -22,7 +22,4 @@
                   (revealif (a b) (pred (!= a b)) (withdraw "B"))
                   (after 10 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")))))))
 
-          (check-liquid
-           (secrets ((a 44) (b 48))
-                    ((a 44) (b 44))
-                    ((a 44) (b 0)))))
+          (check-liquid))

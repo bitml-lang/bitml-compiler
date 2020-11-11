@@ -36,9 +36,4 @@
                   (after 1000 (split (1 -> (withdraw "A")) (1 -> (withdraw "B")))) ; timeout
                   )))
           
-          (check-liquid
-           (secrets ((a 44) (b 48))
-                    ((a 2) (b 0))
-                    ((a 2) (b 1))
-                    ((a 44) (b 44))
-                    ((a 44) (b 2)))))
+          (check-liquid))

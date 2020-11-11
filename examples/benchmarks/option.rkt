@@ -30,5 +30,4 @@
  
  (ref (EuropeanOption "A" 1000 1100 (withdraw "A") (withdraw "I")))
  
- (check-liquid
-  (strategy "A" (do-auth))))
+ (check-liquid))

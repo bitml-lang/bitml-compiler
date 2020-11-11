@@ -159,7 +159,7 @@
      #'(string-append "(rngt " contract-name ")")]
     
     [(_ (auth part:string ... (contract params ...)))
-     #'(if (equal? (list "A") (list part ...))
+     #'(if (or (equal? (list "A") (list part ...)) (equal? (list "M") (list part ...)))
            (string-append " (tau. " (compile-maude-contract (contract params ...))" ) ")
            (string-append " (*: " (compile-maude-contract (contract params ...))" ) "))]
 
