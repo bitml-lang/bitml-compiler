@@ -35,7 +35,9 @@
     #:literals (pre choice define-rec)
     [(_ (pre guard ...)
         (choice (contr params ...) ...)
-        (define-rec name:string contr1) ...
+        (define-rec name:string
+          (pre (deposit p v d)...)...
+          contr1) ...
         maude-query ...)
 
      
@@ -62,7 +64,7 @@
              ;compile the renegotiation contracts
              (begin
                (add-output (string-append "// Transactions for contract " 'name))
-               (compile (tau contr1) 'cont1r "" 0 tx-v (get-remaining-fee avail-fee) (get-participants) 0
+               (compile (tau contr1) 'cont1r "" 0 (+ tx-v v ... ...) (get-remaining-fee avail-fee) (get-participants) 0
                         (get-script-params contr1) (get-script-params contr1)))...
 
              (displayln (format "\\\\Compilation time: ~a ms" (round (- (current-inexact-milliseconds) start-time)))))
