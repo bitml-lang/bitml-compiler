@@ -14,4 +14,4 @@ After the installation, you have to logout and login again.
 
 ## Documentation
 
-https://blockchain.unica.it/bitml/docs
+https://bitml-lang.github.io/
